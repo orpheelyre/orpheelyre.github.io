@@ -1,10 +1,50 @@
 <!DOCTYPE html>
 <html>
-<head><title>Whitespace Cosmos</title>
-<link rel='stylesheet' href='assets/style.css'>
+<head>
+  <title>Whitespace Cosmos</title>
+  <link rel='stylesheet' href='assets/style.css'>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;700&display=swap" rel="stylesheet">
+  <!-- GenYoMin JP 字体可后续引入，暂用系统中文字体占位 -->
 </head>
 <body>
-<canvas id='canvas'></canvas>
-<script type='module' src='assets/js/index.js'></script>
+  <div id="book-double-outer">
+    <div id="book-double-container">
+      <div id="book-left" class="book-page book-left">
+        <div id="menu-3col">
+          <div class="menu-col menu-col-left">
+            <div id="menu-design"></div>
+            <div id="menu-artwork"></div>
+          </div>
+          <div class="menu-col menu-col-right">
+            <div id="menu-essay"></div>
+            <div id="menu-poem"></div>
+          </div>
+          <div class="menu-corner menu-corner-topright">
+            <div class="profile-name">Orlan Syuhui Yuan / 袁思卉</div>
+          </div>
+          <div class="menu-corner menu-corner-bottomright">
+            <div class="profile-links">
+              Instagram @42inchestomars<br>
+              Itch.io @42inchestomars<br>
+              Mail orlan.lujun@gmail.com
+            </div>
+          </div>
+        </div>
+      </div>
+      <div id="book-right" class="book-page book-right">
+        <div id="book-header">
+          <button id="font-increase" class="fontsize-btn" title="增大字号"><img src="assets/icons/font+.png" alt="A+" style="height:1.2em;width:1.2em;"></button>
+          <button id="font-decrease" class="fontsize-btn" title="减小字号"><img src="assets/icons/font-.png" alt="A-" style="height:1.2em;width:1.2em;"></button>
+          <button id="fullscreen-btn" title="全屏"><img src="assets/icons/fullscreen.png" alt="⛶" style="height:1.2em;width:1.2em;"></button>
+          <button id="close-btn" title="合上书"><img src="assets/icons/menu.png" alt="☰" style="height:1.2em;width:1.2em;"></button>
+        </div>
+        <div id="content-clip">
+          <div id="content"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <canvas id='canvas' style="display:none;"></canvas>
+  <script type='module' src='assets/js/index.js'></script>
 </body>
 </html>

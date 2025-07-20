@@ -1,1 +1,380 @@
-body { margin: 0; background: #f6f6f6; font-family: sans-serif; }
+@font-face {
+  font-family: 'Space Grotesk';
+  src: url('./fonts/SpaceGrotesk-VariableFont_wght.ttf') format('truetype');
+  font-weight: 400 700;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'GenYoMin JP Medium';
+  src: url('./fonts/GenYoMinJP-Medium.ttf') format('truetype');
+  font-weight: 500;
+  font-display: swap;
+}
+
+body {
+  margin: 0;
+  background: #161616;
+  font-family: 'Space Grotesk', 'GenYoMin JP', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  color: #3C3E42;
+  min-height: 100vh;
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+html, body {
+  touch-action: none;
+  user-select: none;
+  overscroll-behavior: none;
+}
+
+#book-double-outer {
+  width: 100vw;
+  height: 100vh;
+  position: relative;
+  overflow: hidden;
+  background: #161616;
+}
+
+#book-double-container {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform-origin: center center;
+  /* width/height set by JS for strict A4 or A4+A4 */
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  box-sizing: content-box;
+  transition: width 0.5s, height 0.5s, transform 0.5s;
+  margin: 0;
+}
+
+.book-page, .book-left, .book-right {
+  width: 794px !important;
+  height: 1123px !important;
+  background: #F8F2E2 url('./textures/bg.png') center center/cover no-repeat;
+  box-shadow: 0 4px 32px rgba(0,0,0,0.18);
+  overflow: hidden;
+  position: relative;
+  border-radius: 0;
+  margin: 0;
+  padding: 0;
+  transition: transform 0.5s cubic-bezier(.77,0,.18,1), box-shadow 0.3s;
+}
+
+#book-double-container.open {
+  width: 1588px !important;
+  height: 1123px !important;
+}
+
+#book-double-container:not(.open) {
+  width: 794px !important;
+  height: 1123px !important;
+}
+
+#book-double-container:not(.open) .book-right {
+  display: none;
+}
+
+#book-double-container.open .book-right {
+  display: block;
+}
+
+/* Remove/override media queries that break A4 ratio */
+@media (max-width: 1700px), (max-width: 1588px), (max-height: 1123px) {
+  #book-double-container, .book-page, .book-left, .book-right {
+    max-width: none !important;
+    max-height: none !important;
+    width: auto;
+    height: auto;
+  }
+}
+
+/* JS会动态设置transform: scale()，保证A4比例和上下居中 */
+
+#menu-3col {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+.menu-col {
+  width: 228px;
+  gap: 24px;
+  display: flex;
+  flex-direction: column;
+  pointer-events: auto;
+}
+.menu-col-left {
+  position: absolute;
+  left: 48px;
+  top: 48px;
+  align-items: flex-start;
+}
+.menu-col-right {
+  position: absolute;
+  right: 48px;
+  top: 480px;
+  align-items: flex-end;
+}
+.menu-section {
+  width: 228px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.menu-title {
+  font-family: 'Space Grotesk', 'GenYoMin JP', sans-serif;
+  font-weight: 700;
+  font-size: 1.08em;
+  margin-bottom: 0;
+  letter-spacing: 0.01em;
+}
+.menu-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.menu-item {
+  font-family: 'Space Grotesk', 'GenYoMin JP', sans-serif;
+  font-size: 1em;
+  font-weight: 400;
+  color: #3C3E42;
+  cursor: pointer;
+  padding: 0;
+  background: none;
+  border: none;
+  outline: none;
+  text-align: left;
+  transition: color 0.2s;
+}
+.menu-item.active {
+  color: inherit;
+  font-weight: 400;
+  text-decoration: underline;
+}
+.menu-corner.menu-corner-topright {
+  position: absolute;
+  top: 48px;
+  right: 48px;
+  text-align: right;
+  font-size: 15px;
+  font-family: 'GenYoMin JP Medium', 'Noto Serif SC', 'PingFang SC', 'Microsoft YaHei', 'GenYoMin JP', 'Space Grotesk', sans-serif;
+  font-weight: 500;
+  color: #3C3E42;
+  letter-spacing: 0.01em;
+}
+.menu-corner.menu-corner-bottomright {
+  position: absolute;
+  bottom: 48px;
+  right: 48px;
+  text-align: right;
+  font-size: 12px;
+  color: #888;
+}
+#menu-design, #menu-artwork, #menu-essay, #menu-poem {
+  width: 100%;
+}
+
+#book-header {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  height: 32px;
+  margin-bottom: 12px;
+  gap: 8px;
+  position: absolute;
+  top: 48px;
+  right: 48px;
+  background: none;
+  z-index: 10;
+}
+#book-header button {
+  width: 24px;
+  height: 24px;
+  min-width: 24px;
+  min-height: 24px;
+  max-width: 24px;
+  max-height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+#book-header button img {
+  width: 24px;
+  height: 24px;
+  display: block;
+}
+#fullscreen-btn, #close-btn {
+  background: none;
+  border: none;
+  font-size: 18px;
+  margin-left: 12px;
+  cursor: pointer;
+  color: #3C3E42;
+  opacity: 0.7;
+  transition: opacity 0.2s;
+}
+#fullscreen-btn:hover, #close-btn:hover {
+  opacity: 1;
+}
+.book-left {
+  overflow: hidden !important;
+}
+
+.book-right {
+  overflow: hidden !important;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+#content-clip {
+  flex: 1 1 auto;
+  min-height: 0;
+  height: 100%;
+  margin: 148px 96px;
+  overflow: hidden;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+}
+#content {
+  flex: 1 1 auto;
+  min-height: 0;
+  height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+  font-size: 18px;
+  color: #3C3E42;
+  padding: 0;
+  line-height: 1.5;
+  font-family: 'Space Grotesk', 'GenYoMin JP', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  box-sizing: border-box;
+  background: transparent;
+}
+
+#content h1, #content h2, #content h3 {
+  font-family: 'Space Grotesk', 'GenYoMin JP', sans-serif;
+  font-weight: 700;
+  margin-top: 0;
+  margin-bottom: 24px;
+  letter-spacing: 0.01em;
+}
+#content h1 { font-size: 2.2em; }
+#content h2 { font-size: 1.5em; }
+#content h3 { font-size: 1.2em; }
+#content p {
+  margin: 0 0 20px 0;
+  font-size: 1em;
+  line-height: 1.7;
+}
+#content img {
+  max-width: 100%;
+  margin: 32px 0;
+  display: block;
+  border-radius: 4px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+}
+#content .meta {
+  font-size: 0.98em;
+  color: #8a857a;
+  margin-bottom: 18px;
+  margin-top: -8px;
+  letter-spacing: 0.01em;
+}
+#content .meta .date {
+  color: #c2bba7;
+}
+#content .desc {
+  font-size: 1.08em;
+  color: #3C3E42;
+  margin-top: 18px;
+  margin-bottom: 0;
+  line-height: 1.8;
+  letter-spacing: 0.01em;
+  font-family: 'Space Grotesk', 'GenYoMin JP', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  white-space: pre-line;
+}
+pre.desc {
+  font-family: 'Space Grotesk', 'GenYoMin JP', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  font-size: 1.08em;
+  color: #3C3E42;
+  background: none;
+  border: none;
+  margin: 18px 0 0 0;
+  padding: 0;
+  line-height: 1.8;
+  letter-spacing: 0.01em;
+  white-space: pre-line;
+}
+pre.desc::first-letter, .desc::first-letter {
+  float: left;
+  font-size: 2.8em;
+  line-height: 1;
+  font-weight: 700;
+  margin-right: 0.12em;
+  margin-top: 0.08em;
+  font-family: 'Space Grotesk', 'GenYoMin JP', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  color: #3C3E42;
+}
+
+/* 滚动条美化 */
+#content::-webkit-scrollbar {
+  width: 8px;
+  background: transparent;
+}
+#content::-webkit-scrollbar-thumb {
+  background: #d2c7b2;
+  border-radius: 4px;
+}
+#content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+@keyframes slideInRight {
+  from { transform: translateX(60px); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+#book-right:hover #content {
+  font-size: 20.4px;
+}
+#book-right:hover #content h1 { font-size: 2.64em; }
+#book-right:hover #content h2 { font-size: 1.8em; }
+#book-right:hover #content h3 { font-size: 1.44em; }
+#book-right:hover #content .meta,
+#book-right:hover #content .desc,
+#book-right:hover #content pre.desc {
+  font-size: 1.296em;
+}
+
+.fontsize-controls {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-left: 12px;
+}
+.fontsize-btn {
+  font-size: 1.2em;
+  background: none;
+  border: 1px solid #bdb6a7;
+  border-radius: 4px;
+  color: #3C3E42;
+  padding: 2px 8px;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+.fontsize-btn:active {
+  background: #ede7d9;
+}
