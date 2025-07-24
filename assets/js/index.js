@@ -235,3 +235,44 @@ fullscreenBtn.onclick = fullscreenContent;
 // 初始只显示左页
 bookDoubleContainer.classList.remove('open');
 renderMenu3Col();
+
+// --- 桌面图标与窗口切换 ---
+const icons = document.querySelectorAll('.desktop-icon');
+const windows = [
+  document.getElementById('window-1'),
+  document.getElementById('book-double-outer'),
+  document.getElementById('window-3')
+];
+const iconStates = [
+  {
+    norm: 'assets/icons/desktop-icons/Property 1=portfolio-norm.png',
+    hover: 'assets/icons/desktop-icons/Property 1=portfolio-hover.png',
+    selected: 'assets/icons/desktop-icons/Property 1=portfolio-selected.png'
+  },
+  {
+    norm: 'assets/icons/desktop-icons/Property 1=file-norm.png',
+    hover: 'assets/icons/desktop-icons/Property 1=file-hover.png',
+    selected: 'assets/icons/desktop-icons/Property 1=file-selected.png'
+  },
+  {
+    norm: 'assets/icons/desktop-icons/Property 1=terminal-norm.png',
+    hover: 'assets/icons/desktop-icons/Property 1=terminal-hover.png',
+    selected: 'assets/icons/desktop-icons/Property 1=terminal-selected.png'
+  }
+];
+icons.forEach((icon, idx) => {
+  icon.addEventListener('mouseenter', () => {
+    if (!icon.classList.contains('selected')) icon.src = iconStates[idx].hover;
+  });
+  icon.addEventListener('mouseleave', () => {
+    if (!icon.classList.contains('selected')) icon.src = iconStates[idx].norm;
+  });
+  icon.addEventListener('click', () => {
+    icons.forEach((ic, i) => {
+      ic.classList.toggle('selected', i === idx);
+      ic.src = i === idx ? iconStates[i].selected : iconStates[i].norm;
+      windows[i].style.display = i === idx ? 'block' : 'none';
+    });
+  });
+});
+// --- END ---
