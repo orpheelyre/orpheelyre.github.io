@@ -27,7 +27,7 @@
 
 body {
   margin: 0;
-  background: #F8F2E2 url('./textures/bg.png') center center/cover no-repeat;
+  background: #161616;
   font-family: 'IMFellDWPica-Regular', 'huiwen', serif;
   color: #222;
   min-height: 100vh;
@@ -46,11 +46,11 @@ html, body {
 }
 
 #book-double-outer {
-  width: 100vw;
-  height: 100vh;
-  position: relative;
-  overflow: hidden;
-  background: #161616;
+  position: fixed
+  top: 48px;
+  left: 48px;
+  right: 48px;
+  bottom: 48px;
 }
 
 #book-double-container {
@@ -65,6 +65,8 @@ html, body {
   box-sizing: content-box;
   transition: width 0.5s, height 0.5s, transform 0.5s;
   margin: 0;
+  /* scale up the book page */
+  transform: scale(1.5) translate(-15%, -15%);
 }
 
 .book-page, .book-left, .book-right {
@@ -125,11 +127,14 @@ html, body {
   flex-direction: column;
   pointer-events: auto;
 }
+/* Menu left column vertical stack and spacing */
 .menu-col-left {
-  position: absolute;
-  left: 48px;
-  top: 48px;
+  left: 64px;
+  margin-left: 64px;
   align-items: flex-start;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
 }
 .menu-col-right {
   position: absolute;
@@ -138,21 +143,15 @@ html, body {
   align-items: flex-end;
 }
 .menu-section {
-  width: 228px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
+  margin-bottom: 0;
+  gap: 8px;
 }
 .menu-title {
-  font-family: 'IMFellDWPica-Regular', serif;
-  font-size: 1.5em;
-  font-weight: bold;
-  margin-bottom: 0.7em;
-  margin-top: 2.5em;
-  letter-spacing: 0.01em;
+  margin-bottom: 0.2em;
+  margin-top: 1.5em;
 }
 .menu-title:first-child {
-  margin-top: 2em;
+  margin-top: 0.5em;
 }
 .menu-list {
   list-style: none;
@@ -188,12 +187,7 @@ html, body {
   letter-spacing: 0.01em;
 }
 .menu-corner.menu-corner-bottomright {
-  position: absolute;
-  bottom: 48px;
-  right: 48px;
-  text-align: right;
-  font-size: 12px;
-  color: #888;
+  display: none !important;
 }
 #menu-design, #menu-artwork, #menu-essay, #menu-poem {
   width: 100%;
@@ -253,10 +247,15 @@ html, body {
   align-items: stretch;
 }
 #content-clip {
+  /* Remove overflow: hidden to allow scrolling to the bottom */
+  overflow: visible;
   flex: 1 1 auto;
   min-height: 0;
   height: 100%;
-  margin: 148px 96px;
+  margin-left: 48px;
+  margin-right: 96px;
+  margin-top: 96px;
+  margin-bottom: 96px;
   overflow: hidden;
   position: relative;
   display: flex;
@@ -264,6 +263,7 @@ html, body {
   justify-content: flex-start;
 }
 #content {
+  font-family: 'IMFellDWPica-Regular', 'huiwen', serif;
   flex: 1 1 auto;
   min-height: 0;
   height: 100%;
@@ -273,13 +273,12 @@ html, body {
   color: #3C3E42;
   padding: 0;
   line-height: 1.5;
-  font-family: 'Space Grotesk', 'GenYoMin JP', 'PingFang SC', 'Microsoft YaHei', sans-serif;
   box-sizing: border-box;
   background: transparent;
 }
 
 #content h1, #content h2, #content h3 {
-  font-family: 'Space Grotesk', 'GenYoMin JP', sans-serif;
+  font-family: 'IMFellDWPica-Regular', 'huiwen', serif;
   font-weight: 700;
   margin-top: 0;
   margin-bottom: 24px;
@@ -317,11 +316,11 @@ html, body {
   margin-bottom: 0;
   line-height: 1.8;
   letter-spacing: 0.01em;
-  font-family: 'Space Grotesk', 'GenYoMin JP', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  font-family: 'IMFellDWPica-Regular', 'huiwen', serif;
   white-space: pre-line;
 }
 pre.desc {
-  font-family: 'Space Grotesk', 'GenYoMin JP', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  font-family: 'IMFellDWPica-Regular', 'huiwen', serif;
   font-size: 1.08em;
   color: #3C3E42;
   background: none;
@@ -339,7 +338,7 @@ pre.desc::first-letter, .desc::first-letter {
   font-weight: 700;
   margin-right: 0.12em;
   margin-top: 0.08em;
-  font-family: 'Space Grotesk', 'GenYoMin JP', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  font-family: 'IMFellDWPica-Regular', 'huiwen', serif;
   color: #3C3E42;
 }
 
@@ -393,20 +392,32 @@ pre.desc::first-letter, .desc::first-letter {
   background: #ede7d9;
 }
 
+/* Desktop icons vertical, size and order adjustment */
 #desktop-icons {
   position: fixed;
   right: 48px;
-  top: 48px;
+  top: 64px;
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 40px;
   z-index: 100;
+  margin-left: auto;
+  margin-right: 48px;
+  align-items: center;
 }
+#icon-1 { order: 3; }
+#icon-2 { order: 1; }
+#icon-3 { order: 2; }
 .desktop-icon {
-  width: 24px;
-  height: 24px;
-  cursor: pointer;
-  transition: filter 0.2s;
+  width: 48px;
+  height: 48px;
+}
+/* Book panel icon (second icon) larger */
+#icon-2.desktop-icon {
+  width: 56px;
+  height: 56px;
+  border: none;
+  box-sizing: border-box;
 }
 .desktop-icon.selected {
   filter: drop-shadow(0 0 8px #fff8);
@@ -510,4 +521,8 @@ pre.desc::first-letter, .desc::first-letter {
   font-style: italic;
   font-size: 1em;
   letter-spacing: 0.01em;
+}
+#content em, .desc em, pre.desc em {
+  font-family: 'IMFellDWPica-Italic', 'huiwen', serif;
+  font-style: italic;
 }

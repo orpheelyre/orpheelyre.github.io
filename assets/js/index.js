@@ -1,30 +1,7 @@
 // 目录和内容数据
 const menuData = [
   {
-    title: 'Design',
-    items: [
-      'Walefall Haven',
-      'Rock N’ Role',
-      'The Medusozian’s Dream',
-      'Debomenon',
-      'Babel of Lexicons',
-      'Acephere',
-      'Tales of Everlasting Symphony',
-    ],
-  },
-  {
-    title: 'Artwork',
-    items: [
-      'Take Me To Your Bad Dreams',
-      'I Broke Time Machine',
-      'Suffocating',
-      'In Memory Of',
-      'Portrait Series',
-      'Early Morning in S.S. Rd',
-    ],
-  },
-  {
-    title: 'Essay',
+    title: 'Proses',
     items: [
       'Dream is an Offshore Fire',
       'Some People, Some Place',
@@ -34,12 +11,18 @@ const menuData = [
     ],
   },
   {
-    title: 'Poem',
+    title: 'Verses',
     items: [
       '4-4-4-44',
       'A Confession',
       'Really Not Rhetoric',
       'Ishmael',
+    ],
+  },
+  {
+    title: 'Academic Works',
+    items: [
+      'The Sailor on the Ship of Fools',
     ],
   },
 ];
@@ -48,35 +31,27 @@ const contentData = {};
 menuData.forEach(section => {
   section.items.forEach(item => {
     // 针对画作测试项插入图片
-    if (item === 'Suffocating') {
+    if (item === 'The Sailor on the Ship of Fools') {
       contentData[item] = `
-        <h2>${item}</h2>
-        <div class="meta">Self portrait &nbsp;·&nbsp; 12'' x 16'' &nbsp;·&nbsp; <span class="date">28 November 2025</span></div>
-        <img src="./assets/projects/Suffocating-1.png" alt="Suffocating">
-        <div class="desc">A self-portrait exploring the feeling of suffocation in modern life. Mixed media on paper.</div>
-      `;
-    } else if (item === 'In Memory Of') {
-      contentData[item] = `
-        <h2>${item}</h2>
-        <div class="meta">My Alfa Romeo &nbsp;·&nbsp; 12'' x 16'' &nbsp;·&nbsp; <span class="date">05 December 2025</span></div>
-        <img src="./assets/projects/InMemoryOf-1.png" alt="In Memory Of">
-        <div class="desc">A tribute to my beloved car, capturing nostalgia and memory. Watercolor on paper.</div>
+        <h2>The Sailor on the Ship of Fools</h2>
+        <div class="meta"><em>A Cyclical Model of Neuroqueer Embodiment in Autistic Companionship</em><br>(2023, Excerpt)</div>
+        <div class="desc">[Academic excerpt content here]</div>
       `;
     } else if (item === 'Dream is an Offshore Fire') {
       contentData[item] = `
-        <h2>Dream is an Offshore Flame</h2>
-        <div class="meta">Essay &nbsp;·&nbsp; <span class="date">2024</span></div>
+        <h2>Dream is an Offshore Fire</h2>
+        <div class="meta">Prose &nbsp;·&nbsp; <span class="date">2024</span></div>
         <pre class="desc">Rising from beneath the pillow, air floods into the nasal cavity and freezes. The alarm rings as I step out the door. Warming the car, brushing my eyebrows hair by hair; heat melts the frost on the windshield layer by layer. Deep breath, gear shift, release handbrake, turn signal to the right, wheels crunching black ice with sharp cracking sounds. The sky still dark, interstate traffic rushes forward, steel monsters glaring with white-pupil headlights.
 
-— It’s alright.
+—— It’s alright.
 
-Disposable gloves prepared beforehand as in the past for dissection labs, the lab coat slips on again, still fits perfectly. Shell midden tumbles onto a tray from a numbered cardboard box, dust and sand invade airways; eyes redden, nostrils itch. Large ceramic shards, stone tools, bivalves, gastropods, animal remains sorted one by one; dried marrow sponge-like, bird teeth entangled with fish bones, carbonised shells still showing fine spiral textures. _Why anthropology?_ Standing on the stone bridge in the drizzle smoking with my lecturer during the first week of classes. _Why not history or psychology?_ I don’t want to forever sit behind mountains of books, deducing supposedly objective explanations, nor control any environment ever again. I want to reconcile with objectivity, walk into the communities I study, touch the material I research. At that time, I looked at him; he narrowed his eyes and exhaled a smoke ring with interest — this slender thing, is it a dry twig or a bone? I took off my gloves.
+Disposable gloves prepared beforehand as in the past for dissection labs, the lab coat slips on again, still fits perfectly. Shell midden tumbles onto a tray from a numbered cardboard box, dust and sand invade airways; eyes redden, nostrils itch. Large ceramic shards, stone tools, bivalves, gastropods, animal remains sorted one by one; dried marrow sponge-like, bird teeth entangled with fish bones, carbonised shells still showing fine spiral textures. _Why anthropology?_ Standing on the stone bridge in the drizzle smoking with my lecturer during the first week of classes. _Why not history or psychology?_ I don’t want to forever sit behind mountains of books, deducing supposedly objective explanations, nor control any environment ever again. I want to reconcile with objectivity, walk into the communities I study, touch the material I research. At that time, I looked at him; he narrowed his eyes and exhaled a smoke ring with interest — this slender thing, is it a dry twig or a bone? I took off my gloves.
 
-Wind crossing the Antarctic Ocean guides hailstones to smash against the window; I hold the remaining unidentifiable fragments from the tray close to my nose and sniff. Shells smell of brine; bones of musk. The projection curtain undulates like a jellyfish, ambient frequencies pulse from the speakers. Talking about childhood wandering among different cities and groups as if doing fieldwork. Just fieldwork without purpose, I shrugged. He feigned seriousness - _perhaps you’ve always been on your way to becoming an anthropologist since childhood; you just didn’t know then._ I laughed, is your department struggling to spend its budget? _Our department,_ he corrected earnestly. Time flowed silently along the spiral textures. I entered a state of flow. Have I ever asked, what’s your favorite step when doing a jigsaw puzzle? “Finding the right piece,” that person once answered without hesitation.
+Wind crossing the Antarctic Ocean guides hailstones to smash against the window; I hold the remaining unidentifiable fragments from the tray close to my nose and sniff. Shells smell of brine; bones of musk. The projection curtain undulates like a jellyfish, ambient frequencies pulse from the speakers. Talking about childhood wandering among different cities and groups as if doing fieldwork. Just fieldwork without purpose, I shrugged. He feigned seriousness - perhaps you’ve always been on your way to becoming an anthropologist since childhood; you just didn’t know then. I laughed, is your department struggling to spend its budget? Our department, he corrected earnestly. Time flowed silently along the spiral textures. I entered a state of flow. Have I ever asked, what’s your favorite step when doing a jigsaw puzzle? “Finding the right piece,” that person once answered without hesitation.
 
-It’s only three in the afternoon, half the sun sinks behind mountain peaks. Leaning by the window, writing the weekly reflection. Frost crawls through window cracks onto my arm, automatically writing about A’s graffiti project, writing about that last night in London when she, I, and Vonia carried four or five spray cans to the bridge arches. Too cold. The wind brings me back to that night; car parked outside, Wei suddenly said, _don’t wear this outfit, what if it gets spray paint?_ I lowered my head, marker stains washed faint; I said I’m cold, the only unpacked coat left is a thin blazer that can’t even be dry-cleaned. She offered to find me something else upstairs, though the car had already parked outside minutes ago. I grabbed my blazer and rushed out. When did it begin to turn cold? Early spring, midnight in London, Vonia, in just a shirt, draped her jacket around my shivering shoulders. And I would remember that night forever: the steaming miso soup gifted by a Japanese restaurant, the panicked flight chased by a homeless woman, the tactile warmth of Vonia’s jacket, A quietly waving outside the car window. Temperature dropped below zero, quiet and very quiet love sealed the window gaps.
+It’s only three in the afternoon, half the sun sinks behind mountain peaks. Leaning by the window, writing the weekly reflection. Frost crawls through window cracks onto my arm, automatically writing about A’s graffiti project, writing about that last night in London when she, I, and Vonia carried four or five spray cans to the bridge arches. Too cold. The wind brings me back to that night; car parked outside, Wei suddenly said, don’t wear this outfit, what if it gets spray paint? I lowered my head, marker stains washed faint; I said I’m cold, the only unpacked coat left is a thin blazer that can’t even be dry-cleaned. She offered to find me something else upstairs, though the car had already parked outside minutes ago. I grabbed my blazer and rushed out. When did it begin to turn cold? Early spring, midnight in London, Vonia, in just a shirt, draped her jacket around my shivering shoulders. And I would remember that night forever: the steaming miso soup gifted by a Japanese restaurant, the panicked flight chased by a homeless woman, the tactile warmth of Vonia’s jacket, A quietly waving outside the car window. Temperature dropped below zero, quiet and very quiet love sealed the window gaps.
 
-“On the last day of April, a heavy snow fell as I left Munich.” Geese scattered overhead, screaming as they passed; I bent down to gaze at the frozen river. _Germany is like this._ He said a German word I couldn’t understand and then laughed: _unfortunately, you’re driving from one winter into another._ 
+“On the last day of April, a heavy snow fell as I left Munich.” Geese scattered overhead, screaming as they passed; I bent down to gaze at the frozen river. Germany is like this. He said a German word I couldn’t understand and then laughed: unfortunately, you’re driving from one winter into another.
 
 I divided the shell midden into sixteen parts, brushed the remaining dust and dirt into the final small box, labeled them, and placed the sixteen samples in the cabinet printed with my name. I divided the 2000-piece puzzle into sixteen sections, sorting by color, pattern, light, and brushstroke after laying the frame. Did I ever mention this is actually my favorite step? Categorising until it can no longer be subdivided, everything neat, uniform, transparent, completely visible. Archaeology cannot experiment with the past itself; what we study settled into dust long before time could be spoken. I plunge into the river of time, swimming upstream toward the beginning.
 
@@ -85,10 +60,11 @@ I divided the shell midden into sixteen parts, brushed the remaining dust and di
 Written during the winter, 2024.</pre>
       `;
     } else {
+      // Default prose/verse content placeholder
       contentData[item] = `
         <h2>${item}</h2>
-        <div class="meta">Essay &nbsp;·&nbsp; <span class="date">2024</span></div>
-        <div class="desc">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque euismod, urna eu tincidunt consectetur, nisi nisl aliquam nunc, eget aliquam nisl nunc euismod nisi. <br><br>Aliquam erat volutpat. Etiam vitae nisi sit amet lorem accumsan porta. Quisque ultricies, sapien nec laoreet placerat, enim est dictum augue, eu dictum enim sem eu orci.</div>
+        <div class="meta">${section.title} &nbsp;·&nbsp; <span class="date">2024</span></div>
+        <div class="desc">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque euismod, urna eu tincidunt consectetur, nisi nisl aliquam nunc, eget aliquam nisl nunc euismod nisi.</div>
       `;
     }
   });
@@ -149,15 +125,17 @@ function renderMenuSection(section, containerId) {
   document.getElementById(containerId).appendChild(sectionDiv);
 }
 
-function renderMenu3Col() {
-  document.getElementById('menu-design').innerHTML = '';
-  document.getElementById('menu-artwork').innerHTML = '';
-  document.getElementById('menu-essay').innerHTML = '';
-  document.getElementById('menu-poem').innerHTML = '';
-  renderMenuSection(menuData[0], 'menu-design');
-  renderMenuSection(menuData[1], 'menu-artwork');
-  renderMenuSection(menuData[2], 'menu-essay');
-  renderMenuSection(menuData[3], 'menu-poem');
+function renderMenuSingleCol() {
+  // Remove any right column if present
+  document.querySelector('.menu-col-right')?.remove();
+  // Only use the left column for all sections
+  let leftCol = document.querySelector('.menu-col-left');
+  if (leftCol) {
+    leftCol.innerHTML = '<div id="menu-proses"></div><div id="menu-verses"></div><div id="menu-academic"></div>';
+    renderMenuSection(menuData[0], 'menu-proses');
+    renderMenuSection(menuData[1], 'menu-verses');
+    renderMenuSection(menuData[2], 'menu-academic');
+  }
 }
 
 function updateBookLeftTransform(open) {
@@ -234,7 +212,7 @@ fullscreenBtn.onclick = fullscreenContent;
 
 // 初始只显示左页
 bookDoubleContainer.classList.remove('open');
-renderMenu3Col();
+renderMenuSingleCol();
 
 // --- 桌面图标与窗口切换 ---
 const icons = document.querySelectorAll('.desktop-icon');
