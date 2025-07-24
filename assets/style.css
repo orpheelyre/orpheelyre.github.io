@@ -47,10 +47,10 @@ html, body {
 
 #book-double-outer {
   position: fixed;
-  top: 96px;
+  top: 48px;
   left: 96px;
   right: 96px;
-  bottom: 96px;
+  bottom: 48px;
   z-index: 200;
 }
 
@@ -526,4 +526,105 @@ pre.desc::first-letter, .desc::first-letter {
 #content em, .desc em, pre.desc em {
   font-family: 'IMFellDWPica-Italic', 'huiwen', serif;
   font-style: italic;
+}
+
+/* === Portfolio Modal Styles === */
+.portfolio-modal {
+  position: fixed;
+  left: 0; top: 0; right: 0; bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+.portfolio-bg {
+  position: absolute;
+  width: 80vw;
+  height: 80vh;
+  left: 50%; top: 50%;
+  transform: translate(-50%, -50%);
+  object-fit: cover;
+  border-radius: 24px;
+  z-index: 0;
+}
+.portfolio-close {
+  position: absolute;
+  right: 3vw;
+  top: 3vh;
+  background: none;
+  border: none;
+  z-index: 2;
+  cursor: pointer;
+}
+.portfolio-close img {
+  width: 40px;
+  height: 40px;
+  display: block;
+}
+.portfolio-tabs {
+  position: absolute;
+  left: 8vw;
+  top: 5vh;
+  z-index: 2;
+  display: flex;
+  gap: 16px;
+}
+.tab-btn {
+  background: #222;
+  color: #fff;
+  border: none;
+  padding: 8px 24px;
+  border-radius: 8px 8px 0 0;
+  font-size: 1.1em;
+  cursor: pointer;
+  opacity: 0.8;
+  transition: background 0.2s, color 0.2s, opacity 0.2s;
+}
+.tab-btn.active {
+  background: #fff;
+  color: #222;
+  opacity: 1;
+}
+.portfolio-grid {
+  position: absolute;
+  left: 8vw;
+  top: 12vh;
+  width: 64vw;
+  height: 60vh;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 32px;
+  z-index: 2;
+  overflow-y: auto;
+}
+.portfolio-grid-item {
+  background: #222;
+  border-radius: 16px;
+  padding: 16px;
+  text-align: center;
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.portfolio-grid-item img {
+  width: 100%;
+  aspect-ratio: 4/3;
+  object-fit: cover;
+  border-radius: 12px;
+  margin-bottom: 12px;
+}
+.portfolio-grid-item .item-title {
+  font-weight: bold;
+  margin-bottom: 4px;
+}
+.portfolio-grid-item .item-desc {
+  font-size: 0.95em;
+  color: #aaa;
+}
+
+.portfolio-close-topleft {
+  left: 3vw;
+  right: auto;
+  top: 3vh;
 }

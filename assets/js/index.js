@@ -254,3 +254,104 @@ icons.forEach((icon, idx) => {
   });
 });
 // --- END ---
+
+// === Portfolio Modal (Design/Game Grid) ===
+// 只保留一份 createPortfolioModal，删除重复定义
+function createPortfolioModal() {
+  if (document.getElementById('portfolio-container')) return; // 避免重复创建
+  const modal = document.createElement('div');
+  modal.id = 'portfolio-container';
+  modal.className = 'portfolio-modal';
+  modal.style.display = 'none';
+  modal.innerHTML = `
+    <img src="assets/projects/Design/container.png" class="portfolio-bg" />
+    <button id="portfolio-close" class="portfolio-close portfolio-close-topleft">
+      <img src="assets/projects/Design/btn-close.png" alt="close" />
+    </button>
+    <div class="portfolio-tabs">
+      <button class="tab-btn active" data-tab="design">Design</button>
+      <button class="tab-btn" data-tab="game">Game</button>
+    </div>
+    <div class="portfolio-grid"></div>
+  `;
+  document.body.appendChild(modal);
+}
+
+function renderPortfolioGrid(tab) {
+  const grid = document.querySelector('.portfolio-grid');
+  if (!grid) return;
+  const items = tab === 'game' ? gameItems : designItems;
+  grid.innerHTML = items.map(item => `
+    <div class="portfolio-grid-item">
+      <img src="${item.img}" alt="${item.title}" />
+      <div class="item-title">${item.title}</div>
+      <div class="item-desc">${item.desc}</div>
+    </div>
+  `).join('');
+}
+
+function showPortfolioModal() {
+  createPortfolioModal();
+  const modal = document.getElementById('portfolio-container');
+  modal.style.display = 'flex';
+  renderPortfolioGrid('design');
+  // 绑定 tab 切换
+  const tabBtns = modal.querySelectorAll('.tab-btn');
+  tabBtns.forEach(btn => {
+    btn.onclick = function() {
+      tabBtns.forEach(b => b.classList.remove('active'));
+      this.classList.add('active');
+      renderPortfolioGrid(this.dataset.tab);
+    };
+  });
+  // 绑定关闭按钮
+  modal.querySelector('#portfolio-close').onclick = function() {
+    modal.style.display = 'none';
+  };
+}
+
+// 重新绑定桌面 icon 切换逻辑
+const icon1 = document.getElementById('icon-1');
+const icon2 = document.getElementById('icon-2');
+const icon3 = document.getElementById('icon-3');
+
+function hideAllWindows() {
+  document.querySelectorAll('.desktop-window').forEach(w => w.style.display = 'none');
+  document.getElementById('book-double-outer').style.display = 'none';
+  const portfolioModal = document.getElementById('portfolio-container');
+  if (portfolioModal) portfolioModal.style.display = 'none';
+}
+
+if (icon1) {
+  icon1.addEventListener('click', e => {
+    e.stopPropagation();
+    hideAllWindows();
+    document.getElementById('book-double-outer').style.display = 'block';
+    // 设置 icon 选中状态
+    document.querySelectorAll('.desktop-icon').forEach(ic => ic.classList.remove('selected'));
+    icon1.classList.add('selected');
+  });
+}
+if (icon2) {
+  icon2.addEventListener('click', e => {
+    e.stopPropagation();
+    hideAllWindows();
+    showPortfolioModal();
+    // 设置 icon 选中状态
+    document.querySelectorAll('.desktop-icon').forEach(ic => ic.classList.remove('selected'));
+    icon2.classList.add('selected');
+  });
+}
+if (icon3) {
+  icon3.addEventListener('click', e => {
+    e.stopPropagation();
+    hideAllWindows();
+    document.getElementById('window-3').style.display = 'block';
+    document.querySelectorAll('.desktop-icon').forEach(ic => ic.classList.remove('selected'));
+    icon3.classList.add('selected');
+  });
+}
+
+// === Portfolio Modal (Design/Game Grid) ===
+// ... 保持原有 createPortfolioModal, renderPortfolioGrid, showPortfolioModal ...
+// 只需调整关闭按钮位置
