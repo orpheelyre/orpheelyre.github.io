@@ -10,12 +10,26 @@
   font-weight: 500;
   font-display: swap;
 }
+@font-face {
+  font-family: 'IMFellDWPica-Regular';
+  src: url('./fonts/IMFellDWPica-Regular.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'huiwen';
+  src: url('./fonts/huiwen.otf') format('opentype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
 
 body {
   margin: 0;
-  background: #161616;
-  font-family: 'Space Grotesk', 'GenYoMin JP', 'PingFang SC', 'Microsoft YaHei', sans-serif;
-  color: #3C3E42;
+  background: #F8F2E2 url('./textures/bg.png') center center/cover no-repeat;
+  font-family: 'IMFellDWPica-Regular', 'huiwen', serif;
+  color: #222;
   min-height: 100vh;
   height: 100vh;
   width: 100vw;
@@ -130,11 +144,15 @@ html, body {
   gap: 12px;
 }
 .menu-title {
-  font-family: 'Space Grotesk', 'GenYoMin JP', sans-serif;
-  font-weight: 700;
-  font-size: 1.08em;
-  margin-bottom: 0;
+  font-family: 'IMFellDWPica-Regular', serif;
+  font-size: 1.5em;
+  font-weight: bold;
+  margin-bottom: 0.7em;
+  margin-top: 2.5em;
   letter-spacing: 0.01em;
+}
+.menu-title:first-child {
+  margin-top: 2em;
 }
 .menu-list {
   list-style: none;
@@ -145,17 +163,13 @@ html, body {
   gap: 4px;
 }
 .menu-item {
-  font-family: 'Space Grotesk', 'GenYoMin JP', sans-serif;
-  font-size: 1em;
-  font-weight: 400;
-  color: #3C3E42;
-  cursor: pointer;
-  padding: 0;
-  background: none;
-  border: none;
-  outline: none;
-  text-align: left;
-  transition: color 0.2s;
+  font-family: 'IMFellDWPica-Regular', 'huiwen', serif;
+  font-size: 1.13em;
+  font-weight: normal;
+  color: #222;
+  margin-bottom: 0.2em;
+  letter-spacing: 0.01em;
+  line-height: 1.5;
 }
 .menu-item.active {
   color: inherit;
@@ -398,7 +412,7 @@ pre.desc::first-letter, .desc::first-letter {
   filter: drop-shadow(0 0 8px #fff8);
 }
 .desktop-icon:hover:not(.selected) {
-  filter: brightness(1.2);
+  filter: none;
 }
 .desktop-window {
   position: fixed;
@@ -451,4 +465,49 @@ pre.desc::first-letter, .desc::first-letter {
   object-fit: cover;
   margin: 0;
   border-radius: 0;
+}
+.book-page, .book-left {
+  padding-left: 72px;
+  padding-top: 56px;
+  box-sizing: border-box;
+}
+.menu-title {
+  font-family: 'IMFellDWPica-Regular', serif;
+  font-size: 1.5em;
+  font-weight: bold;
+  margin-bottom: 0.7em;
+  margin-top: 2.5em;
+  letter-spacing: 0.01em;
+}
+.menu-title:first-child {
+  margin-top: 2em;
+}
+.menu-item {
+  font-family: 'IMFellDWPica-Regular', 'huiwen', serif;
+  font-size: 1.13em;
+  font-weight: normal;
+  color: #222;
+  margin-bottom: 0.2em;
+  letter-spacing: 0.01em;
+  line-height: 1.5;
+}
+.menu-section {
+  margin-bottom: 2.2em;
+}
+.menu-corner.menu-corner-topright {
+  font-family: 'IMFellDWPica-Regular', 'huiwen', serif;
+  font-size: 1.1em;
+  color: #222;
+  position: absolute;
+  right: 64px;
+  top: 40px;
+  text-align: right;
+  background: none;
+  box-shadow: none;
+  letter-spacing: 0.01em;
+}
+.menu-list em {
+  font-style: italic;
+  font-size: 1em;
+  letter-spacing: 0.01em;
 }
