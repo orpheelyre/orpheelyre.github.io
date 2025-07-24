@@ -236,6 +236,32 @@ fullscreenBtn.onclick = fullscreenContent;
 bookDoubleContainer.classList.remove('open');
 renderMenu3Col();
 
+// --- 左侧menu-item点击逻辑 ---
+document.querySelectorAll('.menu-item a').forEach(link => {
+  link.addEventListener('click', function(e) {
+    e.preventDefault();
+    // 高亮当前
+    document.querySelectorAll('.menu-item a').forEach(l => l.classList.remove('active'));
+    this.classList.add('active');
+    // 翻开书页（只有未翻开时才加open和动画）
+    if (!bookDoubleContainer.classList.contains('open')) {
+      bookDoubleContainer.classList.add('open');
+      updateBookLeftTransform(true);
+    }
+    // 显示内容
+    const key = this.getAttribute('data-content');
+    contentEl.innerHTML = contentData[key] || '<p>No content.</p>';
+    applyContentFontSize(currentFontSize);
+    // 仅图片内容时显示全屏按钮
+    if (contentData[key] && contentData[key].includes('<img')) {
+      fullscreenBtn.style.display = '';
+    } else {
+      fullscreenBtn.style.display = 'none';
+    }
+  });
+});
+// --- END ---
+
 // --- 桌面图标与窗口切换 ---
 const icons = document.querySelectorAll('.desktop-icon');
 const windows = [
