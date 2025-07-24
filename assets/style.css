@@ -46,11 +46,12 @@ html, body {
 }
 
 #book-double-outer {
-  position: fixed
-  top: 48px;
-  left: 48px;
-  right: 48px;
-  bottom: 48px;
+  position: fixed;
+  top: 96px;
+  left: 96px;
+  right: 96px;
+  bottom: 96px;
+  z-index: 200;
 }
 
 #book-double-container {
