@@ -418,7 +418,7 @@ function openProjectDetail(id) {
 
 /* ── Desktop icon definitions ─────────────────────────────────── */
 function makeIconDefs() {
-  const rX  = Math.max(window.innerWidth  - 110, 500);
+  const rX  = Math.max(window.innerWidth  - 108, 500); // right edge at innerWidth - 12
   const bH  = window.innerHeight - 20;   // desktop height
 
   // DOM order matters for mobile layout:
@@ -556,6 +556,9 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   desktop.appendChild(socialDock);
+
+  // Auto-open about window on load
+  wm.show('about', { title: 'about.md', html: renderAbout(), w: 420, h: 460 });
 
   updateClock();
   setInterval(updateClock, 15000);

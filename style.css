@@ -193,7 +193,7 @@ body {
 /* ── Desktop Icons ──────────────────────────────────────────────── */
 .icon {
   position: absolute;
-  width: 72px;
+  width: 96px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -689,12 +689,9 @@ body {
     display: flex !important;
     flex-wrap: wrap;
     align-self: flex-start;
-    width: 160px;
+    width: 208px;
     gap: 8px;
     margin-top: 8px;
-  }
-  .social-dock .icon {
-    width: 72px;
   }
 
   .icon-img {
