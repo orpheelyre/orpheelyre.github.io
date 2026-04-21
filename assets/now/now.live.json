@@ -1,16 +1,23 @@
 {
+  "updated": "21 April 2026",
   "updatedAuto": true,
   "by": "OL",
-  "status": "worker write check ok",
+  "status": "Writing thesis, writing, writing. Many years later, as he faced the firing squad, Colonel Aureliano Buend\\u00eda was to remember that distant afternoon when his father took him to discover ice.",
   "focus": [
-    "sync check"
+    "Revising the methodology chapter.",
+    "Becoming an argillite expert."
   ],
   "devlog": [
     {
       "date": "21 April 2026",
-      "text": "worker end-to-end pass"
+      "text": "initial commit and framework on live"
+    },
+    {
+      "date": "21 April 2026",
+      "text": "real-time read and write updated via cloudflare"
     }
   ],
-  "picture": "",
-  "pictureAlt": "Picture of the day"
+  "picture": "assets/now/IMG_6437.jpg",
+  "pictureRemoved": false,
+  "pictureAlt": "the historical assemblage April collected for me w"
 }
