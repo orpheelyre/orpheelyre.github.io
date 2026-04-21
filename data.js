@@ -34,19 +34,16 @@ const SITE = {
   now: {
     updated: "April 2026",
     updatedAuto: true,
-    by: "anyone can edit",
-    status: "Writing, reading, and prototyping around material memory and digital narrative.",
+    by: "OL",
+    status: "Writing thesis, writing, writing. Many years later, as he faced the firing squad, Colonel Aureliano Buend\u00eda was to remember that distant afternoon when his father took him to discover ice.",
     picture: "assets/now/IMG_6437.jpg",
     pictureAlt: "the historical assemblage April bought me w",
     focus: [
-      "Drafting ideas around archaeology, embodiment, and landscape practice",
-      "Refining project notes and publication prep",
-      "Balancing research writing with experimental media work",
+      "Reviewing the methodology chapter.",
+      "Becoming a argillite expert.",
     ],
     devlog: [
-      { date: "21 April 2026", text: "Initial commit and framework 上线了。" },
-      { date: "20 April 2026", text: "Revisited field notes and archival fragments." },
-      { date: "19 April 2026", text: "Sketched interaction ideas for heritage storytelling." },
+      { date: "21 April 2026", text: "initial commit and framework on live." },
     ],
   },
 
