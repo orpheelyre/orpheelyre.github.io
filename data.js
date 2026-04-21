@@ -14,7 +14,7 @@ const SITE = {
 
   name:    "Orlan Y. Syshui",
   tagline: "Material Evidence · Field Experience · Digital Narrative",
-  bio:     "Researcher and artist working at the intersection of archaeology, anthropology, and experimental media. Holds a BSc in Computer Science. Currently completing BA(Hon) in Archaeology at University of Otago.",
+  bio:     "Researcher and artist working at the intersection of archaeology, anthropology, and experimental media. Based at the University of Otago. Current work sits at the edges of landscape, heritage, medical anthropology, and memory politics, tracing the processual and relational conditions through which sites and institutions accumulate afterlives.",
 
   interests: [
     "Archaeological Theory",
