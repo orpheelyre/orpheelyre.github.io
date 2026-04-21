@@ -14,7 +14,8 @@ const SITE = {
 
   name:    "Orlan Y. Syshui",
   tagline: "Material Evidence · Field Experience · Digital Narrative",
-  bio:     "Researcher and artist working at the intersection of archaeology, anthropology, and experimental media. Based at the University of Otago. Current work sits at the edges of landscape, heritage, medical anthropology, and memory politics, tracing the processual and relational conditions through which sites and institutions accumulate afterlives.",
+  bio:     "Researcher and artist working at the intersection of archaeology, anthropology, and experimental media. Doing Honours at University of Otago. Current work sits at the edges of landscape, heritage, medical anthropology, and memory politics, tracing the processual and relational conditions through which sites and institutions accumulate afterlives.",
+  bioSecond: "A tomb of glass and a fossil of green.",
 
   interests: [
     "Archaeological Theory",
@@ -27,6 +28,23 @@ const SITE = {
   ],
 
   email: "orlan.syshui@gmail.com",
+
+  // ── Now page (quickly editable live status) ─────────────────────
+  // Update these fields whenever you want to refresh the Now window.
+  now: {
+    updated: "April 2026",
+    status: "Writing, reading, and prototyping around material memory and digital narrative.",
+    focus: [
+      "Drafting ideas around archaeology, embodiment, and landscape practice",
+      "Refining project notes and publication prep",
+      "Balancing research writing with experimental media work",
+    ],
+    devlog: [
+      "Revisiting field notes and archival fragments",
+      "Sketching interaction ideas for heritage storytelling",
+      "Listening to ambient playlists while editing",
+    ],
+  },
 
   // ── Social / external links (rendered as desktop icons) ─────────
   social: [
@@ -88,7 +106,8 @@ const SITE = {
       title:       "Whalefall Haven",
       category:    "video-games",
       role:        "Project Manager · World-builder · Lead UX Designer",
-      description: "An immersive role-playing game featuring deep-sea world-building and narrative design.",
+      orgLine:     "Whaley Studio, Worldwide",
+      description: "A narrative-driven space opera RPG where players shape their build, wield Mimic abilities, and make relationship-driven choices that alter reputation, fate, and story outcomes.",
       url:         "https://store.steampowered.com/app/3061230/Whalefall_Haven/",
       tags:        ["game design", "UX", "world-building", "narrative"],
       status:      "In Development",
@@ -99,7 +118,8 @@ const SITE = {
       title:       "Urban Heritage Exploration Platform",
       category:    "mr-experience",
       role:        "Lead UX Designer · Research Collaborator",
-      description: "Interactive UX/UI flows for an urban heritage exploration platform in collaboration with academic and industry partners. Digital Heritage Lab, NYU Shanghai.",
+      orgLine:     "Digital Heritage Lab, NYU Shanghai, China",
+      description: "Interactive UX/UI flows for an urban heritage exploration platform in collaboration with academic and industry partners.",
       url:         null,
       tags:        ["UX/UI", "digital heritage", "interactive design"],
       status:      "Completed 2025",
@@ -171,6 +191,14 @@ const SITE = {
     "Interactive Cultural Storytelling",
     "Archaeological Survey & Excavation",
   ],
+
+  // ── cv.md password ───────────────────────────────────────────────
+  // Change this to whatever you like. Visible in source — aesthetic feature only.
+  cvPassword: "1453",
+
+  // ── now.txt edit password ────────────────────────────────────────
+  // Visible in source — lightweight lock for fun/admin gate.
+  nowEditPassword: "6476",
 
   // ── Hidden icons (appear in Bin, not on desktop) ─────────────────
   // Remove an id from this array and push to restore it to the desktop.

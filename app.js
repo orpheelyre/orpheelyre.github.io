@@ -134,7 +134,7 @@ class WM {
   }
 
   show(id, opts) {
-    if (this.open[id]) { this.focus(this.open[id]); return; }
+    if (this.open[id]) { this.focus(this.open[id]); return this.open[id]; }
     const el = this._build(id, opts);
     this.desktop.appendChild(el);
     this.open[id] = el;
@@ -145,6 +145,10 @@ class WM {
   close(id) {
     const el = this.open[id];
     if (!el) return;
+    if (id === 'now') {
+      stopNowPenguinAnimation();
+      nowEditing = false;
+    }
     el.remove();
     delete this.open[id];
   }
@@ -231,6 +235,18 @@ document.addEventListener('touchstart', e => {
   startWinDrag(e.target, t.clientX, t.clientY);
 }, { passive: true });
 
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && e.target.classList.contains('now-lock-input')) {
+    e.target.closest('.now-lock-pad')?.querySelector('.now-lock-ok')?.click();
+    return;
+  }
+  if (e.key === 'Enter' && e.target.classList.contains('cv-lock-input')) {
+    e.target.dataset.submit = '1';
+    e.target.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    e.target.closest('.cv-lock-pad')?.querySelector('.cv-lock-ok')?.click();
+  }
+});
+
 document.addEventListener('click', e => {
   // Window close
   const closeBtn = e.target.closest('.win-close');
@@ -273,6 +289,67 @@ document.addEventListener('click', e => {
     return;
   }
 
+  // Now window actions
+  const nowAction = e.target.closest('[data-now-action]');
+  if (nowAction) {
+    const action = nowAction.dataset.nowAction;
+    if (action === 'edit') {
+      openNowEditPasswordPrompt();
+    } else if (action === 'cancel') {
+      nowEditing = false;
+      openNowWindow();
+    } else if (action === 'save') {
+      saveNowData(readNowFormData());
+      nowEditing = false;
+      openNowWindow();
+    } else if (action === 'reset') {
+      localStorage.removeItem(NOW_STORAGE_KEY);
+      nowEditing = false;
+      openNowWindow();
+    }
+    return;
+  }
+
+  // now password — OK / Cancel
+  if (e.target.closest('.now-lock-ok')) {
+    const input = document.querySelector('.now-lock-input');
+    const expected = String(SITE.nowEditPassword || '6476');
+    if ((input?.value || '') === expected) {
+      wm.close('now-lock');
+      nowEditing = true;
+      openNowWindow();
+    } else {
+      document.querySelector('.now-lock-error')?.classList.add('visible');
+      input?.select();
+    }
+    return;
+  }
+  if (e.target.closest('.now-lock-cancel')) { wm.close('now-lock'); return; }
+
+  // Bin item actions
+  const binAction = e.target.closest('.bin-item-action');
+  if (binAction) {
+    if (binAction.dataset.binAction === 'restore') restoreIcon(binAction.dataset.binId);
+    if (binAction.dataset.binAction === 'cv-lock') openCvPasswordPrompt();
+    return;
+  }
+
+  // cv password — OK button
+  if (e.target.closest('.cv-lock-ok') || e.target.closest('.cv-lock-input[data-submit]')) {
+    const input = document.querySelector('.cv-lock-input');
+    if (input?.value === (SITE.cvPassword || '')) {
+      wm.close('cv-lock');
+      playSound('unlock');
+      const cv = renderCV();
+      wm.show('cv', { title: 'cv.md', tabs: cv.tabs, w: 520, h: 460 });
+    } else {
+      document.querySelector('.cv-lock-error')?.classList.add('visible');
+      input?.select();
+    }
+    return;
+  }
+  if (e.target.closest('.cv-lock-cancel')) { wm.close('cv-lock'); return; }
+
   // Empty Bin → always fails with a Mac-style error
   if (e.target.closest('.trash-empty-btn')) {
     wm.show('bin-error', {
@@ -289,12 +366,184 @@ document.addEventListener('click', e => {
 });
 
 /* ── Content renderers ────────────────────────────────────────── */
+const NOW_STORAGE_KEY = 'now:override';
+
+const PENGUIN_FRAMES = [
+  String.raw` /\_/\
+(=>m<=)
+ (")(")`,
+  String.raw` /\_/\
+(=>m<=)
+ (")(")~`,
+  String.raw` /\_/\
+~(=>m<=)
+ (")(")`,
+];
+
+let nowPenguinTimer = null;
+let nowPenguinFrame = 0;
+let nowEditing = false;
+
+function escapeHtml(value) {
+  return String(value ?? '').replace(/[&<>"']/g, char => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;',
+  })[char]);
+}
+
+function linesToArray(value) {
+  return String(value || '')
+    .split('\n')
+    .map(v => v.trim())
+    .filter(Boolean);
+}
+
+function normalizeNowData(raw) {
+  const src = raw && typeof raw === 'object' ? raw : {};
+  const devlogSource = Array.isArray(src.devlog) ? src.devlog : (Array.isArray(src.lately) ? src.lately : []);
+  return {
+    updated: String(src.updated || 'Recently'),
+    status: String(src.status || 'Thinking, writing, and making.'),
+    focus: Array.isArray(src.focus) ? src.focus.map(v => String(v)).filter(Boolean) : [],
+    devlog: devlogSource.map(v => String(v)).filter(Boolean),
+  };
+}
+
+function getNowData() {
+  const base = normalizeNowData(SITE.now);
+  try {
+    const raw = localStorage.getItem(NOW_STORAGE_KEY);
+    if (!raw) return base;
+    const override = JSON.parse(raw);
+    const overrideDevlog = Array.isArray(override?.devlog)
+      ? override.devlog
+      : (Array.isArray(override?.lately) ? override.lately : base.devlog);
+    return normalizeNowData({
+      updated: typeof override?.updated === 'string' ? override.updated : base.updated,
+      status: typeof override?.status === 'string' ? override.status : base.status,
+      focus: Array.isArray(override?.focus) ? override.focus : base.focus,
+      devlog: overrideDevlog,
+    });
+  } catch (_) {
+    return base;
+  }
+}
+
+function saveNowData(data) {
+  localStorage.setItem(NOW_STORAGE_KEY, JSON.stringify(normalizeNowData(data)));
+}
+
+function readNowFormData() {
+  return normalizeNowData({
+    updated: document.getElementById('now-input-updated')?.value || '',
+    status: document.getElementById('now-input-status')?.value || '',
+    focus: linesToArray(document.getElementById('now-input-focus')?.value || ''),
+    devlog: linesToArray(document.getElementById('now-input-devlog')?.value || ''),
+  });
+}
+
+function stopNowPenguinAnimation() {
+  if (nowPenguinTimer) {
+    clearInterval(nowPenguinTimer);
+    nowPenguinTimer = null;
+  }
+}
+
+function startNowPenguinAnimation() {
+  stopNowPenguinAnimation();
+  const el = document.getElementById('now-penguin-frame');
+  if (!el) return;
+  el.textContent = PENGUIN_FRAMES[0];
+  nowPenguinFrame = 1;
+  nowPenguinTimer = setInterval(() => {
+    const frameEl = document.getElementById('now-penguin-frame');
+    if (!frameEl) { stopNowPenguinAnimation(); return; }
+    frameEl.textContent = PENGUIN_FRAMES[nowPenguinFrame];
+    nowPenguinFrame = (nowPenguinFrame + 1) % PENGUIN_FRAMES.length;
+  }, 260);
+}
+
+function renderNow() {
+  const nowData = getNowData();
+  const focusHtml = nowData.focus.map(item => `<li>${escapeHtml(item)}</li>`).join('') || '<li>Click Edit to add focus items.</li>';
+  const devlogHtml = nowData.devlog.map(item => `<li>${escapeHtml(item)}</li>`).join('') || '<li>Click Edit to add devlog items.</li>';
+  const editControls = nowEditing
+    ? `<button class="now-btn" data-now-action="save">Save</button>
+       <button class="now-btn" data-now-action="cancel">Cancel</button>
+       <button class="now-btn" data-now-action="reset">Reset</button>`
+    : `<button class="now-btn" data-now-action="edit">Edit</button>`;
+
+  const body = nowEditing
+    ? `<div class="now-edit-grid">
+         <label class="now-label" for="now-input-updated">Updated</label>
+         <input id="now-input-updated" class="now-input" type="text" value="${escapeHtml(nowData.updated)}" />
+         <label class="now-label" for="now-input-status">Status</label>
+         <textarea id="now-input-status" class="now-textarea" rows="3">${escapeHtml(nowData.status)}</textarea>
+         <label class="now-label" for="now-input-focus">Current Focus (one line each)</label>
+         <textarea id="now-input-focus" class="now-textarea" rows="4">${escapeHtml(nowData.focus.join('\n'))}</textarea>
+         <label class="now-label" for="now-input-devlog">Devlog (one line each)</label>
+         <textarea id="now-input-devlog" class="now-textarea" rows="4">${escapeHtml(nowData.devlog.join('\n'))}</textarea>
+       </div>`
+    : `<div class="now-updated">Updated: ${escapeHtml(nowData.updated)}</div>
+       <div class="now-status">${escapeHtml(nowData.status)}</div>
+       <div class="now-block-title">Current Focus</div>
+       <ul class="now-list">${focusHtml}</ul>
+       <div class="now-block-title">Devlog</div>
+       <ul class="now-list">${devlogHtml}</ul>`;
+
+  return `
+    <div class="now-wrap">
+      <pre id="now-penguin-frame" class="now-penguin-ascii" aria-label="Animated ASCII cat"></pre>
+      <div class="now-actions">${editControls}</div>
+      ${body}
+    </div>
+  `;
+}
+
+function openNowWindow() {
+  if (!wm) return;
+  const existing = wm.open?.now;
+  if (existing) {
+    existing.querySelector('.win-body').innerHTML = `<div class="win-pad">${renderNow()}</div>`;
+    wm.focus(existing);
+    startNowPenguinAnimation();
+    return;
+  }
+  wm.show('now', { title: 'now.txt', html: renderNow(), w: 320, h: 320, x: 350, y: 72 });
+  startNowPenguinAnimation();
+}
+
+function openNowEditPasswordPrompt() {
+  if (wm.open['now-lock']) { wm.focus(wm.open['now-lock']); return; }
+  wm.show('now-lock', {
+    title: 'now.txt',
+    html: `<div class="win-pad now-lock-pad">
+      <div class="now-lock-msg">Admin password required to edit this file.</div>
+      <input class="now-lock-input" type="password" placeholder="Password" />
+      <div class="now-lock-error">Incorrect password.</div>
+      <div class="now-lock-actions">
+        <button class="now-lock-cancel">Cancel</button>
+        <button class="now-lock-ok">Unlock</button>
+      </div>
+    </div>`,
+    w: 280, h: 175,
+  });
+  setTimeout(() => document.querySelector('.now-lock-input')?.focus(), 50);
+}
+
 function renderAbout() {
   const interests = SITE.interests.map(i => `<span class="tag">${i}</span>`).join('');
+  const bioHtml = [SITE.bio, SITE.bioSecond]
+    .filter(Boolean)
+    .map(p => `<p>${p}</p>`)
+    .join('');
   return `
     <div class="about-name">${SITE.name}</div>
     <div class="about-tagline">${SITE.tagline}</div>
-    <div class="about-bio">${SITE.bio}</div>
+    <div class="about-bio">${bioHtml}</div>
     <div class="section-head">Academic Interests</div>
     <div class="interest-grid">${interests}</div>
     <div class="section-head">Contact</div>
@@ -395,6 +644,7 @@ function renderProjects() {
           <div class="project-card" data-project-id="${p.id}">
             <div class="project-title">${p.title} <span class="project-open-hint">↗</span></div>
             ${p.role ? `<div class="project-role">${p.role}</div>` : ''}
+            ${p.orgLine ? `<div class="project-org">${p.orgLine}</div>` : ''}
             <div class="project-desc">${p.description}</div>
             <div class="project-tags">${p.tags.map(t => `<span class="tag">${t}</span>`).join('')}</div>
             <div class="project-status">${p.status}</div>
@@ -408,27 +658,118 @@ function renderProjects() {
   return { tabs };
 }
 
+/* ── Sound effects (Web Audio API) ───────────────────────────── */
+function playSound(type) {
+  try {
+    const ctx  = new (window.AudioContext || window.webkitAudioContext)();
+    const gain = ctx.createGain();
+    gain.connect(ctx.destination);
+    const now = ctx.currentTime;
+
+    if (type === 'drop') {
+      // Low descending thud
+      const osc = ctx.createOscillator();
+      osc.type = 'square';
+      osc.connect(gain);
+      osc.frequency.setValueAtTime(160, now);
+      osc.frequency.exponentialRampToValueAtTime(55, now + 0.18);
+      gain.gain.setValueAtTime(0.18, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.22);
+      osc.start(now); osc.stop(now + 0.22);
+
+    } else if (type === 'restore') {
+      // Short ascending pop
+      const osc = ctx.createOscillator();
+      osc.type = 'square';
+      osc.connect(gain);
+      osc.frequency.setValueAtTime(320, now);
+      osc.frequency.exponentialRampToValueAtTime(640, now + 0.1);
+      gain.gain.setValueAtTime(0.12, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.14);
+      osc.start(now); osc.stop(now + 0.14);
+
+    } else if (type === 'unlock') {
+      // Two-note chime: C5 then E5
+      [523, 659].forEach((freq, i) => {
+        const o = ctx.createOscillator();
+        const g = ctx.createGain();
+        o.type = 'square';
+        o.connect(g); g.connect(ctx.destination);
+        const t = now + i * 0.13;
+        o.frequency.setValueAtTime(freq, t);
+        g.gain.setValueAtTime(0, t);
+        g.gain.linearRampToValueAtTime(0.1, t + 0.01);
+        g.gain.exponentialRampToValueAtTime(0.001, t + 0.14);
+        o.start(t); o.stop(t + 0.14);
+      });
+    }
+    setTimeout(() => ctx.close(), 800);
+  } catch (_) {}
+}
+
 /* ── Bin helpers ──────────────────────────────────────────────── */
-function getBinItems() { return JSON.parse(localStorage.getItem('bin:items') || '[]'); }
+// Dropped desktop icons live in-memory only, so a page refresh resets them.
+const runtimeBinItems = [];
+const restoredHiddenIds = new Set();
+
+function getBinItems() { return runtimeBinItems; }
 function addBinItem(id, label, iconKey) {
-  const items = getBinItems();
-  if (!items.some(i => i.id === id)) {
-    items.push({ id, label, iconKey: iconKey || 'document' });
-    localStorage.setItem('bin:items', JSON.stringify(items));
-  }
+  if (!runtimeBinItems.some(i => i.id === id)) runtimeBinItems.push({ id, label, iconKey: iconKey || 'document' });
 }
 function dropIntoBin(id, label, iconKey, el) {
   addBinItem(id, label, iconKey);
   el.remove();
+  playSound('drop');
   const win = document.getElementById('win-bin');
   if (win) win.querySelector('.win-body').innerHTML = renderBin();
+}
+
+function restoreIcon(id) {
+  const idx = runtimeBinItems.findIndex(i => i.id === id);
+  if (idx !== -1) runtimeBinItems.splice(idx, 1);
+
+  const hiddenIds = SITE.hiddenIcons || [];
+  if (hiddenIds.includes(id)) restoredHiddenIds.add(id);
+
+  const def = makeIconDefs().find(d => d.id === id);
+  if (def && !document.getElementById('icon-' + id)) {
+    const desktop = document.getElementById('desktop');
+    const el = createIcon(def);
+    if (def.social) document.querySelector('.social-dock')?.appendChild(el);
+    else            desktop.appendChild(el);
+  }
+
+  playSound('restore');
+  const win = document.getElementById('win-bin');
+  if (win) win.querySelector('.win-body').innerHTML = renderBin();
+}
+
+function openCvPasswordPrompt() {
+  if (wm.open['cv-lock']) { wm.focus(wm.open['cv-lock']); return; }
+  wm.show('cv-lock', {
+    title: 'cv.md',
+    html: `<div class="win-pad cv-lock-pad">
+      <div class="cv-lock-msg">This document is locked.</div>
+      <input class="cv-lock-input" type="password" placeholder="Password" />
+      <div class="cv-lock-error">Incorrect password.</div>
+      <div class="cv-lock-actions">
+        <button class="cv-lock-cancel">Cancel</button>
+        <button class="cv-lock-ok">Open</button>
+      </div>
+    </div>`,
+    w: 260, h: 170,
+  });
+  // Autofocus input after window renders
+  setTimeout(() => document.querySelector('.cv-lock-input')?.focus(), 50);
 }
 
 /* ── Bin window ───────────────────────────────────────────────── */
 function renderBin() {
   const notes   = SITE.trash || [];
   const dropped = getBinItems();
-  const hidden  = (SITE.hiddenIcons || []).map(id => {
+  const hidden  = (SITE.hiddenIcons || [])
+    .filter(id => !restoredHiddenIds.has(id))
+    .map(id => {
     const def = makeIconDefs().find(d => d.id === id);
     return { id, label: def?.label || id, iconKey: def?.iconKey || 'document' };
   });
@@ -443,19 +784,30 @@ function renderBin() {
       ${n.text ? `<div class="bin-note-text">${n.text}</div>` : ''}
     </div>`);
 
-  // Dropped/hidden icons → keep original icon and label, no extension
-  const iconRows = [
-    ...dropped.map(d => ({ label: d.label, iconKey: d.iconKey || 'document' })),
-    ...hidden.map(h  => ({ label: h.label, iconKey: h.iconKey })),
-  ].map(item => `
-    <div class="bin-item">
+  // Dropped icons → restorable by click
+  const droppedRows = dropped.map(d => `
+    <div class="bin-item bin-item-action" data-bin-action="restore" data-bin-id="${d.id}">
       <div class="bin-item-file">
-        <span class="bin-doc-icon">${SVG[item.iconKey] || SVG.document}</span>
-        <span class="bin-filename">${item.label}</span>
+        <span class="bin-doc-icon">${SVG[d.iconKey] || SVG.document}</span>
+        <span class="bin-filename">${d.label}</span>
       </div>
     </div>`);
 
-  const allHtml = [...noteRows, ...iconRows].join('');
+  // Hidden icons — cv needs password, others can be restored
+  const hiddenRows = hidden.map(h => {
+    const isCv = h.id === 'cv';
+    const action = isCv ? 'cv-lock' : 'restore';
+    return `<div class="bin-item bin-item-action" data-bin-action="${action}" data-bin-id="${h.id}">
+      <div class="bin-item-file">
+        <span class="bin-doc-icon">${SVG[h.iconKey] || SVG.document}</span>
+        <span class="bin-filename">${h.label}${isCv ? ' 🔒' : ''}</span>
+      </div>
+    </div>`;
+  });
+
+  const iconRows = [...droppedRows, ...hiddenRows];
+
+  const allHtml = [...noteRows, ...droppedRows, ...hiddenRows].join('');
   const hasItems = noteRows.length > 0 || iconRows.length > 0;
 
   return `<div class="win-pad">
@@ -611,6 +963,10 @@ function updateClock() {
 }
 
 /* ── Theme toggle ─────────────────────────────────────────────── */
+document.getElementById('start-btn')?.addEventListener('click', () => {
+  openNowWindow();
+});
+
 document.getElementById('theme-btn').addEventListener('click', () => {
   const html = document.documentElement;
   html.dataset.theme = html.dataset.theme === 'dark' ? 'light' : 'dark';
@@ -630,11 +986,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const defs = makeIconDefs();
 
-  // Icons in the bin (dragged or hidden by SITE.hiddenIcons)
-  const binnedIds = new Set([
-    ...getBinItems().map(i => i.id),
-    ...(SITE.hiddenIcons || []),
-  ]);
+  // Legacy persisted bin data is no longer used (refresh should restore desktop icons).
+  localStorage.removeItem('bin:items');
+
+  // Only site-defined hidden icons stay in the bin across refreshes.
+  const binnedIds = new Set([...(SITE.hiddenIcons || [])]);
 
   const socialDock = document.createElement('div');
   socialDock.className = 'social-dock';
@@ -650,6 +1006,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Auto-open about window on load
   wm.show('about', { title: 'about.md', html: renderAbout(), w: 420, h: 460 });
+  openNowWindow();
 
   updateClock();
   setInterval(updateClock, 15000);
