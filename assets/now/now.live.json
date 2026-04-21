@@ -10,7 +10,11 @@
   "devlog": [
     {
       "date": "21 April 2026",
-      "text": "initial commit and framework on live; real-time read and write updated via cloudflare."
+      "text": "initial commit and framework on live"
+    },
+    {
+      "date": "21 April 2026",
+      "text": "real-time read and write updated via cloudflare"
     }
   ],
   "picture": "assets/now/IMG_6437.jpg",
