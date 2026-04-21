@@ -269,7 +269,7 @@ document.addEventListener('keydown', e => {
   }
 });
 
-document.addEventListener('click', e => {
+document.addEventListener('click', async e => {
   // Window close
   const closeBtn = e.target.closest('.win-close');
   if (closeBtn) { wm.close(closeBtn.dataset.id); return; }
@@ -337,7 +337,7 @@ document.addEventListener('click', e => {
       nowPictureRemoved = false;
       openNowWindow();
     } else if (action === 'save') {
-      if (!saveNowData(readNowFormData())) return;
+      if (!(await saveNowData(readNowFormData()))) return;
       nowEditing = false;
       releaseNowPreviewObjectUrl();
       nowUploadedPictureData = '';
@@ -345,7 +345,7 @@ document.addEventListener('click', e => {
       openNowWindow();
       refreshDevlogWindow();
     } else if (action === 'reset') {
-      localStorage.removeItem(NOW_STORAGE_KEY);
+      if (!(await resetNowData())) return;
       nowEditing = false;
       releaseNowPreviewObjectUrl();
       nowUploadedPictureData = '';
@@ -366,7 +366,7 @@ document.addEventListener('click', e => {
       devlogEditing = false;
       refreshDevlogWindow();
     } else if (action === 'save') {
-      if (!saveNowData(readDevlogFormData())) return;
+      if (!(await saveNowData(readDevlogFormData()))) return;
       devlogEditing = false;
       refreshDevlogWindow();
     }
@@ -441,6 +441,29 @@ document.addEventListener('click', e => {
 
 /* ── Content renderers ────────────────────────────────────────── */
 const NOW_STORAGE_KEY = 'now:override';
+const NOW_SYNC_TOKEN_KEY = 'now:sync:github-token';
+const NOW_SYNC = (() => {
+  const cfg = SITE?.nowSync && typeof SITE.nowSync === 'object' ? SITE.nowSync : {};
+  const provider = String(cfg.provider || '').toLowerCase();
+  if (provider !== 'github') return { enabled: false };
+  const owner = String(cfg.owner || '').trim();
+  const repo = String(cfg.repo || '').trim();
+  const branch = String(cfg.branch || 'main').trim() || 'main';
+  const path = String(cfg.path || '').trim();
+  const rawUrl = String(cfg.rawUrl || '').trim();
+  const pollMs = Math.max(5000, Number(cfg.pollMs) || 15000);
+  const enabled = Boolean(owner && repo && branch && path && rawUrl);
+  return {
+    enabled,
+    provider,
+    owner,
+    repo,
+    branch,
+    path,
+    rawUrl,
+    pollMs,
+  };
+})();
 
 const CAT_FRAMES = {
   grumpy: [
@@ -476,6 +499,10 @@ let devlogEditing = false;
 let nowUploadedPictureData = '';
 let nowPreviewObjectUrl = '';
 let nowPictureRemoved = false;
+let nowSharedData = null;
+let nowSharedDataHash = '';
+let nowSyncPollTimer = null;
+let nowSyncBusy = false;
 
 function escapeHtml(value) {
   return String(value ?? '').replace(/[&<>"']/g, char => ({
@@ -611,11 +638,33 @@ function normalizeNowData(raw) {
   };
 }
 
-function getNowData() {
-  const base = normalizeNowData(SITE.now);
+function encodePathSegments(path) {
+  return String(path || '').split('/').map(encodeURIComponent).join('/');
+}
+
+function toBase64Utf8(text) {
+  try {
+    const bytes = new TextEncoder().encode(String(text || ''));
+    let binary = '';
+    bytes.forEach(b => { binary += String.fromCharCode(b); });
+    return btoa(binary);
+  } catch (_) {
+    return '';
+  }
+}
+
+function getGithubSyncToken() {
+  try {
+    return String(localStorage.getItem(NOW_SYNC_TOKEN_KEY) || '').trim();
+  } catch (_) {
+    return '';
+  }
+}
+
+function readNowDataFromLocal(base) {
   try {
     const raw = localStorage.getItem(NOW_STORAGE_KEY);
-    if (!raw) return base;
+    if (!raw) return null;
     const override = JSON.parse(raw);
     const overrideDevlog = Array.isArray(override?.devlog)
       ? override.devlog
@@ -636,17 +685,150 @@ function getNowData() {
         : base.pictureAlt,
     });
   } catch (_) {
-    return base;
+    return null;
   }
 }
 
-function saveNowData(data) {
+function applyNowSharedData(data, { persistLocal = true, refresh = true } = {}) {
+  const normalized = normalizeNowData(data);
+  const nextHash = JSON.stringify(normalized);
+  const changed = nextHash !== nowSharedDataHash;
+  nowSharedData = normalized;
+  nowSharedDataHash = nextHash;
+  if (persistLocal) {
+    try { localStorage.setItem(NOW_STORAGE_KEY, nextHash); } catch (_) {}
+  }
+  if (changed && refresh) {
+    if (!nowEditing && wm?.open?.now) openNowWindow();
+    if (!devlogEditing && wm?.open?.devlog) refreshDevlogWindow();
+  }
+  return changed;
+}
+
+function getNowData() {
+  const base = normalizeNowData(SITE.now);
+  if (nowSharedData) return normalizeNowData(nowSharedData);
+  const local = readNowDataFromLocal(base);
+  if (local) {
+    applyNowSharedData(local, { persistLocal: false, refresh: false });
+    return local;
+  }
+  applyNowSharedData(base, { persistLocal: false, refresh: false });
+  return base;
+}
+
+async function fetchNowDataFromRemote() {
+  if (!NOW_SYNC.enabled) return null;
+  const url = `${NOW_SYNC.rawUrl}${NOW_SYNC.rawUrl.includes('?') ? '&' : '?'}t=${Date.now()}`;
+  const res = await fetch(url, { cache: 'no-store' });
+  if (!res.ok) throw new Error('Could not load shared now.live');
+  const body = await res.json();
+  return normalizeNowData(body);
+}
+
+async function publishNowDataToGithub(data) {
+  if (!NOW_SYNC.enabled) return true;
+  let token = getGithubSyncToken();
+  if (!token) {
+    const provided = prompt('Realtime publish needs a GitHub token. Paste token (saved only in this browser).');
+    token = String(provided || '').trim();
+    if (!token) {
+      alert('Live publish cancelled. No token entered.');
+      return false;
+    }
+    try { localStorage.setItem(NOW_SYNC_TOKEN_KEY, token); } catch (_) {}
+  }
+
+  const apiBase = `https://api.github.com/repos/${encodeURIComponent(NOW_SYNC.owner)}/${encodeURIComponent(NOW_SYNC.repo)}/contents/${encodePathSegments(NOW_SYNC.path)}`;
+  const headers = {
+    Accept: 'application/vnd.github+json',
+    Authorization: `Bearer ${token}`,
+    'X-GitHub-Api-Version': '2022-11-28',
+  };
+
+  let sha = '';
+  const readRes = await fetch(`${apiBase}?ref=${encodeURIComponent(NOW_SYNC.branch)}`, { headers });
+  if (readRes.ok) {
+    const current = await readRes.json();
+    sha = String(current?.sha || '').trim();
+  } else if (readRes.status !== 404) {
+    throw new Error('Could not read shared now.live file');
+  }
+
+  const payload = JSON.stringify(normalizeNowData(data), null, 2) + '\n';
+  const putBody = {
+    message: `Update now.live ${new Date().toISOString()}`,
+    content: toBase64Utf8(payload),
+    branch: NOW_SYNC.branch,
+  };
+  if (sha) putBody.sha = sha;
+
+  const writeRes = await fetch(apiBase, {
+    method: 'PUT',
+    headers: {
+      ...headers,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(putBody),
+  });
+  if (!writeRes.ok) {
+    if (writeRes.status === 401 || writeRes.status === 403) {
+      try { localStorage.removeItem(NOW_SYNC_TOKEN_KEY); } catch (_) {}
+      throw new Error('Token rejected. Please paste a valid GitHub token.');
+    }
+    throw new Error('Could not publish shared now.live file');
+  }
+  return true;
+}
+
+async function syncNowDataFromRemote() {
+  if (!NOW_SYNC.enabled || nowSyncBusy) return;
+  nowSyncBusy = true;
   try {
-    localStorage.setItem(NOW_STORAGE_KEY, JSON.stringify(normalizeNowData(data)));
-    return true;
+    const remote = await fetchNowDataFromRemote();
+    if (remote) applyNowSharedData(remote, { persistLocal: true, refresh: true });
   } catch (_) {
-    alert('Could not save locally. Try a smaller image and save again.');
+    // Keep local view as fallback when remote is unreachable.
+  } finally {
+    nowSyncBusy = false;
+  }
+}
+
+async function saveNowData(data) {
+  const normalized = normalizeNowData(data);
+  if (!NOW_SYNC.enabled) {
+    applyNowSharedData(normalized, { persistLocal: true, refresh: false });
+    return true;
+  }
+  try {
+    await publishNowDataToGithub(normalized);
+    applyNowSharedData(normalized, { persistLocal: true, refresh: false });
+    return true;
+  } catch (err) {
+    try { localStorage.setItem(NOW_STORAGE_KEY, JSON.stringify(normalized)); } catch (_) {}
+    alert(`${err?.message || 'Live publish failed.'} Saved locally only.`);
     return false;
+  }
+}
+
+async function resetNowData() {
+  const base = normalizeNowData(SITE.now);
+  if (!NOW_SYNC.enabled) {
+    nowSharedData = null;
+    nowSharedDataHash = '';
+    try { localStorage.removeItem(NOW_STORAGE_KEY); } catch (_) {}
+    return true;
+  }
+  return saveNowData(base);
+}
+
+function initNowSync() {
+  const initial = getNowData();
+  applyNowSharedData(initial, { persistLocal: true, refresh: false });
+  if (!NOW_SYNC.enabled) return;
+  syncNowDataFromRemote();
+  if (!nowSyncPollTimer) {
+    nowSyncPollTimer = setInterval(() => { syncNowDataFromRemote(); }, NOW_SYNC.pollMs);
   }
 }
 
@@ -688,7 +870,9 @@ function bindNowEditMediaControls() {
   const removedInput = document.getElementById('now-input-picture-removed');
   if (!fileInput || !urlInput || !preview) return;
 
-  const defaultHint = 'Image upload is saved in this browser on this device.';
+  const defaultHint = NOW_SYNC.enabled
+    ? 'Image uploads publish live after Save succeeds.'
+    : 'Image upload is saved in this browser on this device.';
   const setHint = text => { if (hint) hint.textContent = text; };
   const currentInput = String(urlInput.value || '').trim();
   nowPictureRemoved = removedInput?.value === '1';
@@ -843,6 +1027,7 @@ function renderNow() {
     ? `<div class="now-edit-grid">
          <input id="now-input-picture-removed" type="hidden" value="${nowData.pictureRemoved ? '1' : ''}" />
          <div class="now-hint">Updated is automatic in NZ time: ${escapeHtml(nowData.updated)}</div>
+         ${NOW_SYNC.enabled ? `<div class="now-hint">Live sync is on. ${getGithubSyncToken() ? 'Token is set on this browser.' : 'First Save will ask for a GitHub token.'}</div>` : ''}
          <label class="now-label" for="now-input-by">By</label>
          <input id="now-input-by" class="now-input" type="text" value="${escapeHtml(nowData.by)}" />
          <label class="now-label" for="now-input-status">Status</label>
@@ -855,7 +1040,7 @@ function renderNow() {
          <label class="now-label" for="now-input-picture-alt">Picture Caption</label>
          <input id="now-input-picture-alt" class="now-input" type="text" value="${escapeHtml(nowData.pictureAlt)}" />
          <img id="now-photo-preview" class="now-photo-preview" alt="Picture preview" hidden />
-         <div id="now-photo-hint" class="now-hint">Image upload is saved in this browser on this device.</div>
+         <div id="now-photo-hint" class="now-hint">${NOW_SYNC.enabled ? 'Image uploads publish live after Save succeeds.' : 'Image upload is saved in this browser on this device.'}</div>
          <label class="now-label" for="now-input-focus">Current Focus (one line each)</label>
          <textarea id="now-input-focus" class="now-textarea" rows="4">${escapeHtml(nowData.focus.join('\n'))}</textarea>
        </div>`
@@ -935,6 +1120,7 @@ function renderDevlog() {
   const body = devlogEditing
     ? `<div class="now-edit-grid">
          <div class="now-hint">One line per update. Format: 21 April 2026 your note</div>
+         ${NOW_SYNC.enabled ? `<div class="now-hint">Live sync is on. ${getGithubSyncToken() ? 'Token is set on this browser.' : 'First Save will ask for a GitHub token.'}</div>` : ''}
          <textarea id="devlog-input-lines" class="now-textarea" rows="10">${escapeHtml(devlogToEditorLines(nowData.devlog))}</textarea>
        </div>`
     : (nowData.devlog.length
@@ -1450,6 +1636,8 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   desktop.appendChild(socialDock);
+
+  initNowSync();
 
   // Auto-open about window on load
   wm.show('about', { title: 'about.md', html: renderAbout(), w: 420, h: 460 });

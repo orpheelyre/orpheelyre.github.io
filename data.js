@@ -46,6 +46,17 @@ const SITE = {
       { date: "21 April 2026", text: "initial commit and framework on live." },
     ],
   },
+  // Shared realtime source for now/devlog edits.
+  // Public read: rawUrl. Admin write: GitHub token saved locally in browser.
+  nowSync: {
+    provider: "github",
+    owner: "orpheelyre",
+    repo: "orpheelyre.github.io",
+    branch: "main",
+    path: "assets/now/now.live.json",
+    rawUrl: "https://raw.githubusercontent.com/orpheelyre/orpheelyre.github.io/main/assets/now/now.live.json",
+    pollMs: 15000,
+  },
 
   // ── Social / external links (rendered as desktop icons) ─────────
   social: [
