@@ -1,17 +1,19 @@
 {
+  "updated": "21 April 2026",
   "updatedAuto": true,
   "by": "OL",
-  "status": "Writing thesis, writing, writing. Many years later, as he faced the firing squad, Colonel Aureliano Buend\u00eda was to remember that distant afternoon when his father took him to discover ice.",
+  "status": "Writing thesis, writing, writing. Many years later, as he faced the firing squad, Colonel Aureliano Buendía was to remember that distant afternoon when his father took him to discover ice.",
   "focus": [
-    "Reviewing the methodology chapter.",
-    "Becoming a argillite expert."
+    "Revising the methodology chapter.",
+    "Becoming an argillite expert."
   ],
   "devlog": [
     {
       "date": "21 April 2026",
-      "text": "initial commit and framework on live."
+      "text": "initial commit and framework on live; real-time read and write updated via cloudflare."
     }
   ],
   "picture": "assets/now/IMG_6437.jpg",
-  "pictureAlt": "the historical assemblage April bought me w"
+  "pictureRemoved": false,
+  "pictureAlt": "the historical assemblage April collected for me w"
 }
