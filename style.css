@@ -117,13 +117,13 @@ body {
 #menubar {
   position: fixed;
   top: 0; left: 0; right: 0;
-  height: 20px;
+  height: 28px;
   background: var(--c-menu-bg);
   border-bottom: 1px solid var(--c-menu-border);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 8px;
+  padding: 0 12px;
   z-index: 9999;
   user-select: none;
 }
@@ -135,14 +135,14 @@ body {
 }
 
 .mb-apple {
-  font-size: 13px;
+  font-size: 15px;
   color: var(--c-menu-text);
   line-height: 1;
 }
 
 .mb-name {
   font-family: var(--font-ui);
-  font-size: var(--sz-ui);
+  font-size: 13px;
   font-weight: 700;
   color: var(--c-menu-text);
   letter-spacing: 0.02em;
@@ -157,7 +157,7 @@ body {
 #theme-btn {
   background: none;
   border: none;
-  font-size: 13px;
+  font-size: 15px;
   color: var(--c-menu-text);
   padding: 0 2px;
   line-height: 1;
@@ -167,7 +167,7 @@ body {
 
 #clock {
   font-family: var(--font-ui);
-  font-size: var(--sz-ui);
+  font-size: 12px;
   color: var(--c-menu-text);
   min-width: 60px;
   text-align: right;
@@ -176,7 +176,7 @@ body {
 /* ── Desktop ────────────────────────────────────────────────────── */
 #desktop {
   position: fixed;
-  top: 20px; left: 0; right: 0; bottom: 0;
+  top: 28px; left: 0; right: 0; bottom: 0;
   overflow: hidden;
   /* System 6 classic 50% dither — alternating black/white 1px pixels */
   background-color: #ffffff;
@@ -187,7 +187,7 @@ body {
 
 [data-theme="dark"] #desktop {
   background-color: var(--c-desktop);
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='2' height='2'%3E%3Crect x='0' y='0' width='1' height='1' fill='%23444444'/%3E%3Crect x='1' y='1' width='1' height='1' fill='%23444444'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='2' height='2'%3E%3Crect x='0' y='0' width='1' height='1' fill='%23606060'/%3E%3Crect x='1' y='1' width='1' height='1' fill='%23606060'/%3E%3C/svg%3E");
 }
 
 /* ── Desktop Icons ──────────────────────────────────────────────── */
@@ -573,22 +573,28 @@ body {
   grid-column: 2;
   font-style: italic;
 }
-.exp-header { margin-bottom: 2px; }
-.exp-title { font-weight: bold; }
-.exp-org { font-style: italic; color: var(--c-text-muted); }
-.exp-loc {
-  font-family: var(--font-ui);
-  font-size: var(--sz-small);
-  color: var(--c-text-muted);
-}
 .exp-period {
   font-family: var(--font-ui);
   font-size: var(--sz-small);
   color: var(--c-text-muted);
-  margin-bottom: 4px;
+  margin-bottom: 3px;
+}
+.exp-title {
+  font-family: var(--font-body);
+  font-size: var(--sz-body);
+  font-weight: bold;
+  color: var(--c-text);
+  line-height: 1.4;
+}
+.exp-org {
+  font-family: var(--font-body);
+  font-size: var(--sz-body);
+  font-style: italic;
+  color: var(--c-text-muted);
+  margin-bottom: 8px;
 }
 .exp-bullets {
-  margin: 0 0 0 1em;
+  margin: 0 0 0 1.1em;
   padding: 0;
   list-style: disc;
 }
@@ -650,32 +656,40 @@ body {
 }
 .md-content hr { border: none; border-top: 1px solid var(--c-border); margin: 14px 0; }
 
-/* Trash window */
-.trash-note {
-  display: flex;
-  gap: 10px;
-  align-items: baseline;
-  padding: 7px 0;
+/* Bin window */
+.bin-item {
+  padding: 6px 0;
   border-bottom: 1px solid var(--c-accent-bg);
 }
-.trash-note:last-of-type { border-bottom: none; }
-.trash-date {
-  font-family: var(--font-ui);
-  font-size: var(--sz-small);
-  color: var(--c-text-muted);
-  white-space: nowrap;
+.bin-item:last-of-type { border-bottom: none; }
+.bin-item-file {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.bin-doc-icon {
+  display: inline-flex;
+  width: 18px;
+  height: 18px;
   flex-shrink: 0;
 }
-.trash-text {
+.bin-doc-icon svg { width: 16px; height: 16px; }
+.bin-filename {
+  font-family: var(--font-ui);
+  font-size: var(--sz-ui);
+  color: var(--c-text);
+}
+.bin-note-text {
   font-family: var(--font-body);
   font-size: var(--sz-body);
-  color: var(--c-text);
+  color: var(--c-text-muted);
   line-height: 1.55;
+  padding: 3px 0 0 24px;
 }
 .trash-actions {
-  padding-top: 12px;
+  padding-top: 10px;
   border-top: 1px solid var(--c-border);
-  margin-top: 8px;
+  margin-top: 6px;
 }
 .trash-empty-btn {
   font-family: var(--font-ui);
@@ -683,9 +697,34 @@ body {
   background: var(--c-bg);
   border: 1px solid var(--c-border);
   color: var(--c-text);
-  padding: 3px 12px;
+  padding: 3px 10px;
 }
 .trash-empty-btn:hover { background: var(--c-text); color: var(--c-bg); }
+
+/* Mac-style error dialog */
+.mac-error {
+  padding: 18px 16px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.mac-error-msg {
+  font-family: var(--font-body);
+  font-size: var(--sz-body);
+  color: var(--c-text);
+  line-height: 1.5;
+}
+.mac-error-actions { display: flex; justify-content: flex-end; }
+.bin-error-ok {
+  font-family: var(--font-ui);
+  font-size: var(--sz-ui);
+  background: var(--c-bg);
+  border: 2px solid var(--c-border);
+  color: var(--c-text);
+  padding: 3px 20px;
+  font-weight: bold;
+}
+.bin-error-ok:hover { background: var(--c-text); color: var(--c-bg); }
 
 /* ── Scrollbars (WebKit) ────────────────────────────────────────── */
 ::-webkit-scrollbar { width: 15px; height: 15px; }
@@ -760,9 +799,9 @@ body {
   .window {
     position: fixed !important;
     left: 0 !important;
-    top: 20px !important;
+    top: 28px !important;
     width: 100vw !important;
-    height: calc(100vh - 20px) !important;
+    height: calc(100vh - 28px) !important;
     box-shadow: none;
     z-index: 1000 !important;
     border-left: none;

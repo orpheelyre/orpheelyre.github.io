@@ -86,11 +86,21 @@ document.addEventListener('mousemove', e => {
   }
 });
 
-document.addEventListener('mouseup', () => {
+document.addEventListener('mouseup', e => {
   if (drag.active?.type === 'icon' && drag.moved) {
-    saveIconPos(drag.active.id,
-      parseInt(drag.active.el.style.left),
-      parseInt(drag.active.el.style.top));
+    const { id, el } = drag.active;
+    const binIcon = id !== 'bin' && document.getElementById('icon-bin');
+    if (binIcon) {
+      const r = binIcon.getBoundingClientRect();
+      if (e.clientX >= r.left && e.clientX <= r.right &&
+          e.clientY >= r.top  && e.clientY <= r.bottom) {
+        dropIntoBin(id, el.querySelector('.icon-label')?.textContent || id, el);
+        drag.active = null;
+        setTimeout(() => { drag.moved = false; }, 0);
+        return;
+      }
+    }
+    saveIconPos(id, parseInt(el.style.left), parseInt(el.style.top));
   }
   drag.active = null;
   setTimeout(() => { if (!drag.active) drag.moved = false; }, 0);
@@ -263,14 +273,19 @@ document.addEventListener('click', e => {
     return;
   }
 
-  // Empty Trash
-  const emptyBtn = e.target.closest('.trash-empty-btn');
-  if (emptyBtn) {
-    localStorage.setItem('trashEmptied', emptyBtn.dataset.count);
-    const win = document.getElementById('win-trash');
-    if (win) win.querySelector('.win-body').innerHTML = renderTrash();
+  // Empty Bin → always fails with a Mac-style error
+  if (e.target.closest('.trash-empty-btn')) {
+    wm.show('bin-error', {
+      title: 'Error',
+      html: `<div class="mac-error">
+        <div class="mac-error-msg">The Bin cannot be emptied because all of the items in it are locked.</div>
+        <div class="mac-error-actions"><button class="bin-error-ok">OK</button></div>
+      </div>`,
+      w: 310, h: 148,
+    });
     return;
   }
+  if (e.target.closest('.bin-error-ok')) { wm.close('bin-error'); return; }
 });
 
 /* ── Content renderers ────────────────────────────────────────── */
@@ -323,10 +338,10 @@ function renderCV() {
 
   return {
     tabs: [
-      { id: 'edu',    label: 'Education',               html: `<div class="win-pad">${edu}</div>` },
-      { id: 'exp',    label: 'Work Experience',        html: `<div class="win-pad">${exp}</div>` },
-      { id: 'field',  label: 'Fieldwork and Laboratory', html: `<div class="win-pad">${field}</div>` },
-      { id: 'skills', label: 'Research Toolkit',       html: `<div class="win-pad"><div class="skills-list">${skills}</div></div>` },
+      { id: 'edu',    label: 'Education',                html: edu },
+      { id: 'exp',    label: 'Work Experience',         html: exp },
+      { id: 'field',  label: 'Fieldwork and Laboratory', html: field },
+      { id: 'skills', label: 'Research Toolkit',        html: `<div class="skills-list">${skills}</div>` },
     ],
   };
 }
@@ -359,8 +374,8 @@ function renderPublications() {
 
   return {
     tabs: [
-      { id: 'papers', label: 'Academic Publications & Public Anthropology', html: `<div class="win-pad">${papers}</div>` },
-      { id: 'pres',   label: 'Presentations',                               html: `<div class="win-pad">${confs}</div>`  },
+      { id: 'papers', label: 'Publications', html: papers },
+      { id: 'pres',   label: 'Conferences', html: confs  },
     ],
   };
 }
@@ -387,30 +402,57 @@ function renderProjects() {
         `).join('')
       : '<p class="empty">Nothing here yet.</p>';
 
-    return { id: cat.id, label: cat.label, html: `<div class="win-pad">${html}</div>` };
+    return { id: cat.id, label: cat.label, html };
   });
 
   return { tabs };
 }
 
-/* ── Trash window ─────────────────────────────────────────────── */
-function renderTrash() {
-  const notes    = SITE.trash || [];
-  const emptiedN = parseInt(localStorage.getItem('trashEmptied') || '0');
-  const visible  = notes.slice(emptiedN);  // only notes added after last empty
+/* ── Bin helpers ──────────────────────────────────────────────── */
+function getBinItems() { return JSON.parse(localStorage.getItem('bin:items') || '[]'); }
+function addBinItem(id, label) {
+  const items = getBinItems();
+  if (!items.some(i => i.id === id)) {
+    items.push({ id, label });
+    localStorage.setItem('bin:items', JSON.stringify(items));
+  }
+}
+function dropIntoBin(id, label, el) {
+  addBinItem(id, label);
+  el.remove();
+  const win = document.getElementById('win-bin');
+  if (win) win.querySelector('.win-body').innerHTML = renderBin();
+}
 
-  const noteHtml = visible.length
-    ? visible.map(n => `
-        <div class="trash-note">
-          <span class="trash-date">${n.date}</span>
-          <span class="trash-text">${n.text}</span>
-        </div>`).join('')
-    : '<p class="empty">Trash is empty.</p>';
+/* ── Bin window ───────────────────────────────────────────────── */
+function renderBin() {
+  const notes   = SITE.trash || [];
+  const dropped = getBinItems();
+  const hidden  = (SITE.hiddenIcons || []).map(id => {
+    const def = makeIconDefs().find(d => d.id === id);
+    return { id, label: def?.label || id };
+  });
 
+  const row = (label, body = '') => `
+    <div class="bin-item">
+      <div class="bin-item-file">
+        <span class="bin-doc-icon">${SVG.document}</span>
+        <span class="bin-filename">${label}.txt</span>
+      </div>
+      ${body ? `<div class="bin-note-text">${body}</div>` : ''}
+    </div>`;
+
+  const allHtml = [
+    ...notes.map(n   => row((n.id || 'note'), n.text)),
+    ...dropped.map(d => row(d.label)),
+    ...hidden.map(h  => row(h.label)),
+  ].join('');
+
+  const hasItems = notes.length > 0 || dropped.length > 0 || hidden.length > 0;
   return `<div class="win-pad">
-    ${noteHtml}
+    ${hasItems ? allHtml : '<p class="empty">Bin is empty.</p>'}
     <div class="trash-actions">
-      <button class="trash-empty-btn" data-count="${notes.length}">Empty Trash</button>
+      <button class="trash-empty-btn">Empty Bin</button>
     </div>
   </div>`;
 }
@@ -447,48 +489,46 @@ function openProjectDetail(id) {
 
 /* ── Desktop icon definitions ─────────────────────────────────── */
 function makeIconDefs() {
-  const rX  = Math.max(window.innerWidth  - 108, 500); // right edge at innerWidth - 12
-  const bH  = window.innerHeight - 20;   // desktop height
+  const rX  = Math.max(window.innerWidth  - 108, 500);
+  const bH  = window.innerHeight - 28;  // desktop height (below 28px menubar)
 
-  // DOM order matters for mobile layout:
-  // folders first → MDs → social (at end, goes to social-dock on mobile)
   return [
     // ── Right top: folders ───────────────────────────────────
     {
       id: 'publications', label: 'Publications', icon: SVG.folder,
-      x: rX, y: 50,
+      x: rX, y: 40,
       action: () => {
         const p = renderPublications();
-        wm.show('publications', { title: 'Publications', tabs: p.tabs, w: 540, h: 440 });
+        wm.show('publications', { title: 'Publications', tabs: p.tabs, w: 480, h: 400 });
       },
     },
     {
       id: 'projects', label: 'Projects', icon: SVG.folder,
-      x: rX, y: 170,
+      x: rX, y: 130,
       action: () => {
         const p = renderProjects();
-        wm.show('projects', { title: 'Projects', tabs: p.tabs, w: 520, h: 420 });
+        wm.show('projects', { title: 'Projects', tabs: p.tabs, w: 480, h: 400 });
       },
     },
     // ── Left top: md files ───────────────────────────────────
     {
       id: 'about', label: 'about.md', icon: SVG.document,
-      x: 30, y: 50,
-      action: () => wm.show('about', { title: 'about.md', html: renderAbout(), w: 420, h: 460 }),
+      x: 30, y: 40,
+      action: () => wm.show('about', { title: 'about.md', html: renderAbout(), w: 400, h: 440 }),
     },
     {
       id: 'cv', label: 'cv.md', icon: SVG.document,
-      x: 30, y: 170,
+      x: 30, y: 130,
       action: () => {
         const cv = renderCV();
-        wm.show('cv', { title: 'cv.md', tabs: cv.tabs, w: 540, h: 480 });
+        wm.show('cv', { title: 'cv.md', tabs: cv.tabs, w: 520, h: 460 });
       },
     },
-    // ── Left bottom: trash ──────────────────────────────────
+    // ── Left bottom: bin ─────────────────────────────────────
     {
-      id: 'trash', label: 'Trash', icon: SVG.trash,
-      x: 30, y: bH - 120,
-      action: () => wm.show('trash', { title: 'Trash', html: renderTrash(), w: 340, h: 300 }),
+      id: 'bin', label: 'Bin', icon: SVG.trash,
+      x: 30, y: bH - 100,
+      action: () => wm.show('bin', { title: 'Bin', html: renderBin(), w: 320, h: 280 }),
     },
     // ── Right bottom: social (stacked from bottom) ───────────
     ...SITE.social.map((s, i) => ({
@@ -497,7 +537,7 @@ function makeIconDefs() {
       icon:   SVG[s.icon] || SVG.document,
       social: true,
       x:      rX,
-      y:      bH - 110 - (SITE.social.length - 1 - i) * 110,
+      y:      bH - 90 - (SITE.social.length - 1 - i) * 90,
       action: () => window.open(s.url, '_blank', 'noopener,noreferrer'),
     })),
   ];
@@ -577,14 +617,19 @@ document.addEventListener('DOMContentLoaded', () => {
   const desktop = document.getElementById('desktop');
   wm = new WM(desktop);
 
-  const defs    = makeIconDefs();
-  const isMobile = window.innerWidth <= 768;
+  const defs = makeIconDefs();
 
-  // Social icons go into a dock div (handles the 2+1 grid on mobile)
+  // Icons in the bin (dragged or hidden by SITE.hiddenIcons)
+  const binnedIds = new Set([
+    ...getBinItems().map(i => i.id),
+    ...(SITE.hiddenIcons || []),
+  ]);
+
   const socialDock = document.createElement('div');
   socialDock.className = 'social-dock';
 
   defs.forEach(def => {
+    if (binnedIds.has(def.id)) return;  // skip binned/hidden icons
     const el = createIcon(def);
     if (def.social) socialDock.appendChild(el);
     else            desktop.appendChild(el);

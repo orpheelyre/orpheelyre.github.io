@@ -14,7 +14,7 @@ const SITE = {
 
   name:    "Orlan Y. Syshui",
   tagline: "Material Evidence · Field Experience · Digital Narrative",
-  bio:     "Researcher and artist working at the intersection of archaeology, anthropology, game design, and experimental media. Holds a BSc in Computer Science. Currently completing BA(Hon) in Archaeology at University of Otago.",
+  bio:     "Researcher and artist working at the intersection of archaeology, anthropology, and experimental media. Holds a BSc in Computer Science. Currently completing BA(Hon) in Archaeology at University of Otago.",
 
   interests: [
     "Archaeological Theory",
@@ -37,11 +37,11 @@ const SITE = {
 
   // ── Education ────────────────────────────────────────────────────
   education: [
-    { degree: "BA(Hon) in Archaeology",                       institution: "University of Otago, NZ", period: "2026 (in progress)" },
+    { degree: "BA(Hon) in Archaeology",                       institution: "University of Otago, NZ", period: "2026" },
     { degree: "DipGrad in Anthropology and Archaeology (HD)", institution: "University of Otago, NZ", period: "2024–2025"          },
     { degree: "BSc in Computer Science",                      institution: "University of Otago, NZ", period: "2016–2020"          },
     {
-      degree:      "Homeschooling (secondary education equivalent)",
+      degree:      "Homeschooling",
       institution: "Self-directed",
       period:      "2009–2014",
       note:        "Liberal education in natural science, literature, philosophy, semiotics, music theory, art and natural history; extensive independent reading; early unstructured field observation in varied cultural and social contexts.",
@@ -74,7 +74,7 @@ const SITE = {
     {
       title: "The Epistemology of Dirt: A Paradoxical Method for an Anthropology of the Margins",
       venue: "ASAA/NZ Conference",
-      year:  "2025",
+      year:  "December 2025",
       type:  "Oral Presentation",
       url:   null,
     },
@@ -171,6 +171,10 @@ const SITE = {
     "Interactive Cultural Storytelling",
     "Archaeological Survey & Excavation",
   ],
+
+  // ── Hidden icons (appear in Bin, not on desktop) ─────────────────
+  // Remove an id from this array and push to restore it to the desktop.
+  hiddenIcons: ['cv'],
 
   // ── Trash ────────────────────────────────────────────────────────
   // Add short notes here — visitors can empty from their view.
