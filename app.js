@@ -55,6 +55,13 @@ const SVG = {
     <line x1="16" y1="15" x2="16" y2="25" stroke="var(--icon-stroke)" stroke-width="1"/>
     <line x1="20" y1="15" x2="20" y2="25" stroke="var(--icon-stroke)" stroke-width="1"/>
   </svg>`,
+
+  terminal: `<svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <rect x="2" y="3" width="28" height="22" fill="var(--icon-fill)" stroke="var(--icon-stroke)" stroke-width="1.5"/>
+    <rect x="2" y="3" width="28" height="6" fill="var(--icon-stroke)"/>
+    <polyline points="6,16 10,19 6,22" fill="none" stroke="var(--icon-stroke)" stroke-width="1.5" stroke-linejoin="round"/>
+    <line x1="13" y1="22" x2="22" y2="22" stroke="var(--icon-stroke)" stroke-width="1.5"/>
+  </svg>`,
 };
 
 /* ── Drag State ───────────────────────────────────────────────── */
@@ -154,6 +161,7 @@ class WM {
       releaseNowPreviewObjectUrl();
     }
     if (id === 'devlog') devlogEditing = false;
+    if (id === 'guestbook') guestbookDrawCtx = null;
     if (id === 'sync-notice' && syncNoticeTimer) {
       clearTimeout(syncNoticeTimer);
       syncNoticeTimer = null;
@@ -268,6 +276,9 @@ document.addEventListener('keydown', e => {
   }
   if (e.key === 'Enter' && e.target.classList.contains('cv-lock-input')) {
     e.target.closest('.cv-lock-pad')?.querySelector('.cv-lock-ok')?.click();
+  }
+  if (e.key === 'Enter' && e.target.classList.contains('gb-msg')) {
+    submitGuestbook();
   }
 });
 
@@ -449,6 +460,23 @@ document.addEventListener('click', async e => {
     }
     return;
   }
+
+  // Guestbook: mood toggle
+  const gbMoodBtn = e.target.closest('.gb-mood');
+  if (gbMoodBtn) {
+    gbMoodBtn.closest('.gb-moods')?.querySelectorAll('.gb-mood').forEach(b => b.classList.remove('active'));
+    gbMoodBtn.classList.add('active');
+    return;
+  }
+  if (e.target.closest('.gb-send')) { submitGuestbook(); return; }
+  if (e.target.closest('.gb-clr')) {
+    const cv = document.getElementById('gb-canvas');
+    if (cv && guestbookDrawCtx) {
+      guestbookDrawCtx.fillStyle = '#fff';
+      guestbookDrawCtx.fillRect(0, 0, cv.width, cv.height);
+    }
+    return;
+  }
 });
 
 /* ── Content renderers ────────────────────────────────────────── */
@@ -467,6 +495,18 @@ const NOW_SYNC = (() => {
     writeUrl,
     canWrite: Boolean(writeUrl),
     pollMs,
+  };
+})();
+
+const GUESTBOOK_SYNC = (() => {
+  const cfg = SITE?.guestbookSync && typeof SITE.guestbookSync === 'object' ? SITE.guestbookSync : {};
+  const readUrl  = String(cfg.readUrl  || '').trim();
+  const writeUrl = String(cfg.writeUrl || '').trim();
+  return {
+    readUrl, writeUrl,
+    enabled:  Boolean(readUrl),
+    canWrite: Boolean(writeUrl),
+    pollMs: Math.max(5000, Number(cfg.pollMs) || 12000),
   };
 })();
 
@@ -510,6 +550,9 @@ let nowSyncPollTimer = null;
 let nowSyncBusy = false;
 let nowAdminSessionPassword = '';
 let syncNoticeTimer = null;
+let guestbookEntries = [];
+let guestbookPollTimer = null;
+let guestbookDrawCtx = null;
 
 function escapeHtml(value) {
   return String(value ?? '').replace(/[&<>"']/g, char => ({
@@ -1141,6 +1184,201 @@ function refreshDevlogWindow() {
   win.querySelector('.win-body').innerHTML = `<div class="win-pad">${renderDevlog()}</div>`;
 }
 
+/* ── Guestbook ────────────────────────────────────────────────── */
+function renderGuestbookEntries() {
+  if (!guestbookEntries.length) {
+    return '<div class="gb-empty">No entries yet. Be the first.</div>';
+  }
+  return guestbookEntries.map(e => `
+    <div class="gb-entry">
+      <div class="gb-entry-hd">&gt;&nbsp;${escapeHtml(e.timestamp)}&nbsp;&bull;&nbsp;${escapeHtml(e.name)}&nbsp;<span class="gb-mood-stamp">${escapeHtml(e.mood)}</span></div>
+      <div class="gb-entry-body">${escapeHtml(e.message)}</div>
+      ${e.drawing ? `<div class="gb-entry-draw"><img src="${escapeHtml(e.drawing)}" alt="" class="gb-draw-img" /></div>` : ''}
+    </div>
+  `).join('');
+}
+
+function renderGuestbook() {
+  return `
+    <div class="gb-wrap">
+      <div class="gb-terminal" id="gb-terminal">${renderGuestbookEntries()}</div>
+      <div class="gb-form">
+        <div class="gb-row">
+          <input class="gb-input gb-name" type="text" placeholder="name" maxlength="40" autocomplete="off" />
+          <input class="gb-input gb-msg"  type="text" placeholder="say something..." maxlength="300" autocomplete="off" />
+        </div>
+        <div class="gb-row gb-footer">
+          <div class="gb-moods">
+            <button class="gb-mood active" data-gm=":)">:)</button>
+            <button class="gb-mood"        data-gm=":(">:(</button>
+            <button class="gb-mood"        data-gm="!?">!?</button>
+          </div>
+          <label class="gb-draw-label"><input type="checkbox" id="gb-draw-chk" />&nbsp;draw</label>
+          <button class="gb-send">&rarr;&nbsp;send</button>
+        </div>
+        <div class="gb-canvas-wrap" id="gb-canvas-wrap" style="display:none">
+          <canvas id="gb-canvas" class="gb-canvas"></canvas>
+          <button class="gb-clr">clear</button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function openGuestbookWindow() {
+  if (!wm) return;
+  if (wm.open?.guestbook) { wm.focus(wm.open.guestbook); return; }
+  wm.show('guestbook', { title: 'guestbook.live', html: renderGuestbook(), w: 460, h: 420 });
+  setTimeout(() => bindGuestbookCanvas(), 30);
+}
+
+function refreshGuestbookTerminal() {
+  const t = document.getElementById('gb-terminal');
+  if (t) t.innerHTML = renderGuestbookEntries();
+}
+
+function bindGuestbookCanvas() {
+  const check = document.getElementById('gb-draw-chk');
+  const wrap  = document.getElementById('gb-canvas-wrap');
+  if (!check || !wrap) return;
+  check.addEventListener('change', () => {
+    wrap.style.display = check.checked ? 'block' : 'none';
+    if (check.checked) initGuestbookCanvas();
+  });
+}
+
+function initGuestbookCanvas() {
+  const canvas = document.getElementById('gb-canvas');
+  if (!canvas || guestbookDrawCtx) return;
+  canvas.width  = canvas.parentElement?.offsetWidth || 300;
+  canvas.height = 72;
+  guestbookDrawCtx = canvas.getContext('2d');
+  guestbookDrawCtx.fillStyle = '#ffffff';
+  guestbookDrawCtx.fillRect(0, 0, canvas.width, canvas.height);
+
+  let drawing = false, lx = 0, ly = 0;
+  const getPos = e => {
+    const r = canvas.getBoundingClientRect();
+    const sx = canvas.width / r.width, sy = canvas.height / r.height;
+    const src = e.touches ? e.touches[0] : e;
+    return { x: (src.clientX - r.left) * sx, y: (src.clientY - r.top) * sy };
+  };
+  const start = e => { drawing = true; const p = getPos(e); lx = p.x; ly = p.y; e.preventDefault(); };
+  const move  = e => {
+    if (!drawing) return;
+    const p = getPos(e);
+    guestbookDrawCtx.beginPath();
+    guestbookDrawCtx.moveTo(lx, ly);
+    guestbookDrawCtx.lineTo(p.x, p.y);
+    guestbookDrawCtx.strokeStyle = '#000';
+    guestbookDrawCtx.lineWidth = 2;
+    guestbookDrawCtx.lineCap = 'round';
+    guestbookDrawCtx.stroke();
+    lx = p.x; ly = p.y;
+    e.preventDefault();
+  };
+  const stop = () => { drawing = false; };
+
+  canvas.addEventListener('mousedown',  start);
+  canvas.addEventListener('mousemove',  move);
+  canvas.addEventListener('mouseup',    stop);
+  canvas.addEventListener('mouseleave', stop);
+  canvas.addEventListener('touchstart', start, { passive: false });
+  canvas.addEventListener('touchmove',  move,  { passive: false });
+  canvas.addEventListener('touchend',   stop);
+}
+
+function showStickyNote(entry) {
+  const desktop = document.getElementById('desktop');
+  if (!desktop) return;
+  const note = document.createElement('div');
+  note.className = 'sticky-note';
+  const rot = (Math.random() * 8 - 4).toFixed(1);
+  note.style.setProperty('--rot', rot + 'deg');
+  note.style.left = Math.floor(Math.random() * Math.max(60, desktop.offsetWidth  - 200) + 30) + 'px';
+  note.style.top  = Math.floor(Math.random() * Math.max(60, desktop.offsetHeight - 140) + 30) + 'px';
+  const msg = entry.message.length > 90 ? entry.message.slice(0, 90) + '\u2026' : entry.message;
+  note.innerHTML = `
+    <div class="sticky-who">${escapeHtml(entry.name)}&nbsp;${escapeHtml(entry.mood)}</div>
+    <div class="sticky-txt">${escapeHtml(msg)}</div>
+    ${entry.drawing ? '<div class="sticky-draw">\u270f drawing</div>' : ''}
+  `;
+  desktop.appendChild(note);
+  setTimeout(() => note.remove(), 4500);
+}
+
+async function submitGuestbook() {
+  if (!GUESTBOOK_SYNC.canWrite) return;
+  const nameEl = document.querySelector('#win-guestbook .gb-name');
+  const msgEl  = document.querySelector('#win-guestbook .gb-msg');
+  const active = document.querySelector('#win-guestbook .gb-mood.active');
+  const drawChk = document.getElementById('gb-draw-chk');
+
+  const name    = String(nameEl?.value || '').trim() || 'anon';
+  const message = String(msgEl?.value  || '').trim();
+  const mood    = active?.dataset.gm || ':)';
+  if (!message) { msgEl?.focus(); return; }
+
+  let drawing = null;
+  if (drawChk?.checked && guestbookDrawCtx) {
+    const cv = document.getElementById('gb-canvas');
+    if (cv) {
+      let d = cv.toDataURL('image/jpeg', 0.65);
+      if (d.length > 50000) d = await downscaleDataUrl(d, 240, 0.55);
+      drawing = d;
+    }
+  }
+
+  const btn = document.querySelector('#win-guestbook .gb-send');
+  if (btn) btn.textContent = '\u2026';
+
+  try {
+    const res = await fetch(GUESTBOOK_SYNC.writeUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, mood, message, drawing }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || data.ok === false) throw new Error(data.error || 'Failed to send.');
+
+    if (nameEl) nameEl.value = '';
+    if (msgEl)  msgEl.value  = '';
+    if (drawChk?.checked && guestbookDrawCtx) {
+      const cv = document.getElementById('gb-canvas');
+      if (cv) { guestbookDrawCtx.fillStyle = '#fff'; guestbookDrawCtx.fillRect(0, 0, cv.width, cv.height); }
+    }
+
+    const entry = data.entry || { name, mood, message, drawing, timestamp: getNzDateLabel() };
+    guestbookEntries.unshift(entry);
+    refreshGuestbookTerminal();
+    showStickyNote(entry);
+  } catch (err) {
+    alert(err.message || 'Could not send.');
+  } finally {
+    if (btn) btn.innerHTML = '&rarr;&nbsp;send';
+  }
+}
+
+async function fetchGuestbookFromRemote() {
+  if (!GUESTBOOK_SYNC.enabled) return;
+  try {
+    const res = await fetch(`${GUESTBOOK_SYNC.readUrl}?t=${Date.now()}`, { cache: 'no-store' });
+    if (!res.ok) return;
+    const data = await res.json();
+    if (Array.isArray(data.entries)) {
+      guestbookEntries = data.entries;
+      refreshGuestbookTerminal();
+    }
+  } catch (_) {}
+}
+
+function initGuestbookSync() {
+  fetchGuestbookFromRemote();
+  if (!guestbookPollTimer && GUESTBOOK_SYNC.enabled) {
+    guestbookPollTimer = setInterval(fetchGuestbookFromRemote, GUESTBOOK_SYNC.pollMs);
+  }
+}
+
 function renderAbout() {
   const interests = SITE.interests.map(i => `<span class="tag">${i}</span>`).join('');
   const bioHtml = [SITE.bio, SITE.bioSecond]
@@ -1508,6 +1746,11 @@ function makeIconDefs() {
       x: 30, y: 220,
       action: () => openDevlogWindow(),
     },
+    {
+      id: 'guestbook', label: 'guestbook', icon: SVG.terminal, iconKey: 'terminal',
+      x: 30, y: 310,
+      action: () => openGuestbookWindow(),
+    },
     // ── Left bottom: bin ─────────────────────────────────────
     {
       id: 'bin', label: 'Bin', icon: SVG.trash, iconKey: 'trash',
@@ -1707,6 +1950,7 @@ document.addEventListener('DOMContentLoaded', () => {
   desktop.appendChild(socialDock);
 
   initNowSync();
+  initGuestbookSync();
 
   // Auto-open about window on load
   wm.show('about', { title: 'about.md', html: renderAbout(), w: 420, h: 460 });

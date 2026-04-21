@@ -1120,3 +1120,149 @@ body {
   .entry-title a,
   .project-title a { font-size: 14px; line-height: 1.6; }
 }
+
+/* ── Guestbook ──────────────────────────────────────────────────── */
+.gb-wrap {
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 11px;
+  color: var(--c-text);
+}
+.gb-terminal {
+  height: 210px;
+  overflow-y: auto;
+  border-bottom: 1px solid var(--c-border);
+  padding-bottom: 8px;
+  margin-bottom: 10px;
+}
+.gb-entry {
+  padding: 5px 0;
+  border-bottom: 1px dotted var(--c-accent-bg);
+}
+.gb-entry:last-child { border-bottom: none; }
+.gb-entry-hd {
+  color: var(--c-text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.gb-mood-stamp { font-weight: bold; color: var(--c-text); }
+.gb-entry-body {
+  padding: 2px 0 0 12px;
+  line-height: 1.5;
+  word-break: break-word;
+  white-space: pre-wrap;
+  color: var(--c-text);
+}
+.gb-entry-draw { padding: 4px 0 0 12px; }
+.gb-draw-img {
+  max-width: 180px;
+  height: auto;
+  border: 1px solid var(--c-border);
+  display: block;
+  image-rendering: pixelated;
+}
+.gb-empty {
+  color: var(--c-text-muted);
+  font-style: italic;
+  padding: 6px 0;
+}
+.gb-form { display: flex; flex-direction: column; gap: 6px; }
+.gb-row  { display: flex; gap: 5px; align-items: center; }
+.gb-input {
+  font-family: var(--font-ui);
+  font-size: var(--sz-ui);
+  background: var(--c-bg);
+  border: 1px solid var(--c-border);
+  color: var(--c-text);
+  padding: 3px 6px;
+}
+.gb-name { width: 72px; flex-shrink: 0; }
+.gb-msg  { flex: 1; min-width: 0; }
+.gb-footer { justify-content: space-between; }
+.gb-moods { display: flex; gap: 2px; }
+.gb-mood {
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 11px;
+  background: var(--c-bg);
+  border: 1px solid var(--c-border);
+  color: var(--c-text);
+  padding: 2px 5px;
+  cursor: pointer;
+  line-height: 1;
+}
+.gb-mood.active { background: var(--c-text); color: var(--c-bg); }
+.gb-mood:hover:not(.active) { opacity: 0.7; }
+.gb-draw-label {
+  font-family: var(--font-ui);
+  font-size: var(--sz-small);
+  color: var(--c-text-muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  user-select: none;
+}
+.gb-send {
+  font-family: var(--font-ui);
+  font-size: var(--sz-ui);
+  background: var(--c-bg);
+  border: 1px solid var(--c-border);
+  color: var(--c-text);
+  padding: 3px 10px;
+  font-weight: bold;
+}
+.gb-send:hover { background: var(--c-text); color: var(--c-bg); }
+.gb-canvas-wrap { display: flex; flex-direction: column; gap: 4px; }
+.gb-canvas {
+  display: block;
+  width: 100%;
+  height: 72px;
+  border: 1px solid var(--c-border);
+  background: #ffffff;
+  cursor: crosshair;
+}
+.gb-clr {
+  font-family: var(--font-ui);
+  font-size: var(--sz-small);
+  background: var(--c-bg);
+  border: 1px solid var(--c-border);
+  color: var(--c-text);
+  padding: 2px 7px;
+  align-self: flex-start;
+}
+.gb-clr:hover { background: var(--c-text); color: var(--c-bg); }
+
+/* Sticky note drop */
+@keyframes sticky-drop {
+  0%   { opacity: 0; transform: translateY(-14px) rotate(var(--rot)); }
+  14%  { opacity: 1; transform: translateY(0)     rotate(var(--rot)); }
+  82%  { opacity: 1; transform: translateY(0)     rotate(var(--rot)); }
+  100% { opacity: 0; transform: translateY(6px)   rotate(var(--rot)); }
+}
+.sticky-note {
+  position: absolute;
+  width: 168px;
+  background: var(--c-bg);
+  border: 1px solid var(--c-border);
+  box-shadow: 3px 3px 0 var(--c-shadow);
+  padding: 8px 10px;
+  z-index: 9000;
+  pointer-events: none;
+  animation: sticky-drop 4.5s ease forwards;
+  font-family: var(--font-ui);
+  font-size: var(--sz-small);
+}
+.sticky-note::before {
+  content: '';
+  display: block;
+  height: 4px;
+  background: repeating-linear-gradient(
+    to right,
+    var(--c-border) 0px, var(--c-border) 3px,
+    transparent 3px, transparent 7px
+  );
+  margin: -8px -10px 8px;
+}
+.sticky-who { font-weight: bold; margin-bottom: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sticky-txt { color: var(--c-text-muted); line-height: 1.4; font-size: 10px; }
+.sticky-draw { margin-top: 3px; color: var(--c-text-muted); font-size: 10px; }

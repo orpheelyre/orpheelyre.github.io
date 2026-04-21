@@ -14,8 +14,7 @@ const SITE = {
 
   name:    "Orlan Y. Syshui",
   tagline: "Material Practice · Field Experience · Digital Narrative",
-  bio:     "Researcher and artist working at the intersection of archaeology, anthropology, and experimental media. Doing honours at Archaeology Programme, Otago. Current work sits at the edges of landscape, heritage, medical anthropology, and memory politics, tracing the processual and relational conditions through which sites and institutions accumulate afterlives.",
-  bioSecond: "A tomb of glass and a fossil of green.",
+  bio:     "A tomb of glass. A fossil of green. A researcher and artist working at the intersection of archaeology, anthropology, and experimental media. Current work sits at the edges of landscape, heritage, medical anthropology, and memory politics, tracing the processual and relational conditions through which sites and institutions accumulate afterlives.",
 
   interests: [
     "Archaeological Theory",
@@ -46,6 +45,15 @@ const SITE = {
       { date: "21 April 2026", text: "initial commit and framework on live." },
     ],
   },
+  // ── Guestbook ────────────────────────────────────────────────────
+  // readUrl: public GET endpoint returning { entries: [...] }
+  // writeUrl: POST endpoint accepting { name, mood, message, drawing? }
+  guestbookSync: {
+    readUrl:  "https://dark-credit-f2c8.erljuzz.workers.dev/guestbook",
+    writeUrl: "https://dark-credit-f2c8.erljuzz.workers.dev/guestbook",
+    pollMs:   12000,
+  },
+
   // Shared realtime source for now/devlog edits.
   // Public read from rawUrl; admin writes through writeUrl backend.
   nowSync: {
@@ -193,13 +201,13 @@ const SITE = {
   // ── Research Toolkit ─────────────────────────────────────────────
   skills: [
     "GIS and Spatial Analysis",
-    "Material Analysis",
+    "Material Culture Studies",
     "Archival and Policy Review",
+    "Archaeological Survey & Excavation",
     "Ethnographic Methods & Qualitative Research",
     "Academic Writing & Theory-Building",
     "UIUX Research & Design",
     "Interactive Cultural Storytelling",
-    "Archaeological Survey & Excavation",
   ],
 
   // ── cv.md password ───────────────────────────────────────────────
