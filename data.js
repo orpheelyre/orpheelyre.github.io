@@ -4,27 +4,29 @@
 //  HOW TO ADD CONTENT:
 //  • New publication  → push an object into SITE.publications
 //  • New conference   → push into SITE.conferences
-//  • New exhibition   → push into SITE.exhibitions
-//  • New project      → push into SITE.projects (category: "games"|"design"|"research")
+//  • New project      → push into SITE.projects
+//                       category: "video-games"|"mr-experience"|"research"|"artwork"
 //  • New experience   → push into SITE.experience
+//  • Trash notes      → push a { date, text } object into SITE.trash
 // ═══════════════════════════════════════════════════════════════
 
 const SITE = {
 
   name:    "Orlan Y. Syshui",
   tagline: "Material Evidence · Field Experience · Digital Narrative",
-  bio:     "Designer and researcher working at the intersection of archaeology, anthropology, game design, and experimental media. Holds a BSc in Computer Science and DipGrad in Anthropology and Archaeology with HD level grades. Currently completing BA(Hon) in Archaeology at University of Otago.",
+  bio:     "Researcher and artist working at the intersection of archaeology, anthropology, game design, and experimental media. Holds a BSc in Computer Science. Currently completing BA(Hon) in Archaeology at University of Otago.",
 
   interests: [
-    "Contemporary Archaeology",
+    "Archaeological Theory",
     "Landscape Archaeology",
     "Digital Heritage",
+    "Critical Heritage Studies",
     "Material Culture and Semiotics",
     "Embodiment and Medical Anthropology",
     "Critical Disability Studies",
   ],
 
-  email: "yualu224@student.otago.ac.nz",
+  email: "orlan.syshui@gmail.com",
 
   // ── Social / external links (rendered as desktop icons) ─────────
   social: [
@@ -47,21 +49,22 @@ const SITE = {
   ],
 
   // ── Publications ─────────────────────────────────────────────────
-  // Template: { title, venue, status, date, url }
+  // Template: { title, type, venue, date, url }
+  // type: "Journal Article" | "Public Anthropology" | etc.
   publications: [
     {
-      title:  "Dream is an Offshore Flame: Notes on Archaeology and Belonging",
-      venue:  "Anthropology & Humanism",
-      status: "Accepted with Minor Revisions",
-      date:   "February 2026",
-      url:    null,
+      title: "Dream is an Offshore Flame: Notes on Archaeology and Belonging",
+      type:  "Journal Article",
+      venue: "Anthropology & Humanism",
+      date:  "2026",
+      url:   "https://doi.org/10.1111/anhu.70081",
     },
     {
-      title:  "Everywhere is a Border, Everywhere a War",
-      venue:  "Allegra Lab",
-      status: "Accepted",
-      date:   "March 2026",
-      url:    null,
+      title: "Everywhere is a Border, Everywhere a War",
+      type:  "Public Anthropology",
+      venue: "Allegra Lab",
+      date:  "March 2026",
+      url:   null,
     },
   ],
 
@@ -77,24 +80,13 @@ const SITE = {
     },
   ],
 
-  // ── Exhibitions & Creative Dissemination ─────────────────────────
-  // Template: { title, venue, location, year, type, url }
-  exhibitions: [
-    { title: "Whalefall Haven", venue: "Gamescom",             location: "Cologne",  year: "2023", type: "Booth Exhibition", url: "https://store.steampowered.com/app/3061230/Whalefall_Haven/" },
-    { title: "Whalefall Haven", venue: "London Games Festival", location: "London",   year: "2024", type: "Booth Exhibition", url: "https://store.steampowered.com/app/3061230/Whalefall_Haven/" },
-    { title: "Whalefall Haven", venue: "CCG Expo",              location: "Shanghai", year: "2024", type: "Booth Exhibition", url: "https://store.steampowered.com/app/3061230/Whalefall_Haven/" },
-    { title: "Whalefall Haven", venue: "Tokyo Game Show",       location: "Tokyo",    year: "2024", type: "Booth Exhibition", url: "https://store.steampowered.com/app/3061230/Whalefall_Haven/" },
-  ],
-
   // ── Projects ─────────────────────────────────────────────────────
-  // category: "games" | "design" | "research"
-  // Template: { id, title, category, description, url, tags, status, mdFile }
-  // mdFile: path to a markdown file in projects/ — click opens a detail window
+  // category: "video-games" | "mr-experience" | "research" | "artwork"
   projects: [
     {
       id:          "whalefall-haven",
       title:       "Whalefall Haven",
-      category:    "games",
+      category:    "video-games",
       role:        "Project Manager · World-builder · Lead UX Designer",
       description: "An immersive role-playing game featuring deep-sea world-building and narrative design.",
       url:         "https://store.steampowered.com/app/3061230/Whalefall_Haven/",
@@ -105,7 +97,7 @@ const SITE = {
     {
       id:          "urban-heritage-platform",
       title:       "Urban Heritage Exploration Platform",
-      category:    "design",
+      category:    "mr-experience",
       role:        "Lead UX Designer · Research Collaborator",
       description: "Interactive UX/UI flows for an urban heritage exploration platform in collaboration with academic and industry partners. Digital Heritage Lab, NYU Shanghai.",
       url:         null,
@@ -141,17 +133,6 @@ const SITE = {
       ],
     },
     {
-      title:    "Archaeology Lab Assistant (Volunteer)",
-      org:      "Dept. of Social Anthropology and Archaeology, University of Otago",
-      location: "Dunedin, Aotearoa",
-      period:   "March – June 2025",
-      bullets: [
-        "Pre-processed archaeological samples for weighing and analysis.",
-        "Conducted manual sorting and removal of contaminants to prepare clean subsamples.",
-        "Ensured label and ID integrity across multi-phase analysis workflows.",
-      ],
-    },
-    {
       title:    "Data Administrator",
       org:      "Wakari Hospital",
       location: "Dunedin, Aotearoa",
@@ -164,9 +145,7 @@ const SITE = {
     },
   ],
 
-  // ── Field & Lab Experience ───────────────────────────────────────
-  // Template: { title, org, location, period, bullets }
-  // Add fieldwork, excavations, surveys, lab placements here
+  // ── Fieldwork & Lab Experience ───────────────────────────────────
   fieldExperience: [
     {
       title:    "Archaeology Lab Assistant (Volunteer)",
@@ -179,10 +158,9 @@ const SITE = {
         "Ensured label and ID integrity across multi-phase analysis workflows.",
       ],
     },
-    // Add field surveys, excavations, ethnographic fieldwork below:
   ],
 
-  // ── Research Toolkits ────────────────────────────────────────────
+  // ── Research Toolkit ─────────────────────────────────────────────
   skills: [
     "GIS and Spatial Analysis",
     "Material Analysis",
@@ -191,6 +169,13 @@ const SITE = {
     "Academic Writing & Theory-Building",
     "UIUX Research & Design",
     "Interactive Cultural Storytelling",
-    "Archaeological Survey and Excavation",
+    "Archaeological Survey & Excavation",
+  ],
+
+  // ── Trash ────────────────────────────────────────────────────────
+  // Add short notes here — visitors can empty from their view.
+  // Push new entries to show them again after someone empties.
+  trash: [
+    // { date: "Apr 2026", text: "example note" },
   ],
 };

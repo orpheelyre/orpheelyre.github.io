@@ -46,6 +46,15 @@ const SVG = {
     <circle cx="21" cy="21" r="1.5" fill="var(--icon-stroke)"/>
     <circle cx="18" cy="18" r="1.5" fill="var(--icon-stroke)"/>
   </svg>`,
+
+  trash: `<svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <rect x="7" y="12" width="18" height="16" fill="var(--icon-fill)" stroke="var(--icon-stroke)" stroke-width="1.5"/>
+    <rect x="4" y="8"  width="24" height="5"  fill="var(--icon-fill)" stroke="var(--icon-stroke)" stroke-width="1.5"/>
+    <rect x="12" y="4" width="8"  height="5"  fill="var(--icon-fill)" stroke="var(--icon-stroke)" stroke-width="1.5"/>
+    <line x1="12" y1="15" x2="12" y2="25" stroke="var(--icon-stroke)" stroke-width="1"/>
+    <line x1="16" y1="15" x2="16" y2="25" stroke="var(--icon-stroke)" stroke-width="1"/>
+    <line x1="20" y1="15" x2="20" y2="25" stroke="var(--icon-stroke)" stroke-width="1"/>
+  </svg>`,
 };
 
 /* ── Drag State ───────────────────────────────────────────────── */
@@ -253,6 +262,15 @@ document.addEventListener('click', e => {
     openProjectDetail(card.dataset.projectId);
     return;
   }
+
+  // Empty Trash
+  const emptyBtn = e.target.closest('.trash-empty-btn');
+  if (emptyBtn) {
+    localStorage.setItem('trashEmptied', emptyBtn.dataset.count);
+    const win = document.getElementById('win-trash');
+    if (win) win.querySelector('.win-body').innerHTML = renderTrash();
+    return;
+  }
 });
 
 /* ── Content renderers ────────────────────────────────────────── */
@@ -305,10 +323,10 @@ function renderCV() {
 
   return {
     tabs: [
-      { id: 'edu',    label: 'Education',    html: `<div class="win-pad">${edu}</div>` },
-      { id: 'exp',    label: 'Experience',   html: `<div class="win-pad">${exp}</div>` },
-      { id: 'field',  label: 'Field & Lab',  html: `<div class="win-pad">${field}</div>` },
-      { id: 'skills', label: 'Skills',       html: `<div class="win-pad"><div class="skills-list">${skills}</div></div>` },
+      { id: 'edu',    label: 'Education',               html: `<div class="win-pad">${edu}</div>` },
+      { id: 'exp',    label: 'Work Experience',        html: `<div class="win-pad">${exp}</div>` },
+      { id: 'field',  label: 'Fieldwork and Laboratory', html: `<div class="win-pad">${field}</div>` },
+      { id: 'skills', label: 'Research Toolkit',       html: `<div class="win-pad"><div class="skills-list">${skills}</div></div>` },
     ],
   };
 }
@@ -317,53 +335,42 @@ function renderPublications() {
   const papers = SITE.publications.length
     ? SITE.publications.map(p => `
         <div class="entry">
+          <div class="entry-type-badge">${p.type}</div>
           <div class="entry-title">
             ${p.url ? `<a href="${p.url}" target="_blank" rel="noopener">&ldquo;${p.title}&rdquo;</a>`
                     : `&ldquo;${p.title}&rdquo;`}
           </div>
-          <div class="entry-meta">${p.venue} &nbsp;&middot;&nbsp; ${p.status} &nbsp;&middot;&nbsp; ${p.date}</div>
+          <div class="entry-meta">${p.venue} &nbsp;&middot;&nbsp; ${p.date}</div>
         </div>
       `).join('')
     : '<p class="empty">No papers yet.</p>';
 
-  // Conferences and exhibitions merged
-  const confs = SITE.conferences.map(c => `
-    <div class="entry">
-      <div class="entry-title entry-conf">
-        ${c.url ? `<a href="${c.url}" target="_blank" rel="noopener">&ldquo;${c.title}&rdquo;</a>`
-                : `&ldquo;${c.title}&rdquo;`}
-      </div>
-      <div class="entry-meta">${c.venue} &nbsp;&middot;&nbsp; ${c.year} &nbsp;&middot;&nbsp; ${c.type}</div>
-    </div>
-  `).join('');
-
-  const exh = SITE.exhibitions.map(e => `
-    <div class="entry">
-      <div class="entry-title">
-        ${e.url ? `<a href="${e.url}" target="_blank" rel="noopener">&ldquo;${e.title}&rdquo;</a>`
-                : `&ldquo;${e.title}&rdquo;`}
-      </div>
-      <div class="entry-meta">${e.venue}, ${e.location} &nbsp;&middot;&nbsp; ${e.year} &nbsp;&middot;&nbsp; ${e.type}</div>
-    </div>
-  `).join('');
-
-  const combined = (confs || exh)
-    ? confs + (confs && exh ? '<div class="entry-divider"></div>' : '') + exh
+  const confs = SITE.conferences.length
+    ? SITE.conferences.map(c => `
+        <div class="entry">
+          <div class="entry-title">
+            ${c.url ? `<a href="${c.url}" target="_blank" rel="noopener">&ldquo;${c.title}&rdquo;</a>`
+                    : `&ldquo;${c.title}&rdquo;`}
+          </div>
+          <div class="entry-meta">${c.venue} &nbsp;&middot;&nbsp; ${c.year} &nbsp;&middot;&nbsp; ${c.type}</div>
+        </div>
+      `).join('')
     : '<p class="empty">Nothing here yet.</p>';
 
   return {
     tabs: [
       { id: 'papers', label: 'Academic Publications & Public Anthropology', html: `<div class="win-pad">${papers}</div>` },
-      { id: 'pres',   label: 'Presentations & Exhibitions',                  html: `<div class="win-pad">${combined}</div>` },
+      { id: 'pres',   label: 'Presentations',                               html: `<div class="win-pad">${confs}</div>`  },
     ],
   };
 }
 
 function renderProjects() {
   const cats = [
-    { id: 'games',    label: 'Games'    },
-    { id: 'design',   label: 'Design'   },
-    { id: 'research', label: 'Research' },
+    { id: 'video-games',   label: 'Video Games'   },
+    { id: 'mr-experience', label: 'MR Experience' },
+    { id: 'research',      label: 'Research'      },
+    { id: 'artwork',       label: 'Artwork'        },
   ];
 
   const tabs = cats.map(cat => {
@@ -384,6 +391,28 @@ function renderProjects() {
   });
 
   return { tabs };
+}
+
+/* ── Trash window ─────────────────────────────────────────────── */
+function renderTrash() {
+  const notes    = SITE.trash || [];
+  const emptiedN = parseInt(localStorage.getItem('trashEmptied') || '0');
+  const visible  = notes.slice(emptiedN);  // only notes added after last empty
+
+  const noteHtml = visible.length
+    ? visible.map(n => `
+        <div class="trash-note">
+          <span class="trash-date">${n.date}</span>
+          <span class="trash-text">${n.text}</span>
+        </div>`).join('')
+    : '<p class="empty">Trash is empty.</p>';
+
+  return `<div class="win-pad">
+    ${noteHtml}
+    <div class="trash-actions">
+      <button class="trash-empty-btn" data-count="${notes.length}">Empty Trash</button>
+    </div>
+  </div>`;
 }
 
 /* ── Project detail window (fetches markdown) ─────────────────── */
@@ -454,6 +483,12 @@ function makeIconDefs() {
         const cv = renderCV();
         wm.show('cv', { title: 'cv.md', tabs: cv.tabs, w: 540, h: 480 });
       },
+    },
+    // ── Left bottom: trash ──────────────────────────────────
+    {
+      id: 'trash', label: 'Trash', icon: SVG.trash,
+      x: 30, y: bH - 120,
+      action: () => wm.show('trash', { title: 'Trash', html: renderTrash(), w: 340, h: 300 }),
     },
     // ── Right bottom: social (stacked from bottom) ───────────
     ...SITE.social.map((s, i) => ({
