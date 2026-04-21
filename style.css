@@ -674,6 +674,10 @@ body {
   padding: 2px 10px;
 }
 .now-btn:hover { background: var(--c-text); color: var(--c-bg); }
+.now-btn-inline {
+  justify-self: start;
+  margin: 2px 0 4px;
+}
 .now-updated {
   font-family: var(--font-ui);
   font-size: var(--sz-small);

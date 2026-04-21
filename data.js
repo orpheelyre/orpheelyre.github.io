@@ -36,8 +36,8 @@ const SITE = {
     updatedAuto: true,
     by: "anyone can edit",
     status: "Writing, reading, and prototyping around material memory and digital narrative.",
-    picture: "",
-    pictureAlt: "Picture of the day",
+    picture: "assets/now/IMG_6437.jpg",
+    pictureAlt: "the historical assemblage April bought me w",
     focus: [
       "Drafting ideas around archaeology, embodiment, and landscape practice",
       "Refining project notes and publication prep",
@@ -98,7 +98,7 @@ const SITE = {
       venue: "ASAA/NZ Conference",
       year:  "December 2025",
       type:  "Oral Presentation",
-      url:   null,
+      url:   "https://static1.squarespace.com/static/563bdbb0e4b0b249b09076eb/t/69277b9c7a77366d4c4ba309/1764195228779/ASAANZ+Programme+BOOKLET+2025.pdf",
     },
   ],
 

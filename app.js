@@ -149,6 +149,9 @@ class WM {
     if (id === 'now') {
       stopNowPenguinAnimation();
       nowEditing = false;
+      nowUploadedPictureData = '';
+      nowPictureRemoved = false;
+      releaseNowPreviewObjectUrl();
     }
     if (id === 'devlog') devlogEditing = false;
     el.remove();
@@ -329,15 +332,24 @@ document.addEventListener('click', e => {
       openNowEditPasswordPrompt();
     } else if (action === 'cancel') {
       nowEditing = false;
+      releaseNowPreviewObjectUrl();
+      nowUploadedPictureData = '';
+      nowPictureRemoved = false;
       openNowWindow();
     } else if (action === 'save') {
-      saveNowData(readNowFormData());
+      if (!saveNowData(readNowFormData())) return;
       nowEditing = false;
+      releaseNowPreviewObjectUrl();
+      nowUploadedPictureData = '';
+      nowPictureRemoved = false;
       openNowWindow();
       refreshDevlogWindow();
     } else if (action === 'reset') {
       localStorage.removeItem(NOW_STORAGE_KEY);
       nowEditing = false;
+      releaseNowPreviewObjectUrl();
+      nowUploadedPictureData = '';
+      nowPictureRemoved = false;
       openNowWindow();
       refreshDevlogWindow();
     }
@@ -354,7 +366,7 @@ document.addEventListener('click', e => {
       devlogEditing = false;
       refreshDevlogWindow();
     } else if (action === 'save') {
-      saveNowData(readDevlogFormData());
+      if (!saveNowData(readDevlogFormData())) return;
       devlogEditing = false;
       refreshDevlogWindow();
     }
@@ -461,6 +473,9 @@ let nowCatMood = 'grumpy';
 let nowCatMoodTimer = null;
 let nowEditing = false;
 let devlogEditing = false;
+let nowUploadedPictureData = '';
+let nowPreviewObjectUrl = '';
+let nowPictureRemoved = false;
 
 function escapeHtml(value) {
   return String(value ?? '').replace(/[&<>"']/g, char => ({
@@ -477,6 +492,35 @@ function linesToArray(value) {
     .split('\n')
     .map(v => v.trim())
     .filter(Boolean);
+}
+
+function releaseNowPreviewObjectUrl() {
+  if (nowPreviewObjectUrl) {
+    URL.revokeObjectURL(nowPreviewObjectUrl);
+    nowPreviewObjectUrl = '';
+  }
+}
+
+function downscaleDataUrl(dataUrl, maxSide = 1600, quality = 0.82) {
+  return new Promise(resolve => {
+    const img = new Image();
+    img.onload = () => {
+      const maxDim = Math.max(img.width, img.height);
+      if (!maxDim || maxDim <= maxSide) { resolve(dataUrl); return; }
+      const scale = maxSide / maxDim;
+      const w = Math.max(1, Math.round(img.width * scale));
+      const h = Math.max(1, Math.round(img.height * scale));
+      const canvas = document.createElement('canvas');
+      canvas.width = w;
+      canvas.height = h;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) { resolve(dataUrl); return; }
+      ctx.drawImage(img, 0, 0, w, h);
+      resolve(canvas.toDataURL('image/jpeg', quality));
+    };
+    img.onerror = () => resolve(dataUrl);
+    img.src = dataUrl;
+  });
 }
 
 function getNzDateLabel(date = new Date()) {
@@ -549,7 +593,8 @@ function devlogToEditorLines(entries) {
 function normalizeNowData(raw) {
   const src = raw && typeof raw === 'object' ? raw : {};
   const devlogSource = Array.isArray(src.devlog) ? src.devlog : (Array.isArray(src.lately) ? src.lately : []);
-  const picture = typeof src.picture === 'string' ? src.picture.trim() : '';
+  const pictureRemoved = src.pictureRemoved === true;
+  const picture = pictureRemoved ? '' : (typeof src.picture === 'string' ? src.picture.trim() : '');
   const pictureAlt = String(src.pictureAlt || 'Picture of the day');
   const updatedAuto = src.updatedAuto !== false;
   const updated = updatedAuto ? getNzDateLabel() : String(src.updated || getNzDateLabel());
@@ -561,6 +606,7 @@ function normalizeNowData(raw) {
     focus: Array.isArray(src.focus) ? src.focus.map(v => String(v)).filter(Boolean) : [],
     devlog: devlogSource.map(normalizeDevlogEntry).filter(Boolean),
     picture,
+    pictureRemoved,
     pictureAlt,
   };
 }
@@ -581,8 +627,13 @@ function getNowData() {
       status: typeof override?.status === 'string' ? override.status : base.status,
       focus: Array.isArray(override?.focus) ? override.focus : base.focus,
       devlog: overrideDevlog,
-      picture: typeof override?.picture === 'string' ? override.picture : base.picture,
-      pictureAlt: typeof override?.pictureAlt === 'string' ? override.pictureAlt : base.pictureAlt,
+      pictureRemoved: override?.pictureRemoved === true,
+      picture: override?.pictureRemoved === true
+        ? ''
+        : ((typeof override?.picture === 'string' && override.picture.trim()) ? override.picture : base.picture),
+      pictureAlt: (typeof override?.pictureAlt === 'string' && override.pictureAlt.trim())
+        ? override.pictureAlt
+        : base.pictureAlt,
     });
   } catch (_) {
     return base;
@@ -590,18 +641,26 @@ function getNowData() {
 }
 
 function saveNowData(data) {
-  localStorage.setItem(NOW_STORAGE_KEY, JSON.stringify(normalizeNowData(data)));
+  try {
+    localStorage.setItem(NOW_STORAGE_KEY, JSON.stringify(normalizeNowData(data)));
+    return true;
+  } catch (_) {
+    alert('Could not save locally. Try a smaller image and save again.');
+    return false;
+  }
 }
 
 function readNowFormData() {
   const current = getNowData();
+  const manualPicture = String(document.getElementById('now-input-picture')?.value || '').trim();
   return normalizeNowData({
     updatedAuto: true,
     by: document.getElementById('now-input-by')?.value || '',
     status: document.getElementById('now-input-status')?.value || '',
     focus: linesToArray(document.getElementById('now-input-focus')?.value || ''),
     devlog: current.devlog,
-    picture: document.getElementById('now-input-picture')?.value || '',
+    pictureRemoved: nowPictureRemoved,
+    picture: nowPictureRemoved ? '' : (nowUploadedPictureData || manualPicture),
     pictureAlt: document.getElementById('now-input-picture-alt')?.value || '',
   });
 }
@@ -614,6 +673,7 @@ function readDevlogFormData() {
     status: current.status,
     focus: current.focus,
     picture: current.picture,
+    pictureRemoved: current.pictureRemoved,
     pictureAlt: current.pictureAlt,
     devlog: parseDevlogLines(document.getElementById('devlog-input-lines')?.value || ''),
   });
@@ -624,13 +684,18 @@ function bindNowEditMediaControls() {
   const urlInput = document.getElementById('now-input-picture');
   const preview = document.getElementById('now-photo-preview');
   const hint = document.getElementById('now-photo-hint');
+  const removeBtn = document.getElementById('now-remove-photo');
+  const removedInput = document.getElementById('now-input-picture-removed');
   if (!fileInput || !urlInput || !preview) return;
 
   const defaultHint = 'Image upload is saved in this browser on this device.';
   const setHint = text => { if (hint) hint.textContent = text; };
+  const currentInput = String(urlInput.value || '').trim();
+  nowPictureRemoved = removedInput?.value === '1';
+  if (currentInput.startsWith('data:image/')) nowUploadedPictureData = currentInput;
 
   const syncPreview = () => {
-    const src = (urlInput.value || '').trim();
+    const src = nowPictureRemoved ? '' : (nowUploadedPictureData || (urlInput.value || '').trim());
     if (src) {
       preview.src = src;
       preview.hidden = false;
@@ -649,24 +714,57 @@ function bindNowEditMediaControls() {
     setHint(defaultHint);
   });
 
-  urlInput.addEventListener('input', syncPreview);
-  fileInput.addEventListener('change', () => {
+  urlInput.addEventListener('input', () => {
+    nowUploadedPictureData = '';
+    nowPictureRemoved = false;
+    if (removedInput) removedInput.value = '';
+    releaseNowPreviewObjectUrl();
+    syncPreview();
+  });
+  fileInput.addEventListener('change', async () => {
     const file = fileInput.files && fileInput.files[0];
     if (!file) return;
-    if (!file.type.startsWith('image/')) {
+    const mime = String(file.type || '').toLowerCase();
+    const name = String(file.name || '').toLowerCase();
+    const hasImageExt = /\.(png|jpe?g|webp|gif)$/.test(name);
+    if (!mime.startsWith('image/') && !hasImageExt) {
       setHint('This file is not an image.');
       return;
     }
-    if (!['image/png', 'image/jpeg', 'image/webp', 'image/gif'].includes(file.type)) {
+    if (mime && !['image/png', 'image/jpeg', 'image/jpg', 'image/webp', 'image/gif'].includes(mime)) {
       setHint('Unsupported format. Please upload PNG, JPG, WEBP, or GIF.');
       return;
     }
+    releaseNowPreviewObjectUrl();
+    nowPreviewObjectUrl = URL.createObjectURL(file);
+    preview.src = nowPreviewObjectUrl;
+    preview.hidden = false;
+    nowPictureRemoved = false;
+    if (removedInput) removedInput.value = '';
+    setHint('Loaded local image. Preparing image for save...');
     const reader = new FileReader();
-    reader.onload = () => {
-      urlInput.value = String(reader.result || '');
-      syncPreview();
+    reader.onload = async () => {
+      let dataUrl = String(reader.result || '');
+      if (!dataUrl.startsWith('data:image/')) {
+        setHint('Could not read this image.');
+        return;
+      }
+      if (dataUrl.length > 450000) dataUrl = await downscaleDataUrl(dataUrl);
+      nowUploadedPictureData = dataUrl;
+      setHint('Image ready. Click Save to keep it.');
     };
     reader.readAsDataURL(file);
+  });
+  removeBtn?.addEventListener('click', () => {
+    nowUploadedPictureData = '';
+    nowPictureRemoved = true;
+    if (removedInput) removedInput.value = '1';
+    releaseNowPreviewObjectUrl();
+    urlInput.value = '';
+    fileInput.value = '';
+    preview.removeAttribute('src');
+    preview.hidden = true;
+    setHint('Photo removed.');
   });
   syncPreview();
 }
@@ -743,6 +841,7 @@ function renderNow() {
 
   const body = nowEditing
     ? `<div class="now-edit-grid">
+         <input id="now-input-picture-removed" type="hidden" value="${nowData.pictureRemoved ? '1' : ''}" />
          <div class="now-hint">Updated is automatic in NZ time: ${escapeHtml(nowData.updated)}</div>
          <label class="now-label" for="now-input-by">By</label>
          <input id="now-input-by" class="now-input" type="text" value="${escapeHtml(nowData.by)}" />
@@ -751,7 +850,8 @@ function renderNow() {
          <label class="now-label" for="now-input-picture">Picture Of The Day URL</label>
          <input id="now-input-picture" class="now-input" type="text" value="${escapeHtml(nowData.picture)}" />
          <label class="now-label" for="now-input-photo-file">Or Upload Picture</label>
-         <input id="now-input-photo-file" class="now-file" type="file" accept="image/png,image/jpeg,image/webp,image/gif" />
+         <input id="now-input-photo-file" class="now-file" type="file" accept="image/png,image/jpeg,image/jpg,image/webp,image/gif" />
+         <button id="now-remove-photo" class="now-btn now-btn-inline" type="button">Remove Photo</button>
          <label class="now-label" for="now-input-picture-alt">Picture Caption</label>
          <input id="now-input-picture-alt" class="now-input" type="text" value="${escapeHtml(nowData.pictureAlt)}" />
          <img id="now-photo-preview" class="now-photo-preview" alt="Picture preview" hidden />
@@ -1198,11 +1298,11 @@ function makeIconDefs() {
   return [
     // ── Right top: folders ───────────────────────────────────
     {
-      id: 'publications', label: 'Publications', icon: SVG.folder, iconKey: 'folder',
+      id: 'publications', label: 'publication', icon: SVG.folder, iconKey: 'folder',
       x: rX, y: 40,
       action: () => {
         const p = renderPublications();
-        wm.show('publications', { title: 'Publications', tabs: p.tabs, w: 480, h: 400 });
+        wm.show('publications', { title: 'publication', tabs: p.tabs, w: 480, h: 400 });
       },
     },
     {
