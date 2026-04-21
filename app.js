@@ -267,8 +267,6 @@ document.addEventListener('keydown', e => {
     return;
   }
   if (e.key === 'Enter' && e.target.classList.contains('cv-lock-input')) {
-    e.target.dataset.submit = '1';
-    e.target.dispatchEvent(new MouseEvent('click', { bubbles: true }));
     e.target.closest('.cv-lock-pad')?.querySelector('.cv-lock-ok')?.click();
   }
 });
@@ -415,7 +413,7 @@ document.addEventListener('click', async e => {
   }
 
   // cv password — OK button
-  if (e.target.closest('.cv-lock-ok') || e.target.closest('.cv-lock-input[data-submit]')) {
+  if (e.target.closest('.cv-lock-ok')) {
     const input = document.querySelector('.cv-lock-input');
     if (input?.value === (SITE.cvPassword || '')) {
       wm.close('cv-lock');
@@ -1071,7 +1069,7 @@ function openNowEditPasswordPrompt() {
   if (wm.open['now-lock']) { wm.focus(wm.open['now-lock']); return; }
   wm.show('now-lock', {
     title: 'now.live',
-    html: `<div class="win-pad now-lock-pad">
+    html: `<div class="now-lock-pad">
       <div class="now-lock-msg">Admin password required to edit this file.</div>
       <input class="now-lock-input" type="password" placeholder="Password" />
       <div class="now-lock-error">Incorrect password.</div>
@@ -1089,7 +1087,7 @@ function openDevlogEditPasswordPrompt() {
   if (wm.open['devlog-lock']) { wm.focus(wm.open['devlog-lock']); return; }
   wm.show('devlog-lock', {
     title: 'devlog.md',
-    html: `<div class="win-pad now-lock-pad">
+    html: `<div class="now-lock-pad">
       <div class="now-lock-msg">Admin password required to update this file.</div>
       <input class="now-lock-input" type="password" placeholder="Password" />
       <div class="now-lock-error">Incorrect password.</div>
@@ -1368,7 +1366,7 @@ function openCvPasswordPrompt() {
   if (wm.open['cv-lock']) { wm.focus(wm.open['cv-lock']); return; }
   wm.show('cv-lock', {
     title: 'cv.md',
-    html: `<div class="win-pad cv-lock-pad">
+    html: `<div class="cv-lock-pad">
       <div class="cv-lock-msg">This document is locked.</div>
       <input class="cv-lock-input" type="password" placeholder="Password" />
       <div class="cv-lock-error">Incorrect password.</div>
