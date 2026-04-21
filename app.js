@@ -1191,7 +1191,7 @@ function renderGuestbookEntries() {
   }
   return guestbookEntries.map(e => `
     <div class="gb-entry">
-      <div class="gb-entry-hd">&gt;&nbsp;${escapeHtml(e.timestamp)}&nbsp;&bull;&nbsp;${escapeHtml(e.name)}&nbsp;<span class="gb-mood-stamp">${escapeHtml(e.mood)}</span></div>
+      <div class="gb-entry-hd">&gt;&nbsp;${escapeHtml(e.ts || e.timestamp || '')}&nbsp;&bull;&nbsp;${escapeHtml(e.name)}&nbsp;<span class="gb-mood-stamp">${escapeHtml(e.mood || '')}</span></div>
       <div class="gb-entry-body">${escapeHtml(e.message)}</div>
       ${e.drawing ? `<div class="gb-entry-draw"><img src="${escapeHtml(e.drawing)}" alt="" class="gb-draw-img" /></div>` : ''}
     </div>
@@ -1292,19 +1292,65 @@ function showStickyNote(entry) {
   const desktop = document.getElementById('desktop');
   if (!desktop) return;
   const note = document.createElement('div');
-  note.className = 'sticky-note';
+  note.className = 'sticky-note is-falling';
+
   const rot = (Math.random() * 8 - 4).toFixed(1);
   note.style.setProperty('--rot', rot + 'deg');
-  note.style.left = Math.floor(Math.random() * Math.max(60, desktop.offsetWidth  - 200) + 30) + 'px';
-  note.style.top  = Math.floor(Math.random() * Math.max(60, desktop.offsetHeight - 140) + 30) + 'px';
-  const msg = entry.message.length > 90 ? entry.message.slice(0, 90) + '\u2026' : entry.message;
+
+  const startX = Math.min(
+    Math.floor(Math.random() * Math.max(60, desktop.offsetWidth - 220) + 30),
+    desktop.offsetWidth - 190
+  );
+  const startY = 30 + Math.floor(Math.random() * 40);
+  note.style.left = startX + 'px';
+  note.style.top  = startY + 'px';
+  note.style.zIndex = 9000;
+
+  const fallDist = desktop.offsetHeight - startY + 10;
+  const fallDur  = (2.5 + Math.random() * 2).toFixed(1);
+  note.style.setProperty('--fall-dist', fallDist + 'px');
+  note.style.setProperty('--fall-dur', fallDur + 's');
+
+  const ts  = entry.ts || entry.timestamp || '';
+  const msg = (entry.message || '').length > 90 ? entry.message.slice(0, 90) + '\u2026' : (entry.message || '');
   note.innerHTML = `
-    <div class="sticky-who">${escapeHtml(entry.name)}&nbsp;${escapeHtml(entry.mood)}</div>
+    <button class="sticky-close" aria-label="Close">\u00d7</button>
+    <div class="sticky-who">${escapeHtml(entry.name)}&nbsp;${escapeHtml(entry.mood || '')}</div>
+    ${ts ? `<div class="sticky-ts">${escapeHtml(ts)}</div>` : ''}
     <div class="sticky-txt">${escapeHtml(msg)}</div>
     ${entry.drawing ? '<div class="sticky-draw">\u270f drawing</div>' : ''}
   `;
   desktop.appendChild(note);
-  setTimeout(() => note.remove(), 4500);
+
+  note.addEventListener('animationend', () => note.remove());
+
+  note.querySelector('.sticky-close').addEventListener('click', () => note.remove());
+
+  let dragging = false, ox = 0, oy = 0;
+  note.addEventListener('pointerdown', e => {
+    if (e.target.closest('.sticky-close')) return;
+    // Freeze at current visual position
+    const deskRect = desktop.getBoundingClientRect();
+    const noteRect = note.getBoundingClientRect();
+    note.classList.remove('is-falling');
+    note.classList.add('is-caught');
+    note.style.left = (noteRect.left - deskRect.left) + 'px';
+    note.style.top  = (noteRect.top  - deskRect.top)  + 'px';
+    note.style.transform = `rotate(${rot}deg)`;
+    note.style.zIndex = 9001;
+
+    dragging = true;
+    ox = e.clientX - (noteRect.left - deskRect.left);
+    oy = e.clientY - (noteRect.top  - deskRect.top);
+    note.setPointerCapture(e.pointerId);
+    e.preventDefault();
+  });
+  note.addEventListener('pointermove', e => {
+    if (!dragging) return;
+    note.style.left = (e.clientX - ox) + 'px';
+    note.style.top  = (e.clientY - oy) + 'px';
+  });
+  note.addEventListener('pointerup', () => { dragging = false; });
 }
 
 async function submitGuestbook() {

@@ -1232,26 +1232,32 @@ body {
 }
 .gb-clr:hover { background: var(--c-text); color: var(--c-bg); }
 
-/* Sticky note drop */
-@keyframes sticky-drop {
-  0%   { opacity: 0; transform: translateY(-14px) rotate(var(--rot)); }
-  14%  { opacity: 1; transform: translateY(0)     rotate(var(--rot)); }
-  82%  { opacity: 1; transform: translateY(0)     rotate(var(--rot)); }
-  100% { opacity: 0; transform: translateY(6px)   rotate(var(--rot)); }
+/* Sticky note fall */
+@keyframes sticky-fall {
+  0%   { opacity: 1; transform: translateY(0)                   rotate(var(--rot)); }
+  88%  { opacity: 1; transform: translateY(var(--fall-dist))    rotate(var(--rot)); }
+  100% { opacity: 0; transform: translateY(calc(var(--fall-dist) + 24px)) rotate(var(--rot)); }
 }
 .sticky-note {
   position: absolute;
-  width: 168px;
+  width: 172px;
   background: var(--c-bg);
   border: 1px solid var(--c-border);
   box-shadow: 3px 3px 0 var(--c-shadow);
   padding: 8px 10px;
   z-index: 9000;
-  pointer-events: none;
-  animation: sticky-drop 4.5s ease forwards;
+  pointer-events: all;
+  cursor: grab;
   font-family: var(--font-ui);
   font-size: var(--sz-small);
+  user-select: none;
+  transform: rotate(var(--rot));
 }
+.sticky-note.is-falling {
+  animation: sticky-fall var(--fall-dur, 4s) linear forwards;
+}
+.sticky-note.is-caught { animation: none; }
+.sticky-note:active { cursor: grabbing; }
 .sticky-note::before {
   content: '';
   display: block;
@@ -1263,6 +1269,16 @@ body {
   );
   margin: -8px -10px 8px;
 }
-.sticky-who { font-weight: bold; margin-bottom: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sticky-close {
+  position: absolute; top: 6px; right: 6px;
+  width: 14px; height: 14px;
+  border: 1px solid var(--c-border); background: var(--c-bg);
+  font-size: 10px; line-height: 12px; text-align: center;
+  cursor: pointer; padding: 0;
+  font-family: var(--font-ui);
+}
+.sticky-close:hover { background: var(--c-shadow); }
+.sticky-who { font-weight: bold; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-right: 16px; }
+.sticky-ts  { color: var(--c-text-muted); font-size: 9px; margin-bottom: 3px; }
 .sticky-txt { color: var(--c-text-muted); line-height: 1.4; font-size: 10px; }
 .sticky-draw { margin-top: 3px; color: var(--c-text-muted); font-size: 10px; }
