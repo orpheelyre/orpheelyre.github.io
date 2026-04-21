@@ -1000,6 +1000,8 @@ body {
   font-weight: bold;
 }
 .bin-error-ok:hover { background: var(--c-text); color: var(--c-bg); }
+.mac-notice .mac-error-msg { text-align: center; }
+.mac-notice .mac-error-actions { justify-content: center; }
 
 /* ── Scrollbars (WebKit) ────────────────────────────────────────── */
 ::-webkit-scrollbar { width: 15px; height: 15px; }

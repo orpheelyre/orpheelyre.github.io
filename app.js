@@ -154,6 +154,10 @@ class WM {
       releaseNowPreviewObjectUrl();
     }
     if (id === 'devlog') devlogEditing = false;
+    if (id === 'sync-notice' && syncNoticeTimer) {
+      clearTimeout(syncNoticeTimer);
+      syncNoticeTimer = null;
+    }
     el.remove();
     delete this.open[id];
   }
@@ -439,6 +443,14 @@ document.addEventListener('click', async e => {
     return;
   }
   if (e.target.closest('.bin-error-ok')) { wm.close('bin-error'); return; }
+  if (e.target.closest('.sync-notice-ok')) {
+    wm.close('sync-notice');
+    if (syncNoticeTimer) {
+      clearTimeout(syncNoticeTimer);
+      syncNoticeTimer = null;
+    }
+    return;
+  }
 });
 
 /* ── Content renderers ────────────────────────────────────────── */
@@ -499,6 +511,7 @@ let nowSharedDataHash = '';
 let nowSyncPollTimer = null;
 let nowSyncBusy = false;
 let nowAdminSessionPassword = '';
+let syncNoticeTimer = null;
 
 function escapeHtml(value) {
   return String(value ?? '').replace(/[&<>"']/g, char => ({
@@ -646,6 +659,26 @@ function setNowAdminSessionPassword(value) {
   nowAdminSessionPassword = String(value || '').trim();
 }
 
+function showSyncNotice(message = 'Saved to now.live.') {
+  if (!wm) return;
+  const html = `<div class="mac-error mac-notice">
+    <div class="mac-error-msg">${escapeHtml(message)}</div>
+    <div class="mac-error-actions"><button class="bin-error-ok sync-notice-ok">OK</button></div>
+  </div>`;
+  const existing = wm.open?.['sync-notice'];
+  if (existing) {
+    existing.querySelector('.win-body').innerHTML = `<div class="win-pad">${html}</div>`;
+    wm.focus(existing);
+  } else {
+    wm.show('sync-notice', { title: 'Notice', html, w: 280, h: 138 });
+  }
+  if (syncNoticeTimer) clearTimeout(syncNoticeTimer);
+  syncNoticeTimer = setTimeout(() => {
+    wm?.close?.('sync-notice');
+    syncNoticeTimer = null;
+  }, 1600);
+}
+
 function readNowDataFromLocal(base) {
   try {
     const raw = localStorage.getItem(NOW_STORAGE_KEY);
@@ -746,18 +779,21 @@ async function syncNowDataFromRemote() {
   }
 }
 
-async function saveNowData(data) {
+async function saveNowData(data, options = {}) {
+  const successMessage = String(options.successMessage || 'Saved to now.live.');
   const normalized = normalizeNowData(data);
   if (!NOW_SYNC.enabled || !nowSyncWriteReady()) {
     applyNowSharedData(normalized, { persistLocal: true, refresh: false });
     if (NOW_SYNC.enabled && !nowSyncWriteReady()) {
       alert('Live endpoint is not configured. Saved locally only.');
     }
+    if (!NOW_SYNC.enabled) showSyncNotice('Saved locally.');
     return true;
   }
   try {
     const published = await publishNowDataToEndpoint(normalized);
     applyNowSharedData(published, { persistLocal: true, refresh: false });
+    showSyncNotice(successMessage);
     return true;
   } catch (err) {
     try { localStorage.setItem(NOW_STORAGE_KEY, JSON.stringify(normalized)); } catch (_) {}
@@ -772,9 +808,10 @@ async function resetNowData() {
     nowSharedData = null;
     nowSharedDataHash = '';
     try { localStorage.removeItem(NOW_STORAGE_KEY); } catch (_) {}
+    showSyncNotice('Restored local defaults.');
     return true;
   }
-  return saveNowData(base);
+  return saveNowData(base, { successMessage: 'Restored now.live defaults.' });
 }
 
 function initNowSync() {
