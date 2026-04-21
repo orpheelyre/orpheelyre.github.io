@@ -14,7 +14,7 @@
     },
     {
       "date": "21 April 2026",
-      "text": "real-time read and write updated via cloudflare"
+      "text": "real-time read and write updated via cloudflare worker"
     }
   ],
   "picture": "assets/now/IMG_6437.jpg",
