@@ -13,7 +13,7 @@
 const SITE = {
 
   name:    "Orlan Y. Syshui",
-  tagline: "Material Evidence · Field Experience · Digital Narrative",
+  tagline: "Material Practice · Field Experience · Digital Narrative",
   bio:     "Researcher and artist working at the intersection of archaeology, anthropology, and experimental media. Doing Honours at University of Otago. Current work sits at the edges of landscape, heritage, medical anthropology, and memory politics, tracing the processual and relational conditions through which sites and institutions accumulate afterlives.",
   bioSecond: "A tomb of glass and a fossil of green.",
 

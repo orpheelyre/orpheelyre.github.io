@@ -156,9 +156,26 @@ class WM {
   focus(el) { el.style.zIndex = ++this.z; }
 
   _build(id, opts) {
-    const off = (this.cascade++ % 7) * 22;
-    const x   = (opts.x || 110) + off;
-    const y   = (opts.y || 60)  + off;
+    const isMobile = window.innerWidth <= 768;
+    const off = (this.cascade++ % (isMobile ? 4 : 7)) * (isMobile ? 14 : 22);
+
+    let w = opts.w || 480;
+    let h = opts.h || 360;
+    if (isMobile) {
+      w = Math.min(w, Math.max(260, window.innerWidth - 16));
+      h = Math.min(h, Math.max(180, window.innerHeight - 44));
+    }
+
+    let x = (opts.x || 110) + off;
+    let y = (opts.y || 60)  + off;
+    if (isMobile) {
+      const minX = 6;
+      const minY = 36;
+      const maxX = Math.max(minX, window.innerWidth - w - 6);
+      const maxY = Math.max(minY, window.innerHeight - h - 6);
+      x = Math.max(minX, Math.min(maxX, x));
+      y = Math.max(minY, Math.min(maxY, y));
+    }
 
     const el  = document.createElement('div');
     el.className     = 'window';
@@ -166,8 +183,8 @@ class WM {
     el.dataset.winId = id;
     el.style.left    = x + 'px';
     el.style.top     = y + 'px';
-    el.style.width   = (opts.w || 480) + 'px';
-    if (opts.h) el.style.height = opts.h + 'px';
+    el.style.width   = w + 'px';
+    if (opts.h || isMobile) el.style.height = h + 'px';
 
     const body = opts.tabs
       ? buildTabs(id, opts.tabs)
@@ -259,12 +276,25 @@ document.addEventListener('click', e => {
     if (win.dataset.zoomed) {
       win.style.width  = win.dataset.prevW + 'px';
       win.style.height = win.dataset.prevH + 'px';
+      if (win.dataset.prevX) win.style.left = win.dataset.prevX + 'px';
+      if (win.dataset.prevY) win.style.top  = win.dataset.prevY + 'px';
+      delete win.dataset.mobileFullscreen;
       delete win.dataset.zoomed;
     } else {
       win.dataset.prevW = win.offsetWidth;
       win.dataset.prevH = win.offsetHeight;
-      win.style.width  = '640px';
-      win.style.height = '520px';
+      win.dataset.prevX = parseInt(win.style.left) || 0;
+      win.dataset.prevY = parseInt(win.style.top)  || 0;
+      if (window.innerWidth <= 768) {
+        win.dataset.mobileFullscreen = '1';
+        win.style.left   = '0px';
+        win.style.top    = '28px';
+        win.style.width  = '100vw';
+        win.style.height = 'calc(100vh - 28px)';
+      } else {
+        win.style.width  = '640px';
+        win.style.height = '520px';
+      }
       win.dataset.zoomed = '1';
     }
     return;
@@ -368,20 +398,35 @@ document.addEventListener('click', e => {
 /* ── Content renderers ────────────────────────────────────────── */
 const NOW_STORAGE_KEY = 'now:override';
 
-const PENGUIN_FRAMES = [
-  String.raw` /\_/\
+const CAT_FRAMES = {
+  grumpy: [
+    String.raw` /\_/\
 (=>m<=)
  (")(")`,
-  String.raw` /\_/\
+    String.raw` /\_/\
 (=>m<=)
  (")(")~`,
-  String.raw` /\_/\
+    String.raw` /\_/\
 ~(=>m<=)
  (")(")`,
-];
+  ],
+  happy: [
+    String.raw` /\_/\
+(=^w^=)
+ (")(")`,
+    String.raw` /\_/\
+(=^w^=)
+ (")(")~`,
+    String.raw` /\_/\
+~(=^w^=)
+ (")(")`,
+  ],
+};
 
 let nowPenguinTimer = null;
 let nowPenguinFrame = 0;
+let nowCatMood = 'grumpy';
+let nowCatMoodTimer = null;
 let nowEditing = false;
 
 function escapeHtml(value) {
@@ -450,19 +495,48 @@ function stopNowPenguinAnimation() {
     clearInterval(nowPenguinTimer);
     nowPenguinTimer = null;
   }
+  if (nowCatMoodTimer) {
+    clearTimeout(nowCatMoodTimer);
+    nowCatMoodTimer = null;
+  }
+  nowCatMood = 'grumpy';
+}
+
+function setNowCatMood(mood, fallbackMs = 0) {
+  nowCatMood = mood;
+  if (nowCatMoodTimer) {
+    clearTimeout(nowCatMoodTimer);
+    nowCatMoodTimer = null;
+  }
+  if (fallbackMs > 0) {
+    nowCatMoodTimer = setTimeout(() => {
+      nowCatMood = 'grumpy';
+      nowCatMoodTimer = null;
+    }, fallbackMs);
+  }
+}
+
+function bindNowCatInteractions(el) {
+  if (!el) return;
+  el.onpointerenter = () => setNowCatMood('happy');
+  el.onpointerleave = () => setNowCatMood('grumpy');
+  el.onmousedown = () => setNowCatMood('happy', 1200);
+  el.ontouchstart = () => setNowCatMood('happy', 1200);
 }
 
 function startNowPenguinAnimation() {
   stopNowPenguinAnimation();
   const el = document.getElementById('now-penguin-frame');
   if (!el) return;
-  el.textContent = PENGUIN_FRAMES[0];
+  bindNowCatInteractions(el);
+  el.textContent = CAT_FRAMES.grumpy[0];
   nowPenguinFrame = 1;
   nowPenguinTimer = setInterval(() => {
     const frameEl = document.getElementById('now-penguin-frame');
     if (!frameEl) { stopNowPenguinAnimation(); return; }
-    frameEl.textContent = PENGUIN_FRAMES[nowPenguinFrame];
-    nowPenguinFrame = (nowPenguinFrame + 1) % PENGUIN_FRAMES.length;
+    const frames = CAT_FRAMES[nowCatMood] || CAT_FRAMES.grumpy;
+    frameEl.textContent = frames[nowPenguinFrame];
+    nowPenguinFrame = (nowPenguinFrame + 1) % frames.length;
   }, 260);
 }
 
@@ -496,7 +570,7 @@ function renderNow() {
 
   return `
     <div class="now-wrap">
-      <pre id="now-penguin-frame" class="now-penguin-ascii" aria-label="Animated ASCII cat"></pre>
+      <pre id="now-penguin-frame" class="now-penguin-ascii" aria-label="Animated ASCII cat. Hover to pat."></pre>
       <div class="now-actions">${editControls}</div>
       ${body}
     </div>
