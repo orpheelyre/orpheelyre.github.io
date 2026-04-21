@@ -28,9 +28,9 @@ const SITE = {
 
   // ── Social / external links (rendered as desktop icons) ─────────
   social: [
-    { id: "instagram", label: "Photography", url: "https://www.instagram.com/42inchestomars/",   icon: "camera"    },
-    { id: "linkedin",  label: "LinkedIn",    url: "https://www.linkedin.com/in/42inchestomars/", icon: "briefcase" },
-    { id: "itchio",    label: "itch.io",     url: "https://42inchestomars.itch.io",              icon: "gamepad"   },
+    { id: "instagram", label: "Instagram", url: "https://www.instagram.com/42inchestomars/",   icon: "camera"    },
+    { id: "linkedin",  label: "LinkedIn",  url: "https://www.linkedin.com/in/42inchestomars/", icon: "briefcase" },
+    { id: "itchio",    label: "itch.io",   url: "https://42inchestomars.itch.io",              icon: "gamepad"   },
   ],
 
   // ── Education ────────────────────────────────────────────────────
@@ -78,40 +78,40 @@ const SITE = {
   ],
 
   // ── Exhibitions & Creative Dissemination ─────────────────────────
-  // Template: { title, type, url, events: [{name, location, year}] }
+  // Template: { title, venue, location, year, type, url }
   exhibitions: [
-    {
-      title:  "Whalefall Haven",
-      type:   "Game",
-      url:    "https://store.steampowered.com/app/3061230/Whalefall_Haven/",
-      events: [
-        { name: "Gamescom",             location: "Cologne",  year: "2023" },
-        { name: "London Games Festival", location: "London",  year: "2024" },
-        { name: "CCG Expo",             location: "Shanghai", year: "2024" },
-        { name: "Tokyo Game Show",      location: "Tokyo",    year: "2024" },
-      ],
-    },
+    { title: "Whalefall Haven", venue: "Gamescom",             location: "Cologne",  year: "2023", type: "Booth Exhibition", url: "https://store.steampowered.com/app/3061230/Whalefall_Haven/" },
+    { title: "Whalefall Haven", venue: "London Games Festival", location: "London",   year: "2024", type: "Booth Exhibition", url: "https://store.steampowered.com/app/3061230/Whalefall_Haven/" },
+    { title: "Whalefall Haven", venue: "CCG Expo",              location: "Shanghai", year: "2024", type: "Booth Exhibition", url: "https://store.steampowered.com/app/3061230/Whalefall_Haven/" },
+    { title: "Whalefall Haven", venue: "Tokyo Game Show",       location: "Tokyo",    year: "2024", type: "Booth Exhibition", url: "https://store.steampowered.com/app/3061230/Whalefall_Haven/" },
   ],
 
   // ── Projects ─────────────────────────────────────────────────────
   // category: "games" | "design" | "research"
-  // Template: { title, category, description, url, tags, status }
+  // Template: { id, title, category, description, url, tags, status, mdFile }
+  // mdFile: path to a markdown file in projects/ — click opens a detail window
   projects: [
     {
+      id:          "whalefall-haven",
       title:       "Whalefall Haven",
       category:    "games",
-      description: "An immersive role-playing game featuring deep-sea world-building and narrative design. Project Manager, World-builder, and Lead UX Designer.",
+      role:        "Project Manager · World-builder · Lead UX Designer",
+      description: "An immersive role-playing game featuring deep-sea world-building and narrative design.",
       url:         "https://store.steampowered.com/app/3061230/Whalefall_Haven/",
       tags:        ["game design", "UX", "world-building", "narrative"],
       status:      "In Development",
+      mdFile:      "projects/whalefall-haven.md",
     },
     {
+      id:          "urban-heritage-platform",
       title:       "Urban Heritage Exploration Platform",
       category:    "design",
+      role:        "Lead UX Designer · Research Collaborator",
       description: "Interactive UX/UI flows for an urban heritage exploration platform in collaboration with academic and industry partners. Digital Heritage Lab, NYU Shanghai.",
       url:         null,
       tags:        ["UX/UI", "digital heritage", "interactive design"],
       status:      "Completed 2025",
+      mdFile:      "projects/urban-heritage-platform.md",
     },
   ],
 
@@ -164,6 +164,24 @@ const SITE = {
     },
   ],
 
+  // ── Field & Lab Experience ───────────────────────────────────────
+  // Template: { title, org, location, period, bullets }
+  // Add fieldwork, excavations, surveys, lab placements here
+  fieldExperience: [
+    {
+      title:    "Archaeology Lab Assistant (Volunteer)",
+      org:      "Dept. of Social Anthropology and Archaeology, University of Otago",
+      location: "Dunedin, Aotearoa",
+      period:   "March – June 2025",
+      bullets: [
+        "Pre-processed archaeological samples for weighing and analysis.",
+        "Conducted manual sorting and removal of contaminants to prepare clean subsamples.",
+        "Ensured label and ID integrity across multi-phase analysis workflows.",
+      ],
+    },
+    // Add field surveys, excavations, ethnographic fieldwork below:
+  ],
+
   // ── Research Toolkits ────────────────────────────────────────────
   skills: [
     "GIS and Spatial Analysis",
@@ -173,5 +191,6 @@ const SITE = {
     "Academic Writing & Theory-Building",
     "UIUX Research & Design",
     "Interactive Cultural Storytelling",
+    "Archaeological Survey and Excavation",
   ],
 };

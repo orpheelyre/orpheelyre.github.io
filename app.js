@@ -5,9 +5,6 @@
 // ═══════════════════════════════════════════════════════════════
 
 /* ── SVG Icons ────────────────────────────────────────────────── */
-// All icons use CSS variables --icon-fill / --icon-stroke so they
-// respond to theme changes and selection states automatically.
-
 const SVG = {
   document: `<svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
     <rect x="4" y="1" width="18" height="26" fill="var(--icon-fill)" stroke="var(--icon-stroke)" stroke-width="1.5"/>
@@ -53,7 +50,7 @@ const SVG = {
 
 /* ── Drag State ───────────────────────────────────────────────── */
 const drag = {
-  active: null,   // { type, el, id?, sx, sy, ox, oy, ow?, oh? }
+  active: null,
   moved:  false,
 };
 
@@ -86,23 +83,20 @@ document.addEventListener('mouseup', () => {
       parseInt(drag.active.el.style.left),
       parseInt(drag.active.el.style.top));
   }
-  const prev = drag.active;
   drag.active = null;
   setTimeout(() => { if (!drag.active) drag.moved = false; }, 0);
 });
 
-/* ── Touch support (tablet / large-screen touch) ─────────────── */
+/* ── Touch support ────────────────────────────────────────────── */
 function touchCoord(e) { return { clientX: e.touches[0].clientX, clientY: e.touches[0].clientY }; }
 
 document.addEventListener('touchmove', e => {
   if (!drag.active) return;
   e.preventDefault();
-  const t = touchCoord(e);
-  const synth = new MouseEvent('mousemove', t);
-  document.dispatchEvent(synth);
+  document.dispatchEvent(new MouseEvent('mousemove', touchCoord(e)));
 }, { passive: false });
 
-document.addEventListener('touchend', e => {
+document.addEventListener('touchend', () => {
   if (!drag.active) return;
   document.dispatchEvent(new MouseEvent('mouseup'));
 });
@@ -116,7 +110,7 @@ class WM {
   constructor(desktop) {
     this.desktop  = desktop;
     this.z        = 100;
-    this.open     = {};   // id → element
+    this.open     = {};
     this.cascade  = 0;
   }
 
@@ -126,6 +120,7 @@ class WM {
     this.desktop.appendChild(el);
     this.open[id] = el;
     this.focus(el);
+    return el;
   }
 
   close(id) {
@@ -143,11 +138,12 @@ class WM {
     const y   = (opts.y || 60)  + off;
 
     const el  = document.createElement('div');
-    el.className    = 'window';
+    el.className     = 'window';
+    el.id            = 'win-' + id;
     el.dataset.winId = id;
-    el.style.left   = x + 'px';
-    el.style.top    = y + 'px';
-    el.style.width  = (opts.w || 480) + 'px';
+    el.style.left    = x + 'px';
+    el.style.top     = y + 'px';
+    el.style.width   = (opts.w || 480) + 'px';
     if (opts.h) el.style.height = opts.h + 'px';
 
     const body = opts.tabs
@@ -184,7 +180,7 @@ function buildTabs(winId, tabs) {
   return `<div class="tabs-bar">${btns}</div><div class="tabs-panels">${panels}</div>`;
 }
 
-/* ── Global drag delegation (mouse + touch) ───────────────────── */
+/* ── Global event delegation ──────────────────────────────────── */
 function startWinDrag(target, cx, cy) {
   const bar = target.closest('.win-bar');
   if (bar && !target.closest('.win-close') && !target.closest('.win-zoom')) {
@@ -211,18 +207,17 @@ function startWinDrag(target, cx, cy) {
 document.addEventListener('mousedown', e => {
   if (startWinDrag(e.target, e.clientX, e.clientY)) e.preventDefault();
 });
-
 document.addEventListener('touchstart', e => {
   const t = e.touches[0];
   startWinDrag(e.target, t.clientX, t.clientY);
 }, { passive: true });
 
 document.addEventListener('click', e => {
-  // Close button
+  // Window close
   const closeBtn = e.target.closest('.win-close');
   if (closeBtn) { wm.close(closeBtn.dataset.id); return; }
 
-  // Zoom button
+  // Window zoom
   const zoomBtn = e.target.closest('.win-zoom');
   if (zoomBtn) {
     const win = zoomBtn.closest('.window');
@@ -240,16 +235,22 @@ document.addEventListener('click', e => {
     return;
   }
 
-  // Tab switching
+  // Tab switch
   const tab = e.target.closest('.tab');
   if (tab) {
-    const bar    = tab.closest('.tabs-bar');
-    const body   = bar.closest('.win-body');
+    const bar  = tab.closest('.tabs-bar');
+    const body = bar.closest('.win-body');
     bar.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
     body.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
     tab.classList.add('active');
-    const panel = document.getElementById(tab.dataset.target);
-    if (panel) panel.classList.add('active');
+    document.getElementById(tab.dataset.target)?.classList.add('active');
+    return;
+  }
+
+  // Project card → detail window
+  const card = e.target.closest('.project-card');
+  if (card) {
+    openProjectDetail(card.dataset.projectId);
     return;
   }
 });
@@ -264,10 +265,7 @@ function renderAbout() {
     <div class="section-head">Academic Interests</div>
     <div class="interest-grid">${interests}</div>
     <div class="section-head">Contact</div>
-    <div class="contact-row">
-      <span>&#9993;</span>
-      <a href="mailto:${SITE.email}">${SITE.email}</a>
-    </div>
+    <div class="contact-row">&#9993;&nbsp; <a href="mailto:${SITE.email}">${SITE.email}</a></div>
   `;
 }
 
@@ -284,30 +282,35 @@ function renderCV() {
   `).join('');
 
   const exp = SITE.experience.map(e => `
-    <div style="margin-bottom:14px">
-      <div class="exp-period">${e.period} — ${e.location}</div>
+    <div class="exp-block">
+      <div class="exp-period">${e.period} &mdash; ${e.location}</div>
       <div class="exp-title">${e.title}</div>
       <div class="exp-org">${e.org}</div>
-      <ul class="exp-bullets">
-        ${e.bullets.map(b => `<li>${b}</li>`).join('')}
-      </ul>
+      <ul class="exp-bullets">${e.bullets.map(b => `<li>${b}</li>`).join('')}</ul>
     </div>
   `).join('');
 
+  const field = (SITE.fieldExperience || []).length
+    ? SITE.fieldExperience.map(f => `
+        <div class="exp-block">
+          <div class="exp-period">${f.period} &mdash; ${f.location}</div>
+          <div class="exp-title">${f.title}</div>
+          <div class="exp-org">${f.org}</div>
+          <ul class="exp-bullets">${f.bullets.map(b => `<li>${b}</li>`).join('')}</ul>
+        </div>
+      `).join('')
+    : '<p class="empty">Field and lab experience entries coming soon.</p>';
+
   const skills = SITE.skills.map(s => `<span class="tag">${s}</span>`).join('');
 
-  return `
-    <div class="cv-section">
-      <div class="section-head">Education</div>${edu}
-    </div>
-    <div class="cv-section">
-      <div class="section-head">Experience</div>${exp}
-    </div>
-    <div class="cv-section">
-      <div class="section-head">Research Toolkits</div>
-      <div class="skills-list">${skills}</div>
-    </div>
-  `;
+  return {
+    tabs: [
+      { id: 'edu',    label: 'Education',    html: `<div class="win-pad">${edu}</div>` },
+      { id: 'exp',    label: 'Experience',   html: `<div class="win-pad">${exp}</div>` },
+      { id: 'field',  label: 'Field & Lab',  html: `<div class="win-pad">${field}</div>` },
+      { id: 'skills', label: 'Skills',       html: `<div class="win-pad"><div class="skills-list">${skills}</div></div>` },
+    ],
+  };
 }
 
 function renderPublications() {
@@ -315,46 +318,43 @@ function renderPublications() {
     ? SITE.publications.map(p => `
         <div class="entry">
           <div class="entry-title">
-            ${p.url ? `<a href="${p.url}" target="_blank" rel="noopener">"${p.title}"</a>`
-                    : `"${p.title}"`}
+            ${p.url ? `<a href="${p.url}" target="_blank" rel="noopener">&ldquo;${p.title}&rdquo;</a>`
+                    : `&ldquo;${p.title}&rdquo;`}
           </div>
-          <div class="entry-meta">${p.venue} &nbsp;·&nbsp; ${p.status} &nbsp;·&nbsp; ${p.date}</div>
+          <div class="entry-meta">${p.venue} &nbsp;&middot;&nbsp; ${p.status} &nbsp;&middot;&nbsp; ${p.date}</div>
         </div>
       `).join('')
     : '<p class="empty">No papers yet.</p>';
 
-  const confs = SITE.conferences.length
-    ? SITE.conferences.map(c => `
-        <div class="entry">
-          <div class="entry-title">
-            ${c.url ? `<a href="${c.url}" target="_blank" rel="noopener">"${c.title}"</a>`
-                    : `"${c.title}"`}
-          </div>
-          <div class="entry-meta">${c.venue} &nbsp;·&nbsp; ${c.year} &nbsp;·&nbsp; ${c.type}</div>
-        </div>
-      `).join('')
-    : '<p class="empty">No conference presentations yet.</p>';
+  // Conferences and exhibitions merged
+  const confs = SITE.conferences.map(c => `
+    <div class="entry">
+      <div class="entry-title entry-conf">
+        ${c.url ? `<a href="${c.url}" target="_blank" rel="noopener">&ldquo;${c.title}&rdquo;</a>`
+                : `&ldquo;${c.title}&rdquo;`}
+      </div>
+      <div class="entry-meta">${c.venue} &nbsp;&middot;&nbsp; ${c.year} &nbsp;&middot;&nbsp; ${c.type}</div>
+    </div>
+  `).join('');
 
-  const exh = SITE.exhibitions.length
-    ? SITE.exhibitions.map(e => `
-        <div class="entry">
-          <div class="entry-title">
-            ${e.url ? `<a href="${e.url}" target="_blank" rel="noopener">${e.title}</a>`
-                    : e.title}
-            <span style="font-style:normal;font-size:11px;color:var(--c-text-muted)"> — ${e.type}</span>
-          </div>
-          <div class="entry-events">
-            ${e.events.map(ev => `<span>${ev.name} ${ev.year}, ${ev.location}</span>`).join('')}
-          </div>
-        </div>
-      `).join('')
-    : '<p class="empty">No exhibitions yet.</p>';
+  const exh = SITE.exhibitions.map(e => `
+    <div class="entry">
+      <div class="entry-title">
+        ${e.url ? `<a href="${e.url}" target="_blank" rel="noopener">&ldquo;${e.title}&rdquo;</a>`
+                : `&ldquo;${e.title}&rdquo;`}
+      </div>
+      <div class="entry-meta">${e.venue}, ${e.location} &nbsp;&middot;&nbsp; ${e.year} &nbsp;&middot;&nbsp; ${e.type}</div>
+    </div>
+  `).join('');
+
+  const combined = (confs || exh)
+    ? confs + (confs && exh ? '<div class="entry-divider"></div>' : '') + exh
+    : '<p class="empty">Nothing here yet.</p>';
 
   return {
     tabs: [
-      { id: 'papers', label: 'Papers',      html: papers },
-      { id: 'conf',   label: 'Conferences', html: confs  },
-      { id: 'exh',    label: 'Exhibitions', html: exh    },
+      { id: 'papers', label: 'Academic Publications & Public Anthropology', html: `<div class="win-pad">${papers}</div>` },
+      { id: 'pres',   label: 'Presentations & Exhibitions',                  html: `<div class="win-pad">${combined}</div>` },
     ],
   };
 }
@@ -370,94 +370,111 @@ function renderProjects() {
     const items = SITE.projects.filter(p => p.category === cat.id);
     const html = items.length
       ? items.map(p => `
-          <div class="project-card">
-            <div class="project-title">
-              ${p.url ? `<a href="${p.url}" target="_blank" rel="noopener">${p.title}</a>`
-                      : p.title}
-            </div>
+          <div class="project-card" data-project-id="${p.id}">
+            <div class="project-title">${p.title} <span class="project-open-hint">↗</span></div>
+            ${p.role ? `<div class="project-role">${p.role}</div>` : ''}
             <div class="project-desc">${p.description}</div>
-            <div class="project-tags">
-              ${p.tags.map(t => `<span class="tag">${t}</span>`).join('')}
-            </div>
+            <div class="project-tags">${p.tags.map(t => `<span class="tag">${t}</span>`).join('')}</div>
             <div class="project-status">${p.status}</div>
           </div>
         `).join('')
       : '<p class="empty">Nothing here yet.</p>';
 
-    return { id: cat.id, label: cat.label, html };
+    return { id: cat.id, label: cat.label, html: `<div class="win-pad">${html}</div>` };
   });
 
   return { tabs };
 }
 
+/* ── Project detail window (fetches markdown) ─────────────────── */
+function openProjectDetail(id) {
+  const p = SITE.projects.find(proj => proj.id === id);
+  if (!p) return;
+
+  const winId = 'proj-' + id;
+  if (wm.open[winId]) { wm.focus(wm.open[winId]); return; }
+
+  const el = wm.show(winId, {
+    title: p.title,
+    html:  '<p class="empty" style="padding:20px 0">Loading&hellip;</p>',
+    w: 560, h: 500,
+  });
+
+  if (!p.mdFile) return;
+
+  fetch(p.mdFile)
+    .then(r => { if (!r.ok) throw new Error(); return r.text(); })
+    .then(md => {
+      const win = document.getElementById('win-' + winId);
+      if (win) win.querySelector('.win-pad').innerHTML =
+        `<div class="md-content">${marked.parse(md)}</div>`;
+    })
+    .catch(() => {
+      const win = document.getElementById('win-' + winId);
+      if (win) win.querySelector('.win-pad').innerHTML =
+        `<p class="empty">Create <code>${p.mdFile}</code> to add content here.</p>`;
+    });
+}
+
 /* ── Desktop icon definitions ─────────────────────────────────── */
-function makeIconDefs(wm) {
-  const defs = [
+function makeIconDefs() {
+  const rX  = Math.max(window.innerWidth  - 110, 500);
+  const bH  = window.innerHeight - 20;   // desktop height
+
+  // DOM order matters for mobile layout:
+  // folders first → MDs → social (at end, goes to social-dock on mobile)
+  return [
+    // ── Right top: folders ───────────────────────────────────
     {
-      id:    'about',
-      label: 'about.md',
-      icon:  SVG.document,
-      x: 50, y: 90,
-      action: () => wm.show('about', {
-        title: 'about.md',
-        html:  renderAbout(),
-        w: 420, h: 460,
-      }),
-    },
-    {
-      id:    'cv',
-      label: 'cv.md',
-      icon:  SVG.document,
-      x: 50, y: 200,
-      action: () => wm.show('cv', {
-        title: 'cv.md',
-        html:  renderCV(),
-        w: 520, h: 540,
-      }),
-    },
-    {
-      id:    'publications',
-      label: 'Publications',
-      icon:  SVG.folder,
-      x: 180, y: 90,
+      id: 'publications', label: 'Publications', icon: SVG.folder,
+      x: rX, y: 50,
       action: () => {
         const p = renderPublications();
-        wm.show('publications', { title: 'Publications', tabs: p.tabs, w: 520, h: 420 });
+        wm.show('publications', { title: 'Publications', tabs: p.tabs, w: 540, h: 440 });
       },
     },
     {
-      id:    'projects',
-      label: 'Projects',
-      icon:  SVG.folder,
-      x: 180, y: 200,
+      id: 'projects', label: 'Projects', icon: SVG.folder,
+      x: rX, y: 170,
       action: () => {
         const p = renderProjects();
         wm.show('projects', { title: 'Projects', tabs: p.tabs, w: 520, h: 420 });
       },
     },
-  ];
-
-  // Social icons — right column, uses window.innerWidth for reliable positioning
-  const rightEdge = Math.max(window.innerWidth - 110, 500);
-  SITE.social.forEach((s, i) => {
-    defs.push({
+    // ── Left top: md files ───────────────────────────────────
+    {
+      id: 'about', label: 'about.md', icon: SVG.document,
+      x: 30, y: 50,
+      action: () => wm.show('about', { title: 'about.md', html: renderAbout(), w: 420, h: 460 }),
+    },
+    {
+      id: 'cv', label: 'cv.md', icon: SVG.document,
+      x: 30, y: 170,
+      action: () => {
+        const cv = renderCV();
+        wm.show('cv', { title: 'cv.md', tabs: cv.tabs, w: 540, h: 480 });
+      },
+    },
+    // ── Right bottom: social (stacked from bottom) ───────────
+    ...SITE.social.map((s, i) => ({
       id:     s.id,
       label:  s.label,
       icon:   SVG[s.icon] || SVG.document,
-      x:      rightEdge,
-      y:      90 + i * 110,
+      social: true,
+      x:      rX,
+      y:      bH - 110 - (SITE.social.length - 1 - i) * 110,
       action: () => window.open(s.url, '_blank', 'noopener,noreferrer'),
-    });
-  });
-
-  return defs;
+    })),
+  ];
 }
 
 /* ── Create a desktop icon element ───────────────────────────── */
 function createIcon(def) {
   const el = document.createElement('div');
-  el.className     = 'icon';
+  el.className      = 'icon';
+  el.id             = 'icon-' + def.id;
   el.dataset.iconId = def.id;
+  if (def.social) el.dataset.iconType = 'social';
 
   const saved = loadIconPos(def.id);
   el.style.left = (saved ? saved.x : def.x) + 'px';
@@ -479,16 +496,9 @@ function createIcon(def) {
     el.classList.add('pressed');
   }
 
-  el.addEventListener('mousedown', e => {
-    startIconDrag(e.clientX, e.clientY);
-    e.preventDefault();
-  });
-
+  el.addEventListener('mousedown', e => { startIconDrag(e.clientX, e.clientY); e.preventDefault(); });
   el.addEventListener('touchstart', e => {
-    // Only set up drag on non-mobile; mobile just uses touchend as tap
-    if (window.innerWidth > 768) {
-      startIconDrag(e.touches[0].clientX, e.touches[0].clientY);
-    }
+    if (window.innerWidth > 768) startIconDrag(e.touches[0].clientX, e.touches[0].clientY);
     el.classList.add('pressed');
   }, { passive: true });
 
@@ -496,17 +506,10 @@ function createIcon(def) {
     el.classList.remove('pressed');
     if (!drag.moved) def.action();
   });
-
   el.addEventListener('touchend', () => {
     el.classList.remove('pressed');
-    // On mobile, always fire action on tap (no drag to check)
-    if (window.innerWidth <= 768) {
-      def.action();
-    } else if (!drag.moved) {
-      def.action();
-    }
-    drag.active = null;
-    drag.moved  = false;
+    if (window.innerWidth <= 768 || !drag.moved) def.action();
+    drag.active = null; drag.moved = false;
   });
 
   return el;
@@ -515,21 +518,18 @@ function createIcon(def) {
 /* ── Clock ────────────────────────────────────────────────────── */
 function updateClock() {
   const now = new Date();
-  const h   = now.getHours().toString().padStart(2, '0');
-  const m   = now.getMinutes().toString().padStart(2, '0');
   const el  = document.getElementById('clock');
-  if (el) el.textContent = h + ':' + m;
+  if (el) el.textContent =
+    now.getHours().toString().padStart(2,'0') + ':' +
+    now.getMinutes().toString().padStart(2,'0');
 }
 
 /* ── Theme toggle ─────────────────────────────────────────────── */
 document.getElementById('theme-btn').addEventListener('click', () => {
-  const html  = document.documentElement;
-  const isDark = html.dataset.theme === 'dark';
-  html.dataset.theme = isDark ? 'light' : 'dark';
+  const html = document.documentElement;
+  html.dataset.theme = html.dataset.theme === 'dark' ? 'light' : 'dark';
   localStorage.setItem('theme', html.dataset.theme);
 });
-
-// Restore saved theme
 (function () {
   const saved = localStorage.getItem('theme');
   if (saved) document.documentElement.dataset.theme = saved;
@@ -542,8 +542,20 @@ document.addEventListener('DOMContentLoaded', () => {
   const desktop = document.getElementById('desktop');
   wm = new WM(desktop);
 
-  const icons = makeIconDefs(wm);
-  icons.forEach(def => desktop.appendChild(createIcon(def)));
+  const defs    = makeIconDefs();
+  const isMobile = window.innerWidth <= 768;
+
+  // Social icons go into a dock div (handles the 2+1 grid on mobile)
+  const socialDock = document.createElement('div');
+  socialDock.className = 'social-dock';
+
+  defs.forEach(def => {
+    const el = createIcon(def);
+    if (def.social) socialDock.appendChild(el);
+    else            desktop.appendChild(el);
+  });
+
+  desktop.appendChild(socialDock);
 
   updateClock();
   setInterval(updateClock, 15000);

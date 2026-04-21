@@ -486,20 +486,32 @@ body {
 .project-card {
   padding: 10px 0;
   border-bottom: 1px solid var(--c-accent-bg);
+  cursor: pointer;
 }
 .project-card:last-child { border-bottom: none; }
+.project-card:hover .project-title { text-decoration: underline; }
 .project-title {
   font-family: var(--font-ui);
   font-size: var(--sz-body);
   font-weight: 700;
   color: var(--c-text);
-  margin-bottom: 4px;
+  margin-bottom: 2px;
 }
 .project-title a {
   color: var(--c-link);
   text-decoration: none;
 }
 .project-title a:hover { text-decoration: underline; }
+.project-open-hint { font-weight: 400; opacity: 0.5; }
+.project-role {
+  font-family: var(--font-ui);
+  font-size: var(--sz-small);
+  font-weight: 400;
+  font-style: italic;
+  color: var(--c-text-muted);
+  margin-bottom: 5px;
+  letter-spacing: 0.01em;
+}
 .project-desc {
   font-family: var(--font-body);
   font-size: var(--sz-body);
@@ -587,6 +599,43 @@ body {
   padding: 10px 0;
 }
 
+/* Experience block wrapper */
+.exp-block {
+  margin-bottom: 16px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--c-accent-bg);
+}
+.exp-block:last-child { border-bottom: none; margin-bottom: 0; }
+
+/* Markdown content (project detail windows) */
+.md-content {
+  font-family: var(--font-body);
+  font-size: var(--sz-body);
+  color: var(--c-text);
+  line-height: 1.65;
+}
+.md-content h1, .md-content h2, .md-content h3 {
+  font-family: var(--font-ui);
+  color: var(--c-text);
+  margin: 18px 0 8px;
+  font-weight: 700;
+}
+.md-content h1 { font-size: 15px; border-bottom: 1px solid var(--c-border); padding-bottom: 4px; }
+.md-content h2 { font-size: 13px; }
+.md-content h3 { font-size: 12px; }
+.md-content p { margin-bottom: 10px; }
+.md-content ul, .md-content ol { margin: 0 0 10px 1.4em; }
+.md-content li { margin-bottom: 3px; }
+.md-content a { color: var(--c-link); }
+.md-content code {
+  font-family: var(--font-ui);
+  font-size: var(--sz-small);
+  background: var(--c-accent-bg);
+  border: 1px solid var(--c-border);
+  padding: 0 3px;
+}
+.md-content hr { border: none; border-top: 1px solid var(--c-border); margin: 14px 0; }
+
 /* ── Scrollbars (WebKit) ────────────────────────────────────────── */
 ::-webkit-scrollbar { width: 15px; height: 15px; }
 ::-webkit-scrollbar-track {
@@ -606,6 +655,9 @@ body {
 }
 ::-webkit-scrollbar-corner { background: var(--c-bg); }
 
+/* Social dock: transparent on desktop — children position normally */
+.social-dock { display: contents; }
+
 /* ═══════════════════════════════════════════════════════════════
    MOBILE  (≤ 768px)
    Icons → centred 2-column grid, larger tap targets
@@ -613,24 +665,36 @@ body {
 ═══════════════════════════════════════════════════════════════ */
 @media (max-width: 768px) {
 
-  /* Desktop becomes a scrollable grid instead of a free canvas */
+  /* Desktop becomes a right-aligned flex column */
   #desktop {
     overflow-y: auto;
     overflow-x: hidden;
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    align-content: start;
-    gap: 12px;
-    padding: 16px 8px 32px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 10px;
+    padding: 16px 12px 32px;
   }
 
   /* Icons: bigger, static (no absolute positioning on mobile) */
   .icon {
     position: static !important;
-    width: auto;
-    min-width: 0;
+    width: 72px;
     padding: 8px 4px;
     align-items: center;
+  }
+
+  /* Social-dock: left-aligned 2-column grid at the bottom */
+  .social-dock {
+    display: flex !important;
+    flex-wrap: wrap;
+    align-self: flex-start;
+    width: 160px;
+    gap: 8px;
+    margin-top: 8px;
+  }
+  .social-dock .icon {
+    width: 72px;
   }
 
   .icon-img {
