@@ -23,6 +23,18 @@ function json(body, status, corsOrigin = '*') {
   });
 }
 
+function noContent(status = 204, corsOrigin = '*') {
+  return new Response(null, {
+    status,
+    headers: {
+      'Cache-Control': 'no-store',
+      'Access-Control-Allow-Origin': corsOrigin,
+      'Access-Control-Allow-Methods': 'POST, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type',
+    },
+  });
+}
+
 function toBase64Utf8(text) {
   const bytes = new TextEncoder().encode(String(text || ''));
   let binary = '';
@@ -88,7 +100,7 @@ export default {
     const corsOrigin = allowedOrigin === '*' ? '*' : (origin === allowedOrigin ? allowedOrigin : allowedOrigin);
 
     if (request.method === 'OPTIONS') {
-      return json({ ok: true }, 204, corsOrigin);
+      return noContent(204, corsOrigin);
     }
 
     if (request.method !== 'POST') {
