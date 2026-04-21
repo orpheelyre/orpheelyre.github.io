@@ -1,0 +1,11 @@
+name = "now-sync"
+main = "now-sync-worker.js"
+compatibility_date = "2026-04-21"
+
+[vars]
+ALLOWED_ORIGIN = "https://orpheelyre.github.io"
+GITHUB_OWNER = "orpheelyre"
+GITHUB_REPO = "orpheelyre.github.io"
+GITHUB_BRANCH = "main"
+NOW_FILE_PATH = "assets/now/now.live.json"
+

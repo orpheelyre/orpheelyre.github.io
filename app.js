@@ -378,8 +378,10 @@ document.addEventListener('click', async e => {
     const lockWin = e.target.closest('.window');
     const lockId = lockWin?.dataset.winId || 'now-lock';
     const input = lockWin?.querySelector('.now-lock-input');
-    const expected = String(SITE.nowEditPassword || '6476');
-    if ((input?.value || '') === expected) {
+    const entered = String(input?.value || '');
+    const expected = String(SITE.nowEditPassword || '').trim();
+    if ((expected && entered === expected) || (!expected && entered)) {
+      setNowAdminSessionPassword(entered);
       wm.close(lockId);
       if (lockId === 'devlog-lock') {
         devlogEditing = true;
@@ -441,26 +443,19 @@ document.addEventListener('click', async e => {
 
 /* ── Content renderers ────────────────────────────────────────── */
 const NOW_STORAGE_KEY = 'now:override';
-const NOW_SYNC_TOKEN_KEY = 'now:sync:github-token';
 const NOW_SYNC = (() => {
   const cfg = SITE?.nowSync && typeof SITE.nowSync === 'object' ? SITE.nowSync : {};
-  const provider = String(cfg.provider || '').toLowerCase();
-  if (provider !== 'github') return { enabled: false };
-  const owner = String(cfg.owner || '').trim();
-  const repo = String(cfg.repo || '').trim();
-  const branch = String(cfg.branch || 'main').trim() || 'main';
-  const path = String(cfg.path || '').trim();
+  const provider = String(cfg.provider || '').toLowerCase() || 'endpoint';
   const rawUrl = String(cfg.rawUrl || '').trim();
+  const writeUrl = String(cfg.writeUrl || '').trim();
   const pollMs = Math.max(5000, Number(cfg.pollMs) || 15000);
-  const enabled = Boolean(owner && repo && branch && path && rawUrl);
+  const enabled = Boolean(rawUrl);
   return {
     enabled,
     provider,
-    owner,
-    repo,
-    branch,
-    path,
     rawUrl,
+    writeUrl,
+    canWrite: Boolean(writeUrl),
     pollMs,
   };
 })();
@@ -503,6 +498,7 @@ let nowSharedData = null;
 let nowSharedDataHash = '';
 let nowSyncPollTimer = null;
 let nowSyncBusy = false;
+let nowAdminSessionPassword = '';
 
 function escapeHtml(value) {
   return String(value ?? '').replace(/[&<>"']/g, char => ({
@@ -638,27 +634,16 @@ function normalizeNowData(raw) {
   };
 }
 
-function encodePathSegments(path) {
-  return String(path || '').split('/').map(encodeURIComponent).join('/');
+function nowSyncWriteReady() {
+  return Boolean(NOW_SYNC.enabled && NOW_SYNC.canWrite);
 }
 
-function toBase64Utf8(text) {
-  try {
-    const bytes = new TextEncoder().encode(String(text || ''));
-    let binary = '';
-    bytes.forEach(b => { binary += String.fromCharCode(b); });
-    return btoa(binary);
-  } catch (_) {
-    return '';
-  }
+function getNowAdminSessionPassword() {
+  return String(nowAdminSessionPassword || '').trim();
 }
 
-function getGithubSyncToken() {
-  try {
-    return String(localStorage.getItem(NOW_SYNC_TOKEN_KEY) || '').trim();
-  } catch (_) {
-    return '';
-  }
+function setNowAdminSessionPassword(value) {
+  nowAdminSessionPassword = String(value || '').trim();
 }
 
 function readNowDataFromLocal(base) {
@@ -726,59 +711,26 @@ async function fetchNowDataFromRemote() {
   return normalizeNowData(body);
 }
 
-async function publishNowDataToGithub(data) {
-  if (!NOW_SYNC.enabled) return true;
-  let token = getGithubSyncToken();
-  if (!token) {
-    const provided = prompt('Realtime publish needs a GitHub token. Paste token (saved only in this browser).');
-    token = String(provided || '').trim();
-    if (!token) {
-      alert('Live publish cancelled. No token entered.');
-      return false;
-    }
-    try { localStorage.setItem(NOW_SYNC_TOKEN_KEY, token); } catch (_) {}
-  }
-
-  const apiBase = `https://api.github.com/repos/${encodeURIComponent(NOW_SYNC.owner)}/${encodeURIComponent(NOW_SYNC.repo)}/contents/${encodePathSegments(NOW_SYNC.path)}`;
-  const headers = {
-    Accept: 'application/vnd.github+json',
-    Authorization: `Bearer ${token}`,
-    'X-GitHub-Api-Version': '2022-11-28',
-  };
-
-  let sha = '';
-  const readRes = await fetch(`${apiBase}?ref=${encodeURIComponent(NOW_SYNC.branch)}`, { headers });
-  if (readRes.ok) {
-    const current = await readRes.json();
-    sha = String(current?.sha || '').trim();
-  } else if (readRes.status !== 404) {
-    throw new Error('Could not read shared now.live file');
-  }
-
-  const payload = JSON.stringify(normalizeNowData(data), null, 2) + '\n';
-  const putBody = {
-    message: `Update now.live ${new Date().toISOString()}`,
-    content: toBase64Utf8(payload),
-    branch: NOW_SYNC.branch,
-  };
-  if (sha) putBody.sha = sha;
-
-  const writeRes = await fetch(apiBase, {
-    method: 'PUT',
-    headers: {
-      ...headers,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(putBody),
+async function publishNowDataToEndpoint(data) {
+  if (!nowSyncWriteReady()) throw new Error('Live write endpoint is not configured.');
+  const password = getNowAdminSessionPassword();
+  if (!password) throw new Error('Admin session expired. Unlock edit and save again.');
+  const res = await fetch(NOW_SYNC.writeUrl, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      password,
+      data: normalizeNowData(data),
+      source: 'now.live',
+    }),
   });
-  if (!writeRes.ok) {
-    if (writeRes.status === 401 || writeRes.status === 403) {
-      try { localStorage.removeItem(NOW_SYNC_TOKEN_KEY); } catch (_) {}
-      throw new Error('Token rejected. Please paste a valid GitHub token.');
-    }
-    throw new Error('Could not publish shared now.live file');
+  let payload = null;
+  try { payload = await res.json(); } catch (_) {}
+  if (!res.ok || payload?.ok === false) {
+    const message = String(payload?.error || `Live publish failed (${res.status}).`);
+    throw new Error(message);
   }
-  return true;
+  return normalizeNowData(payload?.data || data);
 }
 
 async function syncNowDataFromRemote() {
@@ -796,13 +748,16 @@ async function syncNowDataFromRemote() {
 
 async function saveNowData(data) {
   const normalized = normalizeNowData(data);
-  if (!NOW_SYNC.enabled) {
+  if (!NOW_SYNC.enabled || !nowSyncWriteReady()) {
     applyNowSharedData(normalized, { persistLocal: true, refresh: false });
+    if (NOW_SYNC.enabled && !nowSyncWriteReady()) {
+      alert('Live endpoint is not configured. Saved locally only.');
+    }
     return true;
   }
   try {
-    await publishNowDataToGithub(normalized);
-    applyNowSharedData(normalized, { persistLocal: true, refresh: false });
+    const published = await publishNowDataToEndpoint(normalized);
+    applyNowSharedData(published, { persistLocal: true, refresh: false });
     return true;
   } catch (err) {
     try { localStorage.setItem(NOW_STORAGE_KEY, JSON.stringify(normalized)); } catch (_) {}
@@ -870,7 +825,7 @@ function bindNowEditMediaControls() {
   const removedInput = document.getElementById('now-input-picture-removed');
   if (!fileInput || !urlInput || !preview) return;
 
-  const defaultHint = NOW_SYNC.enabled
+  const defaultHint = nowSyncWriteReady()
     ? 'Image uploads publish live after Save succeeds.'
     : 'Image upload is saved in this browser on this device.';
   const setHint = text => { if (hint) hint.textContent = text; };
@@ -1027,7 +982,7 @@ function renderNow() {
     ? `<div class="now-edit-grid">
          <input id="now-input-picture-removed" type="hidden" value="${nowData.pictureRemoved ? '1' : ''}" />
          <div class="now-hint">Updated is automatic in NZ time: ${escapeHtml(nowData.updated)}</div>
-         ${NOW_SYNC.enabled ? `<div class="now-hint">Live sync is on. ${getGithubSyncToken() ? 'Token is set on this browser.' : 'First Save will ask for a GitHub token.'}</div>` : ''}
+         ${NOW_SYNC.enabled ? `<div class="now-hint">${nowSyncWriteReady() ? 'Live sync is on. Save publishes for everyone.' : 'Live sync read is on. writeUrl not configured yet.'}</div>` : ''}
          <label class="now-label" for="now-input-by">By</label>
          <input id="now-input-by" class="now-input" type="text" value="${escapeHtml(nowData.by)}" />
          <label class="now-label" for="now-input-status">Status</label>
@@ -1040,7 +995,7 @@ function renderNow() {
          <label class="now-label" for="now-input-picture-alt">Picture Caption</label>
          <input id="now-input-picture-alt" class="now-input" type="text" value="${escapeHtml(nowData.pictureAlt)}" />
          <img id="now-photo-preview" class="now-photo-preview" alt="Picture preview" hidden />
-         <div id="now-photo-hint" class="now-hint">${NOW_SYNC.enabled ? 'Image uploads publish live after Save succeeds.' : 'Image upload is saved in this browser on this device.'}</div>
+         <div id="now-photo-hint" class="now-hint">${nowSyncWriteReady() ? 'Image uploads publish live after Save succeeds.' : 'Image upload is saved in this browser on this device.'}</div>
          <label class="now-label" for="now-input-focus">Current Focus (one line each)</label>
          <textarea id="now-input-focus" class="now-textarea" rows="4">${escapeHtml(nowData.focus.join('\n'))}</textarea>
        </div>`
@@ -1120,7 +1075,7 @@ function renderDevlog() {
   const body = devlogEditing
     ? `<div class="now-edit-grid">
          <div class="now-hint">One line per update. Format: 21 April 2026 your note</div>
-         ${NOW_SYNC.enabled ? `<div class="now-hint">Live sync is on. ${getGithubSyncToken() ? 'Token is set on this browser.' : 'First Save will ask for a GitHub token.'}</div>` : ''}
+         ${NOW_SYNC.enabled ? `<div class="now-hint">${nowSyncWriteReady() ? 'Live sync is on. Save publishes for everyone.' : 'Live sync read is on. writeUrl not configured yet.'}</div>` : ''}
          <textarea id="devlog-input-lines" class="now-textarea" rows="10">${escapeHtml(devlogToEditorLines(nowData.devlog))}</textarea>
        </div>`
     : (nowData.devlog.length
@@ -1567,20 +1522,99 @@ function createIcon(def) {
     el.classList.add('pressed');
   }
 
-  el.addEventListener('mousedown', e => { startIconDrag(e.clientX, e.clientY); e.preventDefault(); });
+  let ignoreMouseUntil = 0;
+
+  el.addEventListener('mousedown', e => {
+    if (Date.now() < ignoreMouseUntil) return;
+    startIconDrag(e.clientX, e.clientY);
+    e.preventDefault();
+  });
+  const MOBILE_ICON_LONG_PRESS_MS = 320;
+  const MOBILE_ICON_TAP_MOVE_PX = 10;
+  let touchDragTimer = null;
+  let touchStartPoint = null;
+  let touchTapCanceled = false;
+  let touchDragStarted = false;
+
+  function clearTouchDragTimer() {
+    if (!touchDragTimer) return;
+    clearTimeout(touchDragTimer);
+    touchDragTimer = null;
+  }
+
+  function resetTouchIconState() {
+    clearTouchDragTimer();
+    touchStartPoint = null;
+    touchTapCanceled = false;
+    touchDragStarted = false;
+  }
+
   el.addEventListener('touchstart', e => {
-    if (window.innerWidth > 768) startIconDrag(e.touches[0].clientX, e.touches[0].clientY);
+    const t = e.touches && e.touches[0];
+    if (!t) return;
+
+    if (window.innerWidth > 768) {
+      startIconDrag(t.clientX, t.clientY);
+      return;
+    }
+
+    ignoreMouseUntil = Date.now() + 700;
+    resetTouchIconState();
+    touchStartPoint = { x: t.clientX, y: t.clientY };
     el.classList.add('pressed');
+    touchDragTimer = setTimeout(() => {
+      if (!touchStartPoint) return;
+      startIconDrag(touchStartPoint.x, touchStartPoint.y);
+      touchDragStarted = true;
+    }, MOBILE_ICON_LONG_PRESS_MS);
+  }, { passive: true });
+
+  el.addEventListener('touchmove', e => {
+    if (window.innerWidth > 768) return;
+    if (!touchStartPoint || touchDragStarted) return;
+    const t = e.touches && e.touches[0];
+    if (!t) return;
+    const dx = t.clientX - touchStartPoint.x;
+    const dy = t.clientY - touchStartPoint.y;
+    if (Math.abs(dx) > MOBILE_ICON_TAP_MOVE_PX || Math.abs(dy) > MOBILE_ICON_TAP_MOVE_PX) {
+      clearTouchDragTimer();
+      touchTapCanceled = true;
+      el.classList.remove('pressed');
+    }
   }, { passive: true });
 
   el.addEventListener('mouseup', () => {
+    if (Date.now() < ignoreMouseUntil) return;
     el.classList.remove('pressed');
     if (!drag.moved) def.action();
   });
+
   el.addEventListener('touchend', () => {
     el.classList.remove('pressed');
-    if (window.innerWidth <= 768 || !drag.moved) def.action();
-    drag.active = null; drag.moved = false;
+    if (window.innerWidth <= 768) {
+      const isDraggingThisIcon = drag.active?.type === 'icon' && drag.active?.id === def.id;
+      if (!isDraggingThisIcon && !touchTapCanceled) def.action();
+      if (!isDraggingThisIcon) {
+        drag.active = null;
+        drag.moved = false;
+      }
+      resetTouchIconState();
+      return;
+    }
+    if (!drag.moved) def.action();
+    drag.active = null;
+    drag.moved = false;
+  });
+
+  el.addEventListener('touchcancel', () => {
+    el.classList.remove('pressed');
+    clearTouchDragTimer();
+    touchTapCanceled = true;
+    if (!(drag.active?.type === 'icon' && drag.active?.id === def.id)) {
+      drag.active = null;
+      drag.moved = false;
+    }
+    touchStartPoint = null;
   });
 
   return el;

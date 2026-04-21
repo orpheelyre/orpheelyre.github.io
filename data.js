@@ -47,14 +47,12 @@ const SITE = {
     ],
   },
   // Shared realtime source for now/devlog edits.
-  // Public read: rawUrl. Admin write: GitHub token saved locally in browser.
+  // Public read from rawUrl; admin writes through writeUrl backend.
   nowSync: {
-    provider: "github",
-    owner: "orpheelyre",
-    repo: "orpheelyre.github.io",
-    branch: "main",
-    path: "assets/now/now.live.json",
+    provider: "endpoint",
     rawUrl: "https://raw.githubusercontent.com/orpheelyre/orpheelyre.github.io/main/assets/now/now.live.json",
+    // Example: "https://your-worker.your-subdomain.workers.dev/now-sync"
+    writeUrl: "https://dark-credit-f2c8.erljuzz.workers.dev",
     pollMs: 15000,
   },
 
@@ -86,7 +84,7 @@ const SITE = {
       title: "Dream is an Offshore Flame: Notes on Archaeology and Belonging",
       type:  "Journal Article",
       venue: "Anthropology & Humanism",
-      date:  "2026",
+      date:  "Feb 2026",
       url:   "https://doi.org/10.1111/anhu.70081",
     },
     {
