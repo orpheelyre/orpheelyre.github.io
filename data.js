@@ -14,7 +14,7 @@ const SITE = {
 
   name:    "Orlan Y. Syshui",
   tagline: "Material Practice · Field Experience · Digital Narrative",
-  bio:     "Researcher and artist working at the intersection of archaeology, anthropology, and experimental media. Doing Honours at University of Otago. Current work sits at the edges of landscape, heritage, medical anthropology, and memory politics, tracing the processual and relational conditions through which sites and institutions accumulate afterlives.",
+  bio:     "Researcher and artist working at the intersection of archaeology, anthropology, and experimental media. Doing honours at Archaeology Programme, Otago. Current work sits at the edges of landscape, heritage, medical anthropology, and memory politics, tracing the processual and relational conditions through which sites and institutions accumulate afterlives.",
   bioSecond: "A tomb of glass and a fossil of green.",
 
   interests: [
@@ -33,16 +33,20 @@ const SITE = {
   // Update these fields whenever you want to refresh the Now window.
   now: {
     updated: "April 2026",
+    updatedAuto: true,
+    by: "anyone can edit",
     status: "Writing, reading, and prototyping around material memory and digital narrative.",
+    picture: "",
+    pictureAlt: "Picture of the day",
     focus: [
       "Drafting ideas around archaeology, embodiment, and landscape practice",
       "Refining project notes and publication prep",
       "Balancing research writing with experimental media work",
     ],
     devlog: [
-      "Revisiting field notes and archival fragments",
-      "Sketching interaction ideas for heritage storytelling",
-      "Listening to ambient playlists while editing",
+      { date: "21 April 2026", text: "Initial commit and framework 上线了。" },
+      { date: "20 April 2026", text: "Revisited field notes and archival fragments." },
+      { date: "19 April 2026", text: "Sketched interaction ideas for heritage storytelling." },
     ],
   },
 
@@ -105,7 +109,7 @@ const SITE = {
       id:          "whalefall-haven",
       title:       "Whalefall Haven",
       category:    "video-games",
-      role:        "Project Manager · World-builder · Lead UX Designer",
+      role:        "Project Manager · World-builder · UX & UI Designer",
       orgLine:     "Whaley Studio, Worldwide",
       description: "A narrative-driven space opera RPG where players shape their build, wield Mimic abilities, and make relationship-driven choices that alter reputation, fate, and story outcomes.",
       url:         "https://store.steampowered.com/app/3061230/Whalefall_Haven/",

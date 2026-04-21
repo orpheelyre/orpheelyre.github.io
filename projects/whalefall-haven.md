@@ -1,13 +1,14 @@
 # Whalefall Haven
 
-**Project Manager · World-builder · Lead UX Designer**
-Whaley Studio — Shanghai / New York · August 2023 – Present
+**Project Manager · World-builder · UX & UI Designer**
+Whaley Studio, Worldwide
+August 2023 – Present
 
 ---
 
 ## Overview
 
-Whalefall Haven is an immersive role-playing game built around deep-sea world-building and branching narrative design. The game is developed by a multidisciplinary team across Shanghai and New York.
+Whalefall Haven is a narrative-driven space opera RPG where players shape their build, use Mimic abilities, and make relationship-based choices that alter reputation, character arcs, and story outcomes.
 
 [View on Steam →](https://store.steampowered.com/app/3061230/Whalefall_Haven/)
 
@@ -23,9 +24,9 @@ Coordinating collaborative timelines across artists, writers, and developers —
 
 Directing the narrative design and the construction of the game world: its lore, ecology, and the cultural logic underpinning its societies.
 
-### UX Design
+### UX & UI Design
 
-End-to-end UX process: wireframes, UI component design, design documentation, and iterative playtesting. Collecting and synthesising qualitative player feedback through interviews and structured testing sessions.
+Led end-to-end UX and UI work: interaction flows, wireframes, UI component and visual system design, interface documentation, and iterative playtesting. Collected and synthesised qualitative player feedback through interviews and structured testing sessions.
 
 ---
 

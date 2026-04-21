@@ -149,6 +149,7 @@ class WM {
       stopNowPenguinAnimation();
       nowEditing = false;
     }
+    if (id === 'devlog') devlogEditing = false;
     el.remove();
     delete this.open[id];
   }
@@ -332,29 +333,59 @@ document.addEventListener('click', e => {
       saveNowData(readNowFormData());
       nowEditing = false;
       openNowWindow();
+      refreshDevlogWindow();
     } else if (action === 'reset') {
       localStorage.removeItem(NOW_STORAGE_KEY);
       nowEditing = false;
       openNowWindow();
+      refreshDevlogWindow();
+    }
+    return;
+  }
+
+  // Devlog window actions
+  const devlogAction = e.target.closest('[data-devlog-action]');
+  if (devlogAction) {
+    const action = devlogAction.dataset.devlogAction;
+    if (action === 'edit') {
+      openDevlogEditPasswordPrompt();
+    } else if (action === 'cancel') {
+      devlogEditing = false;
+      refreshDevlogWindow();
+    } else if (action === 'save') {
+      saveNowData(readDevlogFormData());
+      devlogEditing = false;
+      refreshDevlogWindow();
     }
     return;
   }
 
   // now password — OK / Cancel
   if (e.target.closest('.now-lock-ok')) {
-    const input = document.querySelector('.now-lock-input');
+    const lockWin = e.target.closest('.window');
+    const lockId = lockWin?.dataset.winId || 'now-lock';
+    const input = lockWin?.querySelector('.now-lock-input');
     const expected = String(SITE.nowEditPassword || '6476');
     if ((input?.value || '') === expected) {
-      wm.close('now-lock');
-      nowEditing = true;
-      openNowWindow();
+      wm.close(lockId);
+      if (lockId === 'devlog-lock') {
+        devlogEditing = true;
+        openDevlogWindow();
+      } else {
+        nowEditing = true;
+        openNowWindow();
+      }
     } else {
-      document.querySelector('.now-lock-error')?.classList.add('visible');
+      lockWin?.querySelector('.now-lock-error')?.classList.add('visible');
       input?.select();
     }
     return;
   }
-  if (e.target.closest('.now-lock-cancel')) { wm.close('now-lock'); return; }
+  if (e.target.closest('.now-lock-cancel')) {
+    const lockWin = e.target.closest('.window');
+    wm.close(lockWin?.dataset.winId || 'now-lock');
+    return;
+  }
 
   // Bin item actions
   const binAction = e.target.closest('.bin-item-action');
@@ -428,6 +459,7 @@ let nowPenguinFrame = 0;
 let nowCatMood = 'grumpy';
 let nowCatMoodTimer = null;
 let nowEditing = false;
+let devlogEditing = false;
 
 function escapeHtml(value) {
   return String(value ?? '').replace(/[&<>"']/g, char => ({
@@ -446,14 +478,89 @@ function linesToArray(value) {
     .filter(Boolean);
 }
 
+function getNzDateLabel(date = new Date()) {
+  try {
+    const parts = new Intl.DateTimeFormat('en-NZ', {
+      timeZone: 'Pacific/Auckland',
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+    }).formatToParts(date);
+    const day = parts.find(p => p.type === 'day')?.value || '';
+    const month = parts.find(p => p.type === 'month')?.value || '';
+    const year = parts.find(p => p.type === 'year')?.value || '';
+    return `${day} ${month} ${year}`.trim();
+  } catch (_) {
+    return '21 April 2026';
+  }
+}
+
+function formatIsoDateToNzLabel(iso) {
+  const d = new Date(`${iso}T00:00:00+12:00`);
+  return Number.isNaN(d.getTime()) ? iso : getNzDateLabel(d);
+}
+
+function parseDatedDevlogLine(line) {
+  const value = String(line || '').trim();
+  if (!value) return null;
+
+  let m = value.match(/^(\d{1,2}\s+[A-Za-z]+\s+\d{4})\s*[-–—:|]\s*(.+)$/);
+  if (!m) m = value.match(/^(\d{1,2}\s+[A-Za-z]+\s+\d{4})\s+(.+)$/);
+  if (m) return { date: m[1].trim(), text: m[2].trim() };
+
+  m = value.match(/^(\d{4}-\d{2}-\d{2})\s*[-–—:|]\s*(.+)$/);
+  if (!m) m = value.match(/^(\d{4}-\d{2}-\d{2})\s+(.+)$/);
+  if (m) return { date: formatIsoDateToNzLabel(m[1].trim()), text: m[2].trim() };
+
+  return null;
+}
+
+function normalizeDevlogEntry(entry) {
+  if (typeof entry === 'string') {
+    const parsed = parseDatedDevlogLine(entry);
+    if (parsed?.text) return parsed;
+    const text = entry.trim();
+    return text ? { date: getNzDateLabel(), text } : null;
+  }
+  if (entry && typeof entry === 'object') {
+    const text = String(entry.text || entry.value || '').trim();
+    if (!text) return null;
+    const parsed = parseDatedDevlogLine(text);
+    if (!entry.date && parsed?.text) return parsed;
+    const date = String(entry.date || '').trim() || getNzDateLabel();
+    return { date, text };
+  }
+  return null;
+}
+
+function parseDevlogLines(value) {
+  return linesToArray(value).map(line => {
+    const parsed = parseDatedDevlogLine(line);
+    if (parsed?.text) return parsed;
+    return { date: getNzDateLabel(), text: line };
+  });
+}
+
+function devlogToEditorLines(entries) {
+  return entries.map(e => `${e.date} ${e.text}`).join('\n');
+}
+
 function normalizeNowData(raw) {
   const src = raw && typeof raw === 'object' ? raw : {};
   const devlogSource = Array.isArray(src.devlog) ? src.devlog : (Array.isArray(src.lately) ? src.lately : []);
+  const picture = typeof src.picture === 'string' ? src.picture.trim() : '';
+  const pictureAlt = String(src.pictureAlt || 'Picture of the day');
+  const updatedAuto = src.updatedAuto !== false;
+  const updated = updatedAuto ? getNzDateLabel() : String(src.updated || getNzDateLabel());
   return {
-    updated: String(src.updated || 'Recently'),
+    updated,
+    updatedAuto,
+    by: String(src.by || 'anyone can edit'),
     status: String(src.status || 'Thinking, writing, and making.'),
     focus: Array.isArray(src.focus) ? src.focus.map(v => String(v)).filter(Boolean) : [],
-    devlog: devlogSource.map(v => String(v)).filter(Boolean),
+    devlog: devlogSource.map(normalizeDevlogEntry).filter(Boolean),
+    picture,
+    pictureAlt,
   };
 }
 
@@ -467,10 +574,14 @@ function getNowData() {
       ? override.devlog
       : (Array.isArray(override?.lately) ? override.lately : base.devlog);
     return normalizeNowData({
+      updatedAuto: typeof override?.updatedAuto === 'boolean' ? override.updatedAuto : base.updatedAuto,
       updated: typeof override?.updated === 'string' ? override.updated : base.updated,
+      by: typeof override?.by === 'string' ? override.by : base.by,
       status: typeof override?.status === 'string' ? override.status : base.status,
       focus: Array.isArray(override?.focus) ? override.focus : base.focus,
       devlog: overrideDevlog,
+      picture: typeof override?.picture === 'string' ? override.picture : base.picture,
+      pictureAlt: typeof override?.pictureAlt === 'string' ? override.pictureAlt : base.pictureAlt,
     });
   } catch (_) {
     return base;
@@ -482,12 +593,60 @@ function saveNowData(data) {
 }
 
 function readNowFormData() {
+  const current = getNowData();
   return normalizeNowData({
-    updated: document.getElementById('now-input-updated')?.value || '',
+    updatedAuto: true,
+    by: document.getElementById('now-input-by')?.value || '',
     status: document.getElementById('now-input-status')?.value || '',
     focus: linesToArray(document.getElementById('now-input-focus')?.value || ''),
-    devlog: linesToArray(document.getElementById('now-input-devlog')?.value || ''),
+    devlog: current.devlog,
+    picture: document.getElementById('now-input-picture')?.value || '',
+    pictureAlt: document.getElementById('now-input-picture-alt')?.value || '',
   });
+}
+
+function readDevlogFormData() {
+  const current = getNowData();
+  return normalizeNowData({
+    updatedAuto: true,
+    by: current.by,
+    status: current.status,
+    focus: current.focus,
+    picture: current.picture,
+    pictureAlt: current.pictureAlt,
+    devlog: parseDevlogLines(document.getElementById('devlog-input-lines')?.value || ''),
+  });
+}
+
+function bindNowEditMediaControls() {
+  const fileInput = document.getElementById('now-input-photo-file');
+  const urlInput = document.getElementById('now-input-picture');
+  const preview = document.getElementById('now-photo-preview');
+  if (!fileInput || !urlInput || !preview) return;
+
+  const syncPreview = () => {
+    const src = (urlInput.value || '').trim();
+    if (src) {
+      preview.src = src;
+      preview.hidden = false;
+    } else {
+      preview.removeAttribute('src');
+      preview.hidden = true;
+    }
+  };
+
+  urlInput.addEventListener('input', syncPreview);
+  fileInput.addEventListener('change', () => {
+    const file = fileInput.files && fileInput.files[0];
+    if (!file || !file.type.startsWith('image/')) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      urlInput.value = String(reader.result || '');
+      syncPreview();
+    };
+    reader.readAsDataURL(file);
+  });
+  syncPreview();
 }
 
 function stopNowPenguinAnimation() {
@@ -520,8 +679,13 @@ function bindNowCatInteractions(el) {
   if (!el) return;
   el.onpointerenter = () => setNowCatMood('happy');
   el.onpointerleave = () => setNowCatMood('grumpy');
-  el.onmousedown = () => setNowCatMood('happy', 1200);
-  el.ontouchstart = () => setNowCatMood('happy', 1200);
+  el.onpointerdown = () => setNowCatMood('happy');
+  el.onpointerup = () => setNowCatMood('happy', 1200);
+  el.onpointercancel = () => setNowCatMood('grumpy');
+  el.onmousedown = () => setNowCatMood('happy');
+  el.onmouseup = () => setNowCatMood('happy', 1200);
+  el.ontouchstart = () => setNowCatMood('happy');
+  el.ontouchend = () => setNowCatMood('happy', 1200);
 }
 
 function startNowPenguinAnimation() {
@@ -543,7 +707,12 @@ function startNowPenguinAnimation() {
 function renderNow() {
   const nowData = getNowData();
   const focusHtml = nowData.focus.map(item => `<li>${escapeHtml(item)}</li>`).join('') || '<li>Click Edit to add focus items.</li>';
-  const devlogHtml = nowData.devlog.map(item => `<li>${escapeHtml(item)}</li>`).join('') || '<li>Click Edit to add devlog items.</li>';
+  const pictureHtml = nowData.picture
+    ? `<figure class="now-photo">
+         <img src="${escapeHtml(nowData.picture)}" alt="${escapeHtml(nowData.pictureAlt || 'Picture of the day')}" loading="lazy" />
+         <figcaption>${escapeHtml(nowData.pictureAlt || 'Picture of the day')}</figcaption>
+       </figure>`
+    : '';
   const editControls = nowEditing
     ? `<button class="now-btn" data-now-action="save">Save</button>
        <button class="now-btn" data-now-action="cancel">Cancel</button>
@@ -552,21 +721,28 @@ function renderNow() {
 
   const body = nowEditing
     ? `<div class="now-edit-grid">
-         <label class="now-label" for="now-input-updated">Updated</label>
-         <input id="now-input-updated" class="now-input" type="text" value="${escapeHtml(nowData.updated)}" />
+         <div class="now-hint">Updated is automatic in NZ time: ${escapeHtml(nowData.updated)}</div>
+         <label class="now-label" for="now-input-by">By</label>
+         <input id="now-input-by" class="now-input" type="text" value="${escapeHtml(nowData.by)}" />
          <label class="now-label" for="now-input-status">Status</label>
          <textarea id="now-input-status" class="now-textarea" rows="3">${escapeHtml(nowData.status)}</textarea>
+         <label class="now-label" for="now-input-picture">Picture Of The Day URL</label>
+         <input id="now-input-picture" class="now-input" type="text" value="${escapeHtml(nowData.picture)}" />
+         <label class="now-label" for="now-input-photo-file">Or Upload Picture</label>
+         <input id="now-input-photo-file" class="now-file" type="file" accept="image/*" />
+         <label class="now-label" for="now-input-picture-alt">Picture Caption</label>
+         <input id="now-input-picture-alt" class="now-input" type="text" value="${escapeHtml(nowData.pictureAlt)}" />
+         <img id="now-photo-preview" class="now-photo-preview" alt="Picture preview" hidden />
+         <div class="now-hint">Image upload is saved in this browser on this device.</div>
          <label class="now-label" for="now-input-focus">Current Focus (one line each)</label>
          <textarea id="now-input-focus" class="now-textarea" rows="4">${escapeHtml(nowData.focus.join('\n'))}</textarea>
-         <label class="now-label" for="now-input-devlog">Devlog (one line each)</label>
-         <textarea id="now-input-devlog" class="now-textarea" rows="4">${escapeHtml(nowData.devlog.join('\n'))}</textarea>
        </div>`
     : `<div class="now-updated">Updated: ${escapeHtml(nowData.updated)}</div>
+       <div class="now-by">By: ${escapeHtml(nowData.by)}</div>
        <div class="now-status">${escapeHtml(nowData.status)}</div>
+       ${pictureHtml}
        <div class="now-block-title">Current Focus</div>
-       <ul class="now-list">${focusHtml}</ul>
-       <div class="now-block-title">Devlog</div>
-       <ul class="now-list">${devlogHtml}</ul>`;
+       <ul class="now-list">${focusHtml}</ul>`;
 
   return `
     <div class="now-wrap">
@@ -583,17 +759,19 @@ function openNowWindow() {
   if (existing) {
     existing.querySelector('.win-body').innerHTML = `<div class="win-pad">${renderNow()}</div>`;
     wm.focus(existing);
+    if (nowEditing) bindNowEditMediaControls();
     startNowPenguinAnimation();
     return;
   }
-  wm.show('now', { title: 'now.txt', html: renderNow(), w: 320, h: 320, x: 350, y: 72 });
+  wm.show('now', { title: 'now.live', html: renderNow(), w: 340, h: 360, x: 350, y: 72 });
+  if (nowEditing) bindNowEditMediaControls();
   startNowPenguinAnimation();
 }
 
 function openNowEditPasswordPrompt() {
   if (wm.open['now-lock']) { wm.focus(wm.open['now-lock']); return; }
   wm.show('now-lock', {
-    title: 'now.txt',
+    title: 'now.live',
     html: `<div class="win-pad now-lock-pad">
       <div class="now-lock-msg">Admin password required to edit this file.</div>
       <input class="now-lock-input" type="password" placeholder="Password" />
@@ -605,7 +783,64 @@ function openNowEditPasswordPrompt() {
     </div>`,
     w: 280, h: 175,
   });
-  setTimeout(() => document.querySelector('.now-lock-input')?.focus(), 50);
+  setTimeout(() => document.querySelector('#win-now-lock .now-lock-input')?.focus(), 50);
+}
+
+function openDevlogEditPasswordPrompt() {
+  if (wm.open['devlog-lock']) { wm.focus(wm.open['devlog-lock']); return; }
+  wm.show('devlog-lock', {
+    title: 'devlog.md',
+    html: `<div class="win-pad now-lock-pad">
+      <div class="now-lock-msg">Admin password required to update this file.</div>
+      <input class="now-lock-input" type="password" placeholder="Password" />
+      <div class="now-lock-error">Incorrect password.</div>
+      <div class="now-lock-actions">
+        <button class="now-lock-cancel">Cancel</button>
+        <button class="now-lock-ok">Unlock</button>
+      </div>
+    </div>`,
+    w: 280, h: 175,
+  });
+  setTimeout(() => document.querySelector('#win-devlog-lock .now-lock-input')?.focus(), 50);
+}
+
+function renderDevlog() {
+  const nowData = getNowData();
+  const controls = devlogEditing
+    ? `<button class="now-btn" data-devlog-action="save">Save</button>
+       <button class="now-btn" data-devlog-action="cancel">Cancel</button>`
+    : `<button class="now-btn" data-devlog-action="edit">Update</button>`;
+  const body = devlogEditing
+    ? `<div class="now-edit-grid">
+         <div class="now-hint">One line per update. Format: 21 April 2026 your note</div>
+         <textarea id="devlog-input-lines" class="now-textarea" rows="10">${escapeHtml(devlogToEditorLines(nowData.devlog))}</textarea>
+       </div>`
+    : (nowData.devlog.length
+      ? nowData.devlog.map((entry, idx) => `
+        <div class="devlog-entry">
+          <div class="devlog-index">${escapeHtml(entry.date)} · #${idx + 1}</div>
+          <div class="devlog-text">${escapeHtml(entry.text)}</div>
+        </div>
+      `).join('')
+      : '<p class="empty">No devlog entries yet.</p>');
+  return `<div class="devlog-wrap"><div class="now-actions">${controls}</div>${body}</div>`;
+}
+
+function openDevlogWindow() {
+  if (!wm) return;
+  const existing = wm.open?.devlog;
+  if (existing) {
+    existing.querySelector('.win-body').innerHTML = `<div class="win-pad">${renderDevlog()}</div>`;
+    wm.focus(existing);
+    return;
+  }
+  wm.show('devlog', { title: 'devlog.md', html: renderDevlog(), w: 400, h: 360, x: 82, y: 220 });
+}
+
+function refreshDevlogWindow() {
+  const win = wm?.open?.devlog;
+  if (!win) return;
+  win.querySelector('.win-body').innerHTML = `<div class="win-pad">${renderDevlog()}</div>`;
 }
 
 function renderAbout() {
@@ -675,8 +910,8 @@ function renderPublications() {
         <div class="entry">
           <div class="entry-type-badge">${p.type}</div>
           <div class="entry-title">
-            ${p.url ? `<a href="${p.url}" target="_blank" rel="noopener">&ldquo;${p.title}&rdquo;</a>`
-                    : `&ldquo;${p.title}&rdquo;`}
+            ${p.url ? `<a href="${p.url}" target="_blank" rel="noopener">${p.title}</a>`
+                    : `${p.title}`}
           </div>
           <div class="entry-meta">${p.venue} &nbsp;&middot;&nbsp; ${p.date}</div>
         </div>
@@ -687,8 +922,8 @@ function renderPublications() {
     ? SITE.conferences.map(c => `
         <div class="entry">
           <div class="entry-title">
-            ${c.url ? `<a href="${c.url}" target="_blank" rel="noopener">&ldquo;${c.title}&rdquo;</a>`
-                    : `&ldquo;${c.title}&rdquo;`}
+            ${c.url ? `<a href="${c.url}" target="_blank" rel="noopener">${c.title}</a>`
+                    : `${c.title}`}
           </div>
           <div class="entry-meta">${c.venue} &nbsp;&middot;&nbsp; ${c.year} &nbsp;&middot;&nbsp; ${c.type}</div>
         </div>
@@ -958,6 +1193,11 @@ function makeIconDefs() {
         const cv = renderCV();
         wm.show('cv', { title: 'cv.md', tabs: cv.tabs, w: 520, h: 460 });
       },
+    },
+    {
+      id: 'devlog', label: 'devlog.md', icon: SVG.document, iconKey: 'document',
+      x: 30, y: 220,
+      action: () => openDevlogWindow(),
     },
     // ── Left bottom: bin ─────────────────────────────────────
     {

@@ -1,7 +1,8 @@
 # Urban Heritage Exploration Platform
 
 **Lead UX Designer · Research Collaborator**
-Digital Heritage Lab, New York University (NYU) Shanghai · May – September 2025
+Digital Heritage Lab, NYU Shanghai, China
+May – September 2025
 
 ---
 
