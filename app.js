@@ -101,6 +101,7 @@ document.addEventListener('mouseup', e => {
       }
     }
     saveIconPos(id, parseInt(el.style.left), parseInt(el.style.top));
+    playSound('place');
   }
   drag.active = null;
   setTimeout(() => { if (!drag.active) drag.moved = false; }, 0);
@@ -622,23 +623,44 @@ function bindNowEditMediaControls() {
   const fileInput = document.getElementById('now-input-photo-file');
   const urlInput = document.getElementById('now-input-picture');
   const preview = document.getElementById('now-photo-preview');
+  const hint = document.getElementById('now-photo-hint');
   if (!fileInput || !urlInput || !preview) return;
+
+  const defaultHint = 'Image upload is saved in this browser on this device.';
+  const setHint = text => { if (hint) hint.textContent = text; };
 
   const syncPreview = () => {
     const src = (urlInput.value || '').trim();
     if (src) {
       preview.src = src;
       preview.hidden = false;
+      setHint(defaultHint);
     } else {
       preview.removeAttribute('src');
       preview.hidden = true;
+      setHint(defaultHint);
     }
   };
+
+  preview.addEventListener('error', () => {
+    setHint('Preview failed. Please use PNG, JPG, WEBP, or GIF.');
+  });
+  preview.addEventListener('load', () => {
+    setHint(defaultHint);
+  });
 
   urlInput.addEventListener('input', syncPreview);
   fileInput.addEventListener('change', () => {
     const file = fileInput.files && fileInput.files[0];
-    if (!file || !file.type.startsWith('image/')) return;
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      setHint('This file is not an image.');
+      return;
+    }
+    if (!['image/png', 'image/jpeg', 'image/webp', 'image/gif'].includes(file.type)) {
+      setHint('Unsupported format. Please upload PNG, JPG, WEBP, or GIF.');
+      return;
+    }
     const reader = new FileReader();
     reader.onload = () => {
       urlInput.value = String(reader.result || '');
@@ -729,11 +751,11 @@ function renderNow() {
          <label class="now-label" for="now-input-picture">Picture Of The Day URL</label>
          <input id="now-input-picture" class="now-input" type="text" value="${escapeHtml(nowData.picture)}" />
          <label class="now-label" for="now-input-photo-file">Or Upload Picture</label>
-         <input id="now-input-photo-file" class="now-file" type="file" accept="image/*" />
+         <input id="now-input-photo-file" class="now-file" type="file" accept="image/png,image/jpeg,image/webp,image/gif" />
          <label class="now-label" for="now-input-picture-alt">Picture Caption</label>
          <input id="now-input-picture-alt" class="now-input" type="text" value="${escapeHtml(nowData.pictureAlt)}" />
          <img id="now-photo-preview" class="now-photo-preview" alt="Picture preview" hidden />
-         <div class="now-hint">Image upload is saved in this browser on this device.</div>
+         <div id="now-photo-hint" class="now-hint">Image upload is saved in this browser on this device.</div>
          <label class="now-label" for="now-input-focus">Current Focus (one line each)</label>
          <textarea id="now-input-focus" class="now-textarea" rows="4">${escapeHtml(nowData.focus.join('\n'))}</textarea>
        </div>`
@@ -996,6 +1018,17 @@ function playSound(type) {
       gain.gain.setValueAtTime(0.12, now);
       gain.gain.exponentialRampToValueAtTime(0.001, now + 0.14);
       osc.start(now); osc.stop(now + 0.14);
+
+    } else if (type === 'place') {
+      // Gentle place-down click for normal icon drops
+      const osc = ctx.createOscillator();
+      osc.type = 'triangle';
+      osc.connect(gain);
+      osc.frequency.setValueAtTime(220, now);
+      osc.frequency.exponentialRampToValueAtTime(170, now + 0.08);
+      gain.gain.setValueAtTime(0.09, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+      osc.start(now); osc.stop(now + 0.1);
 
     } else if (type === 'unlock') {
       // Two-note chime: C5 then E5

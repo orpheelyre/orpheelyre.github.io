@@ -1,4 +1,4 @@
-# Urban Heritage Exploration Platform
+# Urban Heritage AR Exploration
 
 **Lead UX Designer · Research Collaborator**
 Digital Heritage Lab, NYU Shanghai, China
@@ -8,7 +8,7 @@ May – September 2025
 
 ## Overview
 
-An interactive platform for exploring urban heritage sites, designed in collaboration with academic and industry partners at NYU Shanghai's Digital Heritage Lab. The platform combines game design principles with cultural storytelling to support audience engagement with living heritage.
+An augmented reality exploration experience for urban heritage sites, designed in collaboration with academic and industry partners at NYU Shanghai's Digital Heritage Lab. The project combines game design principles with cultural storytelling to support audience engagement with living heritage.
 
 ---
 

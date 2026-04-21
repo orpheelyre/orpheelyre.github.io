@@ -119,7 +119,7 @@ const SITE = {
     },
     {
       id:          "urban-heritage-platform",
-      title:       "Urban Heritage Exploration Platform",
+      title:       "Urban Heritage AR Exploration",
       category:    "mr-experience",
       role:        "Lead UX Designer · Research Collaborator",
       orgLine:     "Digital Heritage Lab, NYU Shanghai, China",
