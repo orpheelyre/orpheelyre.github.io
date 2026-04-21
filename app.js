@@ -94,7 +94,7 @@ document.addEventListener('mouseup', e => {
       const r = binIcon.getBoundingClientRect();
       if (e.clientX >= r.left && e.clientX <= r.right &&
           e.clientY >= r.top  && e.clientY <= r.bottom) {
-        dropIntoBin(id, el.querySelector('.icon-label')?.textContent || id, el);
+        dropIntoBin(id, el.querySelector('.icon-label')?.textContent || id, el.dataset.iconKey, el);
         drag.active = null;
         setTimeout(() => { drag.moved = false; }, 0);
         return;
@@ -410,15 +410,15 @@ function renderProjects() {
 
 /* ── Bin helpers ──────────────────────────────────────────────── */
 function getBinItems() { return JSON.parse(localStorage.getItem('bin:items') || '[]'); }
-function addBinItem(id, label) {
+function addBinItem(id, label, iconKey) {
   const items = getBinItems();
   if (!items.some(i => i.id === id)) {
-    items.push({ id, label });
+    items.push({ id, label, iconKey: iconKey || 'document' });
     localStorage.setItem('bin:items', JSON.stringify(items));
   }
 }
-function dropIntoBin(id, label, el) {
-  addBinItem(id, label);
+function dropIntoBin(id, label, iconKey, el) {
+  addBinItem(id, label, iconKey);
   el.remove();
   const win = document.getElementById('win-bin');
   if (win) win.querySelector('.win-body').innerHTML = renderBin();
@@ -430,25 +430,34 @@ function renderBin() {
   const dropped = getBinItems();
   const hidden  = (SITE.hiddenIcons || []).map(id => {
     const def = makeIconDefs().find(d => d.id === id);
-    return { id, label: def?.label || id };
+    return { id, label: def?.label || id, iconKey: def?.iconKey || 'document' };
   });
 
-  const row = (label, body = '') => `
+  // Notes from data.js → shown as .txt files with text preview
+  const noteRows = notes.map(n => `
     <div class="bin-item">
       <div class="bin-item-file">
         <span class="bin-doc-icon">${SVG.document}</span>
-        <span class="bin-filename">${label}.txt</span>
+        <span class="bin-filename">${n.id || 'note'}.${n.ext || 'txt'}</span>
       </div>
-      ${body ? `<div class="bin-note-text">${body}</div>` : ''}
-    </div>`;
+      ${n.text ? `<div class="bin-note-text">${n.text}</div>` : ''}
+    </div>`);
 
-  const allHtml = [
-    ...notes.map(n   => row((n.id || 'note'), n.text)),
-    ...dropped.map(d => row(d.label)),
-    ...hidden.map(h  => row(h.label)),
-  ].join('');
+  // Dropped/hidden icons → keep original icon and label, no extension
+  const iconRows = [
+    ...dropped.map(d => ({ label: d.label, iconKey: d.iconKey || 'document' })),
+    ...hidden.map(h  => ({ label: h.label, iconKey: h.iconKey })),
+  ].map(item => `
+    <div class="bin-item">
+      <div class="bin-item-file">
+        <span class="bin-doc-icon">${SVG[item.iconKey] || SVG.document}</span>
+        <span class="bin-filename">${item.label}</span>
+      </div>
+    </div>`);
 
-  const hasItems = notes.length > 0 || dropped.length > 0 || hidden.length > 0;
+  const allHtml = [...noteRows, ...iconRows].join('');
+  const hasItems = noteRows.length > 0 || iconRows.length > 0;
+
   return `<div class="win-pad">
     ${hasItems ? allHtml : '<p class="empty">Bin is empty.</p>'}
     <div class="trash-actions">
@@ -495,7 +504,7 @@ function makeIconDefs() {
   return [
     // ── Right top: folders ───────────────────────────────────
     {
-      id: 'publications', label: 'Publications', icon: SVG.folder,
+      id: 'publications', label: 'Publications', icon: SVG.folder, iconKey: 'folder',
       x: rX, y: 40,
       action: () => {
         const p = renderPublications();
@@ -503,7 +512,7 @@ function makeIconDefs() {
       },
     },
     {
-      id: 'projects', label: 'Projects', icon: SVG.folder,
+      id: 'projects', label: 'Projects', icon: SVG.folder, iconKey: 'folder',
       x: rX, y: 130,
       action: () => {
         const p = renderProjects();
@@ -512,12 +521,12 @@ function makeIconDefs() {
     },
     // ── Left top: md files ───────────────────────────────────
     {
-      id: 'about', label: 'about.md', icon: SVG.document,
+      id: 'about', label: 'about.md', icon: SVG.document, iconKey: 'document',
       x: 30, y: 40,
       action: () => wm.show('about', { title: 'about.md', html: renderAbout(), w: 400, h: 440 }),
     },
     {
-      id: 'cv', label: 'cv.md', icon: SVG.document,
+      id: 'cv', label: 'cv.md', icon: SVG.document, iconKey: 'document',
       x: 30, y: 130,
       action: () => {
         const cv = renderCV();
@@ -526,16 +535,17 @@ function makeIconDefs() {
     },
     // ── Left bottom: bin ─────────────────────────────────────
     {
-      id: 'bin', label: 'Bin', icon: SVG.trash,
+      id: 'bin', label: 'Bin', icon: SVG.trash, iconKey: 'trash',
       x: 30, y: bH - 100,
       action: () => wm.show('bin', { title: 'Bin', html: renderBin(), w: 320, h: 280 }),
     },
     // ── Right bottom: social (stacked from bottom) ───────────
     ...SITE.social.map((s, i) => ({
-      id:     s.id,
-      label:  s.label,
-      icon:   SVG[s.icon] || SVG.document,
-      social: true,
+      id:      s.id,
+      label:   s.label,
+      icon:    SVG[s.icon] || SVG.document,
+      iconKey: s.icon,
+      social:  true,
       x:      rX,
       y:      bH - 90 - (SITE.social.length - 1 - i) * 90,
       action: () => window.open(s.url, '_blank', 'noopener,noreferrer'),
@@ -546,9 +556,10 @@ function makeIconDefs() {
 /* ── Create a desktop icon element ───────────────────────────── */
 function createIcon(def) {
   const el = document.createElement('div');
-  el.className      = 'icon';
-  el.id             = 'icon-' + def.id;
-  el.dataset.iconId = def.id;
+  el.className       = 'icon';
+  el.id              = 'icon-' + def.id;
+  el.dataset.iconId  = def.id;
+  el.dataset.iconKey = def.iconKey || 'document';
   if (def.social) el.dataset.iconType = 'social';
 
   const saved = loadIconPos(def.id);
