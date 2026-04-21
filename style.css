@@ -1,0 +1,687 @@
+/* ═══════════════════════════════════════════════════════════════
+   style.css  —  System 6-inspired personal site
+   orpheelyre.github.io
+
+   CUSTOMIZE COLORS: edit the CSS variables in :root (light mode)
+   and [data-theme="dark"] (dark mode) below.
+   Every color in the site derives from these variables.
+═══════════════════════════════════════════════════════════════ */
+
+/* ── Chicago FLF ───────────────────────────────────────────────────
+   Download from: https://www.fontsquirrel.com/fonts/chicago-flf
+   Place ChicagoFLF.woff2 + ChicagoFLF.ttf in the /fonts/ folder.
+   Falls back to Space Mono until the font file is present.
+──────────────────────────────────────────────────────────────────── */
+@font-face {
+  font-family: 'ChicagoFLF';
+  src: url('fonts/ChicagoFLF.woff2') format('woff2'),
+       url('fonts/ChicagoFLF.ttf')   format('truetype');
+  font-weight: normal;
+  font-style:  normal;
+  font-display: swap;
+}
+
+@import url('https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap');
+
+/* ── Variables ─────────────────────────────────────────────────── */
+:root {
+  /* Desktop */
+  --c-desktop:        #888888;
+
+  /* Windows */
+  --c-bg:             #ffffff;
+  --c-border:         #000000;
+  --c-shadow:         #000000;
+
+  /* Title bar stripes (alternating 1px lines) */
+  --c-stripe-a:       #000000;
+  --c-stripe-b:       #ffffff;
+
+  /* Menu bar */
+  --c-menu-bg:        #ffffff;
+  --c-menu-border:    #000000;
+  --c-menu-text:      #000000;
+
+  /* Text */
+  --c-text:           #000000;
+  --c-text-muted:     #555555;
+  --c-link:           #000000;
+
+  /* Tabs */
+  --c-tab-active:     #ffffff;
+  --c-tab-inactive:   #bbbbbb;
+  --c-tab-text:       #000000;
+
+  /* Icon SVG fill / stroke — controlled by JS too */
+  --icon-fill:        #ffffff;
+  --icon-stroke:      #000000;
+
+  /* Scrollbar */
+  --c-scrollbar:      #ffffff;
+  --c-scrollbar-btn:  #ffffff;
+
+  /* ── ACCENT (used for tags, highlights) ──
+     Change this one value to shift the accent color site-wide  */
+  --c-accent:         #000000;
+  --c-accent-bg:      #f0f0f0;
+
+  /* Typography */
+  --font-ui:          'ChicagoFLF', 'Space Mono', 'Courier New', monospace;
+  --font-body:        -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Georgia, serif;
+  --sz-ui:            11px;
+  --sz-body:          13px;
+  --sz-small:         11px;
+}
+
+[data-theme="dark"] {
+  --c-desktop:        #1a1a1a;
+  --c-bg:             #2a2a2a;
+  --c-border:         #999999;
+  --c-shadow:         #777777;
+  --c-stripe-a:       #999999;
+  --c-stripe-b:       #2a2a2a;
+  --c-menu-bg:        #222222;
+  --c-menu-border:    #777777;
+  --c-menu-text:      #dddddd;
+  --c-text:           #e0e0e0;
+  --c-text-muted:     #aaaaaa;
+  --c-link:           #cccccc;
+  --c-tab-active:     #2a2a2a;
+  --c-tab-inactive:   #1a1a1a;
+  --c-tab-text:       #dddddd;
+  --icon-fill:        #2a2a2a;
+  --icon-stroke:      #dddddd;
+  --c-scrollbar:      #3a3a3a;
+  --c-scrollbar-btn:  #3a3a3a;
+  --c-accent:         #dddddd;
+  --c-accent-bg:      #333333;
+}
+
+/* ── Reset ─────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+a { color: var(--c-link); }
+a:hover { text-decoration: underline; }
+button { cursor: pointer; font-family: var(--font-ui); }
+
+/* ── Body ───────────────────────────────────────────────────────── */
+body {
+  margin: 0;
+  overflow: hidden;
+  height: 100vh;
+  font-family: var(--font-ui);
+  font-size: var(--sz-ui);
+  background: var(--c-desktop);
+}
+
+/* ── Menu Bar ───────────────────────────────────────────────────── */
+#menubar {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  height: 20px;
+  background: var(--c-menu-bg);
+  border-bottom: 1px solid var(--c-menu-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 8px;
+  z-index: 9999;
+  user-select: none;
+}
+
+.mb-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.mb-apple {
+  font-size: 13px;
+  color: var(--c-menu-text);
+  line-height: 1;
+}
+
+.mb-name {
+  font-family: var(--font-ui);
+  font-size: var(--sz-ui);
+  font-weight: 700;
+  color: var(--c-menu-text);
+  letter-spacing: 0.02em;
+}
+
+.mb-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+#theme-btn {
+  background: none;
+  border: none;
+  font-size: 13px;
+  color: var(--c-menu-text);
+  padding: 0 2px;
+  line-height: 1;
+  height: 18px;
+}
+#theme-btn:hover { opacity: 0.7; }
+
+#clock {
+  font-family: var(--font-ui);
+  font-size: var(--sz-ui);
+  color: var(--c-menu-text);
+  min-width: 60px;
+  text-align: right;
+}
+
+/* ── Desktop ────────────────────────────────────────────────────── */
+#desktop {
+  position: fixed;
+  top: 20px; left: 0; right: 0; bottom: 0;
+  overflow: hidden;
+  /* System 6 classic 50% dither — alternating black/white 1px pixels */
+  background-color: #ffffff;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='2' height='2'%3E%3Crect x='0' y='0' width='1' height='1' fill='%23000000'/%3E%3Crect x='1' y='1' width='1' height='1' fill='%23000000'/%3E%3C/svg%3E");
+  background-size: 2px 2px;
+  image-rendering: pixelated;
+}
+
+[data-theme="dark"] #desktop {
+  background-color: var(--c-desktop);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='2' height='2'%3E%3Crect x='0' y='0' width='1' height='1' fill='%23444444'/%3E%3Crect x='1' y='1' width='1' height='1' fill='%23444444'/%3E%3C/svg%3E");
+}
+
+/* ── Desktop Icons ──────────────────────────────────────────────── */
+.icon {
+  position: absolute;
+  width: 72px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  cursor: default;
+  user-select: none;
+  z-index: 10;
+  padding: 4px;
+}
+
+.icon-img {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.icon-img svg {
+  width: 36px;
+  height: 36px;
+  display: block;
+}
+
+.icon-label {
+  font-family: var(--font-ui);
+  font-size: var(--sz-small);
+  color: #000000;
+  text-align: center;
+  line-height: 1.3;
+  padding: 1px 4px;
+  word-break: break-word;
+  /* System 6: white label background sits on the dither pattern */
+  background: #ffffff;
+  width: 100%;
+}
+
+[data-theme="dark"] .icon-label {
+  background: var(--c-bg);
+  color: var(--c-text);
+}
+
+.icon.pressed .icon-img {
+  --icon-fill: var(--icon-stroke);
+  --icon-stroke: var(--c-bg);
+}
+
+.icon.pressed .icon-label {
+  background: var(--c-text);
+  color: var(--c-bg);
+}
+
+/* ── Windows ────────────────────────────────────────────────────── */
+.window {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--c-border);
+  box-shadow: 3px 3px 0 var(--c-shadow);
+  background: var(--c-bg);
+  min-width: 280px;
+  min-height: 140px;
+  overflow: hidden;
+}
+
+/* Title bar */
+.win-bar {
+  position: relative;
+  height: 20px;
+  flex-shrink: 0;
+  background: repeating-linear-gradient(
+    to bottom,
+    var(--c-stripe-a) 0px, var(--c-stripe-a) 1px,
+    var(--c-stripe-b) 1px, var(--c-stripe-b) 2px
+  );
+  border-bottom: 1px solid var(--c-border);
+  cursor: default;
+  user-select: none;
+}
+
+.win-close,
+.win-zoom {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 11px;
+  height: 11px;
+  border: 1.5px solid var(--c-border);
+  background: var(--c-bg);
+  padding: 0;
+  appearance: none;
+  -webkit-appearance: none;
+}
+.win-close:active,
+.win-zoom:active {
+  background: var(--c-text);
+}
+.win-close { left: 6px; }
+.win-zoom  { right: 6px; }
+
+.win-title {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  font-family: var(--font-ui);
+  font-size: var(--sz-ui);
+  font-weight: 700;
+  color: var(--c-text);
+  background: var(--c-bg);
+  padding: 0 8px;
+  white-space: nowrap;
+  max-width: calc(100% - 60px);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 20px;
+}
+
+/* Window body */
+.win-body {
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.win-pad {
+  padding: 14px 16px;
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
+}
+
+/* Resize handle (grow box) */
+.win-sizer {
+  position: absolute;
+  bottom: 2px;
+  right: 2px;
+  width: 14px;
+  height: 14px;
+  cursor: nwse-resize;
+  background: repeating-linear-gradient(
+    -45deg,
+    transparent 0px, transparent 2px,
+    var(--c-border) 2px, var(--c-border) 3px
+  );
+  opacity: 0.6;
+  pointer-events: all;
+}
+
+/* ── Tabs ───────────────────────────────────────────────────────── */
+.tabs-bar {
+  display: flex;
+  flex-shrink: 0;
+  border-bottom: 1px solid var(--c-border);
+  padding: 4px 6px 0;
+  gap: 3px;
+  background: var(--c-bg);
+}
+
+.tab {
+  font-family: var(--font-ui);
+  font-size: var(--sz-ui);
+  color: var(--c-tab-text);
+  background: var(--c-tab-inactive);
+  border: 1px solid var(--c-border);
+  border-bottom: none;
+  padding: 2px 10px 3px;
+  position: relative;
+  bottom: -1px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.tab:hover { opacity: 0.85; }
+.tab.active {
+  background: var(--c-tab-active);
+  z-index: 1;
+}
+
+.tabs-panels {
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+}
+
+.tab-panel {
+  display: none;
+  height: 100%;
+  overflow-y: auto;
+  padding: 14px 16px;
+}
+.tab-panel.active { display: block; }
+
+/* ── Content Styles ─────────────────────────────────────────────── */
+
+/* About window */
+.about-name {
+  font-family: var(--font-ui);
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--c-text);
+  margin-bottom: 4px;
+}
+.about-tagline {
+  font-family: var(--font-ui);
+  font-size: var(--sz-small);
+  color: var(--c-text-muted);
+  margin-bottom: 14px;
+  font-style: italic;
+}
+.about-bio {
+  font-family: var(--font-body);
+  font-size: var(--sz-body);
+  color: var(--c-text);
+  line-height: 1.65;
+  margin-bottom: 16px;
+}
+.section-head {
+  font-family: var(--font-ui);
+  font-size: var(--sz-ui);
+  font-weight: 700;
+  color: var(--c-text);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 8px;
+  padding-bottom: 3px;
+  border-bottom: 1px solid var(--c-border);
+}
+.interest-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-bottom: 16px;
+}
+.tag {
+  font-family: var(--font-ui);
+  font-size: var(--sz-small);
+  color: var(--c-text);
+  background: var(--c-accent-bg);
+  border: 1px solid var(--c-border);
+  padding: 2px 7px;
+}
+.contact-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+  font-family: var(--font-ui);
+  font-size: var(--sz-ui);
+  color: var(--c-text);
+}
+
+/* Publication / conference entries */
+.entry {
+  padding: 10px 0;
+  border-bottom: 1px solid var(--c-accent-bg);
+}
+.entry:last-child { border-bottom: none; }
+.entry-title {
+  font-family: var(--font-body);
+  font-size: var(--sz-body);
+  font-style: italic;
+  color: var(--c-text);
+  line-height: 1.4;
+  margin-bottom: 4px;
+}
+.entry-title a {
+  color: var(--c-link);
+  text-decoration: none;
+}
+.entry-title a:hover { text-decoration: underline; }
+.entry-meta {
+  font-family: var(--font-ui);
+  font-size: var(--sz-small);
+  color: var(--c-text-muted);
+  line-height: 1.4;
+}
+.entry-events {
+  font-family: var(--font-ui);
+  font-size: var(--sz-small);
+  color: var(--c-text-muted);
+  margin-top: 4px;
+}
+.entry-events span::after { content: " ·"; }
+.entry-events span:last-child::after { content: ""; }
+
+/* Project cards */
+.project-card {
+  padding: 10px 0;
+  border-bottom: 1px solid var(--c-accent-bg);
+}
+.project-card:last-child { border-bottom: none; }
+.project-title {
+  font-family: var(--font-ui);
+  font-size: var(--sz-body);
+  font-weight: 700;
+  color: var(--c-text);
+  margin-bottom: 4px;
+}
+.project-title a {
+  color: var(--c-link);
+  text-decoration: none;
+}
+.project-title a:hover { text-decoration: underline; }
+.project-desc {
+  font-family: var(--font-body);
+  font-size: var(--sz-body);
+  color: var(--c-text);
+  line-height: 1.55;
+  margin-bottom: 6px;
+}
+.project-tags { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 4px; }
+.project-status {
+  font-family: var(--font-ui);
+  font-size: var(--sz-small);
+  color: var(--c-text-muted);
+}
+
+/* CV */
+.cv-section { margin-bottom: 20px; }
+.cv-entry {
+  display: grid;
+  grid-template-columns: 100px 1fr;
+  gap: 4px 12px;
+  margin-bottom: 10px;
+  font-family: var(--font-body);
+  font-size: var(--sz-body);
+  color: var(--c-text);
+  line-height: 1.5;
+}
+.cv-period {
+  font-family: var(--font-ui);
+  font-size: var(--sz-small);
+  color: var(--c-text-muted);
+  padding-top: 2px;
+}
+.cv-degree {
+  font-weight: bold;
+}
+.cv-inst {
+  font-style: italic;
+  color: var(--c-text-muted);
+  font-size: var(--sz-small);
+}
+.cv-note {
+  font-size: var(--sz-small);
+  color: var(--c-text-muted);
+  line-height: 1.4;
+  grid-column: 2;
+  font-style: italic;
+}
+.exp-header { margin-bottom: 2px; }
+.exp-title { font-weight: bold; }
+.exp-org { font-style: italic; color: var(--c-text-muted); }
+.exp-loc {
+  font-family: var(--font-ui);
+  font-size: var(--sz-small);
+  color: var(--c-text-muted);
+}
+.exp-period {
+  font-family: var(--font-ui);
+  font-size: var(--sz-small);
+  color: var(--c-text-muted);
+  margin-bottom: 4px;
+}
+.exp-bullets {
+  margin: 0 0 0 1em;
+  padding: 0;
+  list-style: disc;
+}
+.exp-bullets li {
+  font-family: var(--font-body);
+  font-size: var(--sz-body);
+  color: var(--c-text);
+  line-height: 1.55;
+  margin-bottom: 2px;
+}
+.skills-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.empty {
+  font-family: var(--font-ui);
+  font-size: var(--sz-ui);
+  color: var(--c-text-muted);
+  font-style: italic;
+  padding: 10px 0;
+}
+
+/* ── Scrollbars (WebKit) ────────────────────────────────────────── */
+::-webkit-scrollbar { width: 15px; height: 15px; }
+::-webkit-scrollbar-track {
+  background: var(--c-scrollbar);
+  border-left: 1px solid var(--c-border);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--c-scrollbar-btn);
+  border: 1px solid var(--c-border);
+  min-height: 20px;
+}
+::-webkit-scrollbar-button {
+  background: var(--c-scrollbar-btn);
+  border: 1px solid var(--c-border);
+  display: block;
+  height: 15px;
+}
+::-webkit-scrollbar-corner { background: var(--c-bg); }
+
+/* ═══════════════════════════════════════════════════════════════
+   MOBILE  (≤ 768px)
+   Icons → centred 2-column grid, larger tap targets
+   Windows → fixed full-screen overlay, no drag/resize
+═══════════════════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+
+  /* Desktop becomes a scrollable grid instead of a free canvas */
+  #desktop {
+    overflow-y: auto;
+    overflow-x: hidden;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    align-content: start;
+    gap: 12px;
+    padding: 16px 8px 32px;
+  }
+
+  /* Icons: bigger, static (no absolute positioning on mobile) */
+  .icon {
+    position: static !important;
+    width: auto;
+    min-width: 0;
+    padding: 8px 4px;
+    align-items: center;
+  }
+
+  .icon-img {
+    width: 52px;
+    height: 52px;
+  }
+  .icon-img svg { width: 48px; height: 48px; }
+
+  .icon-label {
+    font-size: 10px;
+    padding: 2px 3px;
+  }
+
+  /* Windows: full-screen modal, centred, no drag, no resize */
+  .window {
+    position: fixed !important;
+    left: 0 !important;
+    top: 20px !important;
+    width: 100vw !important;
+    height: calc(100vh - 20px) !important;
+    box-shadow: none;
+    z-index: 1000 !important;
+    border-left: none;
+    border-right: none;
+    border-bottom: none;
+  }
+
+  /* Hide the resize handle on mobile */
+  .win-sizer { display: none; }
+
+  /* Prevent the title-bar drag cursor on mobile */
+  .win-bar { cursor: default; }
+
+  /* Slightly taller title bar for easier tapping */
+  .win-bar { height: 26px; }
+  .win-title { line-height: 26px; font-size: 12px; }
+  .win-close,
+  .win-zoom  { width: 14px; height: 14px; }
+
+  /* Tabs: allow horizontal scroll if many tabs */
+  .tabs-bar {
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    -webkit-overflow-scrolling: touch;
+  }
+  .tab { white-space: nowrap; padding: 3px 12px 4px; font-size: 11px; }
+
+  /* Scrollbar: hide on mobile (native scroll handles it) */
+  ::-webkit-scrollbar { width: 0; height: 0; }
+
+  /* Larger tap target for content links */
+  .entry-title a,
+  .project-title a { font-size: 14px; line-height: 1.6; }
+}
