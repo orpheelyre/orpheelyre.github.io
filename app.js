@@ -1532,6 +1532,10 @@ function setAdminLoggedIn(val) {
   if (wm?.open?.now) openNowWindow();
   if (wm?.open?.devlog) openDevlogWindow();
   if (wm?.open?.guestbook) refreshGuestbookTerminal();
+  // Re-render pinned notes so unpin button appears/disappears with admin state
+  activePinned.forEach(el => el.remove());
+  activePinned.clear();
+  if (GUESTBOOK_SYNC.enabled) fetchGuestbookFromRemote();
 }
 
 /* ── Guestbook admin actions ──────────────────────────────────── */

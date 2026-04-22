@@ -102,6 +102,8 @@
 a { color: var(--c-link); }
 a:hover { text-decoration: underline; }
 button { cursor: pointer; font-family: var(--font-ui); color: inherit; }
+:focus-visible { outline: 2px solid #4488dd; outline-offset: 1px; }
+:focus:not(:focus-visible) { outline: none; }
 
 /* ── Body ───────────────────────────────────────────────────────── */
 body {
@@ -1245,6 +1247,7 @@ body {
   position: absolute;
   width: 172px;
   background: var(--c-bg);
+  color: var(--c-text);
   border: 1px solid var(--c-border);
   box-shadow: 3px 3px 0 var(--c-shadow);
   padding: 8px 10px;
@@ -1320,7 +1323,7 @@ body {
 }
 .gb-admin-btns button:hover { background: var(--c-shadow); }
 .gb-admin-del:hover { border-color: #c00; color: #c00; }
-.gb-admin-pin:hover { border-color: #88f; color: #88f; }
+.gb-admin-pin:hover { border-color: #4488dd; color: #4488dd; }
 /* Admin login window */
 .admin-wrap {
   display: flex; flex-direction: column; align-items: center;
@@ -1332,7 +1335,7 @@ body {
   color: var(--c-text);
 }
 .admin-status { font-family: var(--font-ui); font-size: 11px; min-height: 14px; }
-.admin-ok { color: #2a7a2a; font-weight: bold; }
+.admin-ok { color: #4488dd; font-weight: bold; }
 .admin-pw-input {
   width: 130px; font-family: var(--font-ui); font-size: 12px;
   border: 1px solid var(--c-border); background: var(--c-bg);
