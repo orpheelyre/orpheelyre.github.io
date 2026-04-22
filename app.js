@@ -162,6 +162,7 @@ class WM {
     }
     if (id === 'devlog') devlogEditing = false;
     if (id === 'guestbook') guestbookDrawCtx = null;
+    if (id === 'admin') { if (adminCatTimer) { clearInterval(adminCatTimer); adminCatTimer = null; } }
     if (id === 'sync-notice' && syncNoticeTimer) {
       clearTimeout(syncNoticeTimer);
       syncNoticeTimer = null;
@@ -280,6 +281,9 @@ document.addEventListener('keydown', e => {
   if (e.key === 'Enter' && e.target.classList.contains('gb-msg')) {
     submitGuestbook();
   }
+  if (e.key === 'Enter' && e.target.classList.contains('admin-pw-input')) {
+    document.querySelector('#win-admin .admin-login-btn')?.click();
+  }
 });
 
 document.addEventListener('click', async e => {
@@ -342,7 +346,8 @@ document.addEventListener('click', async e => {
   if (nowAction) {
     const action = nowAction.dataset.nowAction;
     if (action === 'edit') {
-      openNowEditPasswordPrompt();
+      nowEditing = true;
+      openNowWindow();
     } else if (action === 'cancel') {
       nowEditing = false;
       releaseNowPreviewObjectUrl();
@@ -374,7 +379,8 @@ document.addEventListener('click', async e => {
   if (devlogAction) {
     const action = devlogAction.dataset.devlogAction;
     if (action === 'edit') {
-      openDevlogEditPasswordPrompt();
+      devlogEditing = true;
+      openDevlogWindow();
     } else if (action === 'cancel') {
       devlogEditing = false;
       refreshDevlogWindow();
@@ -469,6 +475,38 @@ document.addEventListener('click', async e => {
     return;
   }
   if (e.target.closest('.gb-send')) { submitGuestbook(); return; }
+
+  // Admin login / logout
+  if (e.target.closest('.admin-login-btn')) {
+    const input = document.querySelector('#win-admin .admin-pw-input');
+    const entered = String(input?.value || '').trim();
+    const expected = String(SITE.nowEditPassword || '').trim();
+    if ((expected && entered === expected) || (!expected && entered)) {
+      setNowAdminSessionPassword(entered);
+      setAdminLoggedIn(true);
+    } else {
+      const st = document.getElementById('admin-status');
+      if (st) { st.textContent = 'wrong password.'; st.style.color = 'var(--c-error, #c00)'; }
+      input?.select();
+    }
+    return;
+  }
+  if (e.target.closest('.admin-logout-btn')) {
+    setAdminLoggedIn(false);
+    return;
+  }
+
+  // Guestbook admin: delete
+  const gbDel = e.target.closest('.gb-admin-del');
+  if (gbDel) { deleteGuestbookEntry(gbDel.dataset.gbid); return; }
+
+  // Guestbook admin: pin
+  const gbPin = e.target.closest('.gb-admin-pin');
+  if (gbPin) { pinGuestbookEntry(gbPin.dataset.gbid); return; }
+
+  // Sticky note unpin (admin)
+  const stickyUnpin = e.target.closest('.sticky-unpin');
+  if (stickyUnpin) { unpinGuestbookEntry(stickyUnpin.dataset.gbid); return; }
   if (e.target.closest('.gb-clr')) {
     const cv = document.getElementById('gb-canvas');
     if (cv && guestbookDrawCtx) {
@@ -553,6 +591,15 @@ let syncNoticeTimer = null;
 let guestbookEntries = [];
 let guestbookPollTimer = null;
 let guestbookDrawCtx = null;
+let adminLoggedIn = sessionStorage.getItem('admin') === '1';
+let adminCatTimer = null;
+const activePinned = new Map(); // id → DOM element
+const ADMIN_CAT_FRAMES = [
+  '/\\_/\\\n(=^.^=)\n(")(")\u007e',
+  '/\\_/\\\n(=-.-=)\n(")(")\u007e',
+  '/\\_/\\\n(=^.^=)\n(")(")\u007e',
+  '/\\_/\\\n(=^w^=)\n(")(")\u007e',
+];
 
 function escapeHtml(value) {
   return String(value ?? '').replace(/[&<>"']/g, char => ({
@@ -1054,7 +1101,9 @@ function renderNow() {
     ? `<button class="now-btn" data-now-action="save">Save</button>
        <button class="now-btn" data-now-action="cancel">Cancel</button>
        <button class="now-btn" data-now-action="reset">Reset</button>`
-    : `<button class="now-btn" data-now-action="edit">Edit</button>`;
+    : adminLoggedIn
+      ? `<button class="now-btn" data-now-action="edit">Edit</button>`
+      : '';
 
   const body = nowEditing
     ? `<div class="now-edit-grid">
@@ -1149,7 +1198,9 @@ function renderDevlog() {
   const controls = devlogEditing
     ? `<button class="now-btn" data-devlog-action="save">Save</button>
        <button class="now-btn" data-devlog-action="cancel">Cancel</button>`
-    : `<button class="now-btn" data-devlog-action="edit">Update</button>`;
+    : adminLoggedIn
+      ? `<button class="now-btn" data-devlog-action="edit">Update</button>`
+      : '';
   const body = devlogEditing
     ? `<div class="now-edit-grid">
          <div class="now-hint">One line per update. Format: 21 April 2026 your note</div>
@@ -1191,7 +1242,7 @@ function renderGuestbookEntries() {
   }
   return guestbookEntries.map(e => `
     <div class="gb-entry">
-      <div class="gb-entry-hd">&gt;&nbsp;${escapeHtml(e.ts || e.timestamp || '')}&nbsp;&bull;&nbsp;${escapeHtml(e.name)}&nbsp;<span class="gb-mood-stamp">${escapeHtml(e.mood || '')}</span></div>
+      <div class="gb-entry-hd">&gt;&nbsp;${escapeHtml(e.ts || e.timestamp || '')}&nbsp;&bull;&nbsp;${escapeHtml(e.name)}&nbsp;<span class="gb-mood-stamp">${escapeHtml(e.mood || '')}</span>${adminLoggedIn ? `<span class="gb-admin-btns"><button class="gb-admin-pin" data-gbid="${escapeHtml(String(e.id))}">pin</button><button class="gb-admin-del" data-gbid="${escapeHtml(String(e.id))}">del</button></span>` : ''}</div>
       <div class="gb-entry-body">${escapeHtml(e.message)}</div>
       ${e.drawing ? `<div class="gb-entry-draw"><img src="${escapeHtml(e.drawing)}" alt="" class="gb-draw-img" /></div>` : ''}
     </div>
@@ -1415,6 +1466,7 @@ async function fetchGuestbookFromRemote() {
       guestbookEntries = data.entries;
       refreshGuestbookTerminal();
     }
+    if (Array.isArray(data.pinned)) syncPinnedNotes(data.pinned);
   } catch (_) {}
 }
 
@@ -1423,6 +1475,151 @@ function initGuestbookSync() {
   if (!guestbookPollTimer && GUESTBOOK_SYNC.enabled) {
     guestbookPollTimer = setInterval(fetchGuestbookFromRemote, GUESTBOOK_SYNC.pollMs);
   }
+}
+
+/* ── Admin ────────────────────────────────────────────────────── */
+function renderAdminLogin() {
+  if (adminLoggedIn) {
+    return `<div class="admin-wrap">
+      <pre class="admin-cat" id="admin-cat">${ADMIN_CAT_FRAMES[0]}</pre>
+      <div class="admin-status admin-ok">\u2713 logged in</div>
+      <button class="admin-logout-btn">logout</button>
+    </div>`;
+  }
+  return `<div class="admin-wrap">
+    <pre class="admin-cat" id="admin-cat">${ADMIN_CAT_FRAMES[0]}</pre>
+    <div class="admin-status" id="admin-status">&nbsp;</div>
+    <input type="password" class="admin-pw-input" placeholder="password" autocomplete="current-password" />
+    <button class="admin-login-btn">\u2192 enter</button>
+  </div>`;
+}
+
+function openAdminLoginWindow() {
+  if (!wm) return;
+  if (wm.open?.['admin']) {
+    const existing = wm.open['admin'];
+    existing.querySelector('.win-body').innerHTML = `<div class="win-pad">${renderAdminLogin()}</div>`;
+    wm.focus(existing);
+    setTimeout(() => { startAdminCatAnimation(); if (!adminLoggedIn) document.querySelector('#win-admin .admin-pw-input')?.focus(); }, 30);
+    return;
+  }
+  wm.show('admin', { title: '42 inches to mars!', html: renderAdminLogin(), w: 210, h: 210 });
+  setTimeout(() => { startAdminCatAnimation(); if (!adminLoggedIn) document.querySelector('#win-admin .admin-pw-input')?.focus(); }, 50);
+}
+
+function startAdminCatAnimation() {
+  if (adminCatTimer) clearInterval(adminCatTimer);
+  let frame = 0;
+  adminCatTimer = setInterval(() => {
+    const cat = document.getElementById('admin-cat');
+    if (!cat) { clearInterval(adminCatTimer); adminCatTimer = null; return; }
+    frame = (frame + 1) % ADMIN_CAT_FRAMES.length;
+    cat.textContent = ADMIN_CAT_FRAMES[frame];
+  }, 550);
+}
+
+function setAdminLoggedIn(val) {
+  adminLoggedIn = val;
+  if (val) {
+    sessionStorage.setItem('admin', '1');
+  } else {
+    sessionStorage.removeItem('admin');
+    setNowAdminSessionPassword('');
+    nowEditing = false;
+    devlogEditing = false;
+  }
+  if (wm?.open?.['admin']) openAdminLoginWindow();
+  if (wm?.open?.now) openNowWindow();
+  if (wm?.open?.devlog) openDevlogWindow();
+  if (wm?.open?.guestbook) refreshGuestbookTerminal();
+}
+
+/* ── Guestbook admin actions ──────────────────────────────────── */
+async function deleteGuestbookEntry(id) {
+  if (!GUESTBOOK_SYNC.canWrite || !adminLoggedIn) return;
+  try {
+    const res = await fetch(GUESTBOOK_SYNC.writeUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'delete', id, password: getNowAdminSessionPassword() || SITE.nowEditPassword }),
+    });
+    const data = await res.json();
+    if (data.ok) {
+      guestbookEntries = guestbookEntries.filter(e => String(e.id) !== String(id));
+      refreshGuestbookTerminal();
+    }
+  } catch (_) {}
+}
+
+async function pinGuestbookEntry(id) {
+  if (!GUESTBOOK_SYNC.canWrite || !adminLoggedIn) return;
+  try {
+    const res = await fetch(GUESTBOOK_SYNC.writeUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'pin', id, password: getNowAdminSessionPassword() || SITE.nowEditPassword }),
+    });
+    const data = await res.json();
+    if (data.ok && data.entry) {
+      // Clear any existing pinned notes first (one at a time)
+      activePinned.forEach(el => el.remove());
+      activePinned.clear();
+      const el = showPinnedNote(data.entry);
+      if (el) activePinned.set(String(id), el);
+    }
+  } catch (_) {}
+}
+
+async function unpinGuestbookEntry(id) {
+  if (!GUESTBOOK_SYNC.canWrite || !adminLoggedIn) return;
+  try {
+    const res = await fetch(GUESTBOOK_SYNC.writeUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'unpin', id, password: getNowAdminSessionPassword() || SITE.nowEditPassword }),
+    });
+    const data = await res.json();
+    if (data.ok) {
+      activePinned.get(String(id))?.remove();
+      activePinned.delete(String(id));
+    }
+  } catch (_) {}
+}
+
+/* ── Pinned sticky notes ──────────────────────────────────────── */
+function showPinnedNote(entry) {
+  const desktop = document.getElementById('desktop');
+  if (!desktop) return null;
+  const note = document.createElement('div');
+  note.className = 'sticky-note is-pinned';
+  note.style.zIndex = 9000;
+  const rot = (Math.random() * 4 - 2).toFixed(1);
+  note.style.setProperty('--rot', rot + 'deg');
+  const ts  = entry.ts || entry.timestamp || '';
+  const msg = (entry.message || '').length > 120 ? entry.message.slice(0, 120) + '\u2026' : (entry.message || '');
+  note.innerHTML = `
+    <div class="sticky-pin-mark">\u{1F4CC}</div>
+    <div class="sticky-who">${escapeHtml(entry.name)}&nbsp;${escapeHtml(entry.mood || '')}</div>
+    ${ts ? `<div class="sticky-ts">${escapeHtml(ts)}</div>` : ''}
+    <div class="sticky-txt">${escapeHtml(msg)}</div>
+    ${entry.drawing ? `<img src="${escapeHtml(entry.drawing)}" alt="" class="gb-draw-img" style="margin-top:4px;width:100%" />` : ''}
+    ${adminLoggedIn ? `<button class="sticky-unpin" data-gbid="${escapeHtml(String(entry.id))}">unpin</button>` : ''}
+  `;
+  desktop.appendChild(note);
+  return note;
+}
+
+function syncPinnedNotes(pinned) {
+  const incoming = new Set(pinned.map(p => String(p.id)));
+  activePinned.forEach((el, id) => {
+    if (!incoming.has(id)) { el.remove(); activePinned.delete(id); }
+  });
+  pinned.forEach(entry => {
+    if (!activePinned.has(String(entry.id))) {
+      const el = showPinnedNote(entry);
+      if (el) activePinned.set(String(entry.id), el);
+    }
+  });
 }
 
 function renderAbout() {
@@ -1956,6 +2153,13 @@ function updateClock() {
 /* ── Theme toggle ─────────────────────────────────────────────── */
 document.getElementById('start-btn')?.addEventListener('click', () => {
   openNowWindow();
+});
+
+document.getElementById('mb-name')?.addEventListener('click', () => {
+  openAdminLoginWindow();
+});
+document.getElementById('mb-name')?.addEventListener('keydown', e => {
+  if (e.key === 'Enter' || e.key === ' ') openAdminLoginWindow();
 });
 
 document.getElementById('theme-btn').addEventListener('click', () => {

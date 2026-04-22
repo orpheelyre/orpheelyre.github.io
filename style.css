@@ -165,7 +165,10 @@ body {
   font-weight: 700;
   color: var(--c-menu-text);
   letter-spacing: 0.02em;
+  cursor: pointer;
+  user-select: none;
 }
+.mb-name:hover { text-decoration: underline; }
 
 .mb-right {
   display: flex;
@@ -1282,3 +1285,63 @@ body {
 .sticky-ts  { color: var(--c-text-muted); font-size: 9px; margin-bottom: 3px; }
 .sticky-txt { color: var(--c-text-muted); line-height: 1.4; font-size: 10px; }
 .sticky-draw { margin-top: 3px; color: var(--c-text-muted); font-size: 10px; }
+/* Pinned note — fixed position, not draggable */
+.sticky-note.is-pinned {
+  position: fixed !important;
+  width: 190px;
+  right: 28px;
+  top: 50%;
+  transform: translateY(-50%) rotate(var(--rot)) !important;
+  left: auto !important;
+  cursor: default;
+}
+@media (max-width: 768px) {
+  .sticky-note.is-pinned {
+    right: auto;
+    left: 50% !important;
+    top: auto;
+    bottom: 72px;
+    transform: translateX(-50%) rotate(var(--rot)) !important;
+  }
+}
+.sticky-pin-mark { font-size: 9px; margin-bottom: 3px; opacity: 0.6; }
+.sticky-unpin {
+  display: block; margin-top: 6px; width: 100%;
+  font-family: var(--font-ui); font-size: 9px;
+  border: 1px solid var(--c-border); background: var(--c-bg);
+  cursor: pointer; padding: 2px 0;
+}
+.sticky-unpin:hover { background: var(--c-shadow); }
+/* Guestbook admin buttons */
+.gb-admin-btns { display: inline-flex; gap: 4px; margin-left: 6px; }
+.gb-admin-btns button {
+  font-family: var(--font-ui); font-size: 9px;
+  border: 1px solid var(--c-border); background: var(--c-bg);
+  cursor: pointer; padding: 0 4px; line-height: 14px;
+}
+.gb-admin-btns button:hover { background: var(--c-shadow); }
+.gb-admin-del:hover { border-color: #c00; color: #c00; }
+.gb-admin-pin:hover { border-color: #55a; color: #55a; }
+/* Admin login window */
+.admin-wrap {
+  display: flex; flex-direction: column; align-items: center;
+  gap: 8px; padding: 10px 0 4px;
+}
+.admin-cat {
+  font-family: var(--font-mono, monospace); font-size: 12px;
+  line-height: 1.5; text-align: center; margin: 0;
+  color: var(--c-text);
+}
+.admin-status { font-family: var(--font-ui); font-size: 11px; min-height: 14px; }
+.admin-ok { color: #2a7a2a; font-weight: bold; }
+.admin-pw-input {
+  width: 130px; font-family: var(--font-ui); font-size: 12px;
+  border: 1px solid var(--c-border); background: var(--c-bg);
+  color: var(--c-text); padding: 3px 6px;
+}
+.admin-login-btn, .admin-logout-btn {
+  font-family: var(--font-ui); font-size: 11px;
+  border: 1px solid var(--c-border); background: var(--c-bg);
+  color: var(--c-text); cursor: pointer; padding: 3px 12px;
+}
+.admin-login-btn:hover, .admin-logout-btn:hover { background: var(--c-shadow); }
