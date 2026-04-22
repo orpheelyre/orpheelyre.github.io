@@ -1732,9 +1732,9 @@ function renderPublications() {
 
 function renderProjects() {
   const cats = [
-    { id: 'video-games',   label: 'Video Games'   },
-    { id: 'mr-experience', label: 'MR Experience' },
     { id: 'research',      label: 'Research'      },
+    { id: 'mr-experience', label: 'MR Experience' },
+    { id: 'video-games',   label: 'Video Games'   },
     { id: 'artwork',       label: 'Artwork'        },
   ];
 

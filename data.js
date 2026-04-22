@@ -132,6 +132,18 @@ const SITE = {
       mdFile:      "projects/whalefall-haven.md",
     },
     {
+      id:          "turau-aruhe-seacliff",
+      title:       "Tracing Heritage Visibility at Tūrau Aruhe Seacliff",
+      category:    "research",
+      role:        "Honours Dissertation",
+      orgLine:     "Supervised by Dr Natasha Phillips and Associate Professor Tim Thomas<br>Archaeology Programme, University of Otago, Aotearoa",
+      description: "An archaeological research project investigating how heritage visibility is shaped by geological instability, ecological succession, and selective remembrance within a still-forming cultural landscape. Combining remote sensing, archival reconstruction, GIS, and field observation, it examines how traces persist, shift, disappear, and re-emerge over time.",
+      url:         null,
+      tags:        ["Critical Heritage Studies", "Contemporary Archaeology", "Landscape Archaeology"],
+      status:      "In Progress",
+      mdFile:      null,
+    },
+    {
       id:          "urban-heritage-platform",
       title:       "Urban Heritage AR Exploration",
       category:    "mr-experience",
