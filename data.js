@@ -32,7 +32,7 @@ const SITE = {
   // Update these fields whenever you want to refresh the Now window.
   now: {
     updated: "April 2026",
-    updatedAuto: true,
+    updatedAuto: false,
     by: "OL",
     status: "Writing thesis, writing, writing. Many years later, as he faced the firing squad, Colonel Aureliano Buend\u00eda was to remember that distant afternoon when his father took him to discover ice.",
     picture: "assets/now/IMG_6437.jpg",

@@ -916,7 +916,8 @@ function readNowFormData() {
   const current = getNowData();
   const manualPicture = String(document.getElementById('now-input-picture')?.value || '').trim();
   return normalizeNowData({
-    updatedAuto: true,
+    updatedAuto: false,
+    updated: getNzDateLabel(),
     by: document.getElementById('now-input-by')?.value || '',
     status: document.getElementById('now-input-status')?.value || '',
     focus: linesToArray(document.getElementById('now-input-focus')?.value || ''),
@@ -930,7 +931,8 @@ function readNowFormData() {
 function readDevlogFormData() {
   const current = getNowData();
   return normalizeNowData({
-    updatedAuto: true,
+    updatedAuto: false,
+    updated: getNzDateLabel(),
     by: current.by,
     status: current.status,
     focus: current.focus,
