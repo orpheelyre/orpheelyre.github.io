@@ -1,8 +1,8 @@
 {
-  "updated": "21 April 2026",
+  "updated": "22 April 2026",
   "updatedAuto": true,
   "by": "OL",
-  "status": "Writing thesis, writing, writing. Many years later, as he faced the firing squad, Colonel Aureliano Buendía was to remember that distant afternoon when his father took him to discover ice.",
+  "status": "Focusing on building your portfolio instead of a playground! (NO I REFUSE)",
   "focus": [
     "Revising the methodology chapter",
     "Becoming an argillite expert",
@@ -17,6 +17,10 @@
     {
       "date": "21 April 2026",
       "text": "real-time read and write updated via cloudflare worker"
+    },
+    {
+      "date": "22 April 2026",
+      "text": "now the admin can pin/unpin a certain note for everyone :D"
     }
   ],
   "picture": "assets/now/IMG_6437.jpg",
