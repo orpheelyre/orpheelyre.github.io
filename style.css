@@ -101,7 +101,7 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 a { color: var(--c-link); }
 a:hover { text-decoration: underline; }
-button { cursor: pointer; font-family: var(--font-ui); }
+button { cursor: pointer; font-family: var(--font-ui); color: inherit; }
 
 /* ── Body ───────────────────────────────────────────────────────── */
 body {
@@ -1289,15 +1289,13 @@ body {
 .sticky-note.is-pinned {
   position: fixed !important;
   width: 190px;
-  right: 28px;
+  left: 58% !important;
   top: 50%;
-  transform: translateY(-50%) rotate(var(--rot)) !important;
-  left: auto !important;
+  transform: translate(-50%, -50%) rotate(var(--rot)) !important;
   cursor: default;
 }
 @media (max-width: 768px) {
   .sticky-note.is-pinned {
-    right: auto;
     left: 50% !important;
     top: auto;
     bottom: 72px;
@@ -1317,11 +1315,12 @@ body {
 .gb-admin-btns button {
   font-family: var(--font-ui); font-size: 9px;
   border: 1px solid var(--c-border); background: var(--c-bg);
+  color: var(--c-text);
   cursor: pointer; padding: 0 4px; line-height: 14px;
 }
 .gb-admin-btns button:hover { background: var(--c-shadow); }
 .gb-admin-del:hover { border-color: #c00; color: #c00; }
-.gb-admin-pin:hover { border-color: #55a; color: #55a; }
+.gb-admin-pin:hover { border-color: #88f; color: #88f; }
 /* Admin login window */
 .admin-wrap {
   display: flex; flex-direction: column; align-items: center;
