@@ -1532,10 +1532,19 @@ function setAdminLoggedIn(val) {
   if (wm?.open?.now) openNowWindow();
   if (wm?.open?.devlog) openDevlogWindow();
   if (wm?.open?.guestbook) refreshGuestbookTerminal();
-  // Re-render pinned notes so unpin button appears/disappears with admin state
-  activePinned.forEach(el => el.remove());
-  activePinned.clear();
-  if (GUESTBOOK_SYNC.enabled) fetchGuestbookFromRemote();
+  // Sync unpin button on existing pinned notes immediately (no fetch needed)
+  activePinned.forEach((el, id) => {
+    const existing = el.querySelector('.sticky-unpin');
+    if (val && !existing) {
+      const btn = document.createElement('button');
+      btn.className = 'sticky-unpin';
+      btn.dataset.gbid = id;
+      btn.textContent = 'unpin';
+      el.appendChild(btn);
+    } else if (!val && existing) {
+      existing.remove();
+    }
+  });
 }
 
 /* ── Guestbook admin actions ──────────────────────────────────── */
