@@ -6,9 +6,14 @@ August 2023 – Present
 
 ---
 
+<video autoplay muted loop playsinline style="width:100%;display:block;margin-bottom:14px;border:2px solid var(--c-border);box-shadow:3px 3px 0 var(--c-shadow)">
+  <source src="https://cdn.cloudflare.steamstatic.com/steam/apps/257060288/movie480_vp9.webm" type="video/webm">
+  <source src="https://cdn.cloudflare.steamstatic.com/steam/apps/257060288/movie480.mp4" type="video/mp4">
+</video>
+
 ## Overview
 
-Whalefall Haven is a narrative-driven space opera RPG where players shape their build, use Mimic abilities, and make relationship-based choices that alter reputation, character arcs, and story outcomes.
+A narrative-driven space opera RPG where players shape their build, wield Mimic abilities, and make relationship-driven choices that alter reputation, fate, and story outcomes. Set aboard a space city built atop the corpse of a planet-sized whale, the game features multiple endings, dark humour, cyber-theology, and non-human beings.
 
 [View on Steam →](https://store.steampowered.com/app/3061230/Whalefall_Haven/)
 

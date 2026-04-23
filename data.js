@@ -14,7 +14,7 @@ const SITE = {
 
   name:    "Orlan Y. Syshui",
   tagline: "Material Practice · Field Experience · Digital Narrative",
-  bio:     "A tomb of glass. A fossil of green. A researcher and artist working at the intersection of archaeology, anthropology, and experimental media. Current work sits at the edges of landscape, heritage, and memory politics, tracing the processual and relational conditions through which sites and institutions accumulate afterlives.",
+  bio:     "A researcher and artist working at the intersection of archaeology, anthropology, and experimental media. Current work sits at the edges of landscape, heritage, and memory politics, tracing the processual and relational conditions through which sites and institutions accumulate afterlives.",
 
   interests: [
     "Archaeological Theory",

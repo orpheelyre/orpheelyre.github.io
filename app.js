@@ -62,6 +62,18 @@ const SVG = {
     <polyline points="6,16 10,19 6,22" fill="none" stroke="var(--icon-stroke)" stroke-width="1.5" stroke-linejoin="round"/>
     <line x1="13" y1="22" x2="22" y2="22" stroke="var(--icon-stroke)" stroke-width="1.5"/>
   </svg>`,
+
+  sisyphus: `<svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="22" cy="13" r="7" fill="var(--icon-fill)" stroke="var(--icon-stroke)" stroke-width="1.5"/>
+    <path d="M17 10 Q20 8 24 11" fill="none" stroke="var(--icon-stroke)" stroke-width="0.9"/>
+    <line x1="18" y1="14" x2="20" y2="17" stroke="var(--icon-stroke)" stroke-width="0.9"/>
+    <circle cx="5" cy="15" r="2.5" fill="var(--icon-fill)" stroke="var(--icon-stroke)" stroke-width="1.2"/>
+    <line x1="7"  y1="17"   x2="13" y2="21"  stroke="var(--icon-stroke)" stroke-width="1.5" stroke-linecap="round"/>
+    <line x1="10" y1="18.5" x2="15" y2="14"  stroke="var(--icon-stroke)" stroke-width="1.3" stroke-linecap="round"/>
+    <line x1="13" y1="21"   x2="9"  y2="27"  stroke="var(--icon-stroke)" stroke-width="1.5" stroke-linecap="round"/>
+    <line x1="13" y1="21"   x2="16" y2="27"  stroke="var(--icon-stroke)" stroke-width="1.5" stroke-linecap="round"/>
+    <line x1="1"  y1="28"   x2="30" y2="28"  stroke="var(--icon-stroke)" stroke-width="1"/>
+  </svg>`,
 };
 
 /* ── Drag State ───────────────────────────────────────────────── */
@@ -203,10 +215,13 @@ class WM {
     el.style.top     = y + 'px';
     el.style.width   = w + 'px';
     if (opts.h || isMobile) el.style.height = h + 'px';
+    if (opts.aspectRatio)   el.dataset.aspectRatio = opts.aspectRatio;
 
     const body = opts.tabs
       ? buildTabs(id, opts.tabs)
-      : `<div class="win-pad">${opts.html}</div>`;
+      : opts.nopad
+        ? opts.html
+        : `<div class="win-pad">${opts.html}</div>`;
 
     el.innerHTML = `
       <div class="win-bar">
@@ -307,7 +322,21 @@ document.addEventListener('click', async e => {
       win.dataset.prevH = win.offsetHeight;
       win.dataset.prevX = parseInt(win.style.left) || 0;
       win.dataset.prevY = parseInt(win.style.top)  || 0;
-      if (window.innerWidth <= 768) {
+      const ar = parseFloat(win.dataset.aspectRatio);
+      if (ar) {
+        // Scale up maintaining the game's native aspect ratio
+        const CHROME  = 23; // win-bar (20px) + top border (1px) + bottom border (1px) + sizer overlap (1px)
+        const margin  = 20;
+        const vw      = window.innerWidth;
+        const vh      = window.innerHeight - 28; // below menubar
+        let W = Math.min(vw - margin, (vh - margin - CHROME) * ar);
+        let H = Math.round(W / ar) + CHROME;
+        W = Math.round(W);
+        win.style.width  = W + 'px';
+        win.style.height = H + 'px';
+        win.style.left   = Math.round((vw - W) / 2) + 'px';
+        win.style.top    = Math.round((vh - H) / 2 + 28) + 'px';
+      } else if (window.innerWidth <= 768) {
         win.dataset.mobileFullscreen = '1';
         win.style.left   = '0px';
         win.style.top    = '28px';
@@ -1998,6 +2027,34 @@ function openProjectDetail(id) {
     });
 }
 
+/* ── Game window ──────────────────────────────────────────────── */
+function openGameWindow() {
+  // Unity Play embed URL
+  const EMBED_URL = 'https://play.unity.com/en/games/e1f1c167-6a9e-41c0-b88a-82ecd1ac27f6/embed';
+  // Native game aspect ratio (width ÷ height). 4/3 = 1.333, 16/9 = 1.778
+  const RATIO  = 16 / 9;
+  const CHROME = 23; // titlebar + borders height in px
+  const defW   = 480;
+  const defH   = Math.round(defW / RATIO) + CHROME;
+
+  if (wm.open['game']) { wm.focus(wm.open['game']); return; }
+
+  const html = `<div class="game-frame">
+       <iframe src="${EMBED_URL}"
+               allowfullscreen allow="autoplay; fullscreen"
+               scrolling="no"></iframe>
+     </div>`;
+
+  wm.show('game', {
+    title: 'game.exe',
+    html,
+    nopad:       true,
+    w:           defW,
+    h:           defH,
+    aspectRatio: RATIO,
+  });
+}
+
 /* ── Desktop icon definitions ─────────────────────────────────── */
 function makeIconDefs() {
   const rX  = Math.max(window.innerWidth  - 108, 500);
@@ -2044,6 +2101,11 @@ function makeIconDefs() {
       id: 'guestbook', label: 'guestbook', icon: SVG.terminal, iconKey: 'terminal',
       x: 30, y: 310,
       action: () => openGuestbookWindow(),
+    },
+    {
+      id: 'game', label: 'game.exe', icon: SVG.sisyphus, iconKey: 'sisyphus',
+      x: 30, y: 400,
+      action: () => openGameWindow(),
     },
     // ── Left bottom: bin ─────────────────────────────────────
     {
