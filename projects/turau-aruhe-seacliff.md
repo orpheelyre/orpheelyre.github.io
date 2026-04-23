@@ -6,7 +6,7 @@ Supervised by Dr Natasha Phillips and Associate Professor Tim Thomas
 
 Archaeology Programme, University of Otago, Aotearoa
 
-2025 – 2026
+2026
 
 ---
 
