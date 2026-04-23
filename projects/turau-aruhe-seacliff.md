@@ -1,8 +1,11 @@
 # Tracing Heritage Visibility at Tūrau Aruhe Seacliff
 
 **Honours Dissertation**
+
 Supervised by Dr Natasha Phillips and Associate Professor Tim Thomas
+
 Archaeology Programme, University of Otago, Aotearoa
+
 2025 – 2026
 
 ---
@@ -17,7 +20,7 @@ An archaeological research project investigating how heritage visibility is shap
 
 ## Research Themes
 
-- **Landscape Instability** — How ongoing coastal erosion and land movement continuously reshape what is and is not visible at the site.
+- **Landscape Instability** — How ongoing slow ground movement continuously reshapes what is and is not visible at the site.
 - **Ecological Succession** — The role of vegetation change in obscuring, revealing, and mediating access to heritage features.
 - **Selective Remembrance** — How institutional and community processes determine which traces are recorded, protected, or allowed to vanish.
 - **Processual Visibility** — Treating visibility not as a fixed property of a site but as a dynamic condition produced through intersecting material and social forces.
