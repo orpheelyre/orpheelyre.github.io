@@ -89,18 +89,22 @@ const SITE = {
   // type: "Journal Article" | "Public Anthropology" | etc.
   publications: [
     {
-      title: "Dream is an Offshore Flame: Notes on Archaeology and Belonging",
-      type:  "Journal Article",
-      venue: "Anthropology & Humanism",
-      date:  "Feb 2026",
-      url:   "https://doi.org/10.1111/anhu.70081",
+      id:       "offshore-flame",
+      title:    "Dream is an Offshore Flame: Notes on Archaeology and Belonging",
+      type:     "Journal Article",
+      venue:    "Anthropology & Humanism",
+      date:     "Feb 2026",
+      url:      "https://doi.org/10.1111/anhu.70081",
+      abstract: "Set within an archaeology lab in Dunedin, Aotearoa, this creative non-fiction piece traces the search for dwelling through the meticulous, repetitive labor of everyday practice. The narrative finds belonging not as a static identity, but as a continuous, tactile engagement with the material world. By drifting between winters in the Southern and Northern Hemispheres, the story weaves together the sorting of ancient middens with a memory of London's contested urban spaces—where a graffiti-covered bridge and a tented sanctuary challenge the boundaries between public architecture and private survival. Through this grounding of sensory reflections in the physical act of sorting, the work unfolds the broader human struggle to find permanence in a transient world, and suggests how the act of creating order from debris might serve as a universal strategy for re-rooting oneself within the river of time. Ultimately, the narrative transforms the intimate labor of an individual into a lens for exploring the ways we might find and inhabit a sense of belonging amidst the displacement and chilly isolation of modern life.",
     },
     {
-      title: "Everywhere is a Border, Everywhere a War",
-      type:  "Public Anthropology",
-      venue: "Allegra Lab",
-      date:  "March 2026",
-      url:   null,
+      id:       "everywhere-border",
+      title:    "Everywhere is a Border, Everywhere a War",
+      type:     "Public Anthropology",
+      venue:    "Allegra Lab",
+      date:     "March 2026",
+      url:      "https://allegralaboratory.net/everywhere-is-a-border-everywhere-a-wall/",
+      abstract: "1 April 2024, London. Written while shifting from one transient stay to another, sixteen days before a final departure. This fragment reflects on the tonal and stratified urban space, refusals of belonging, and the uneasy ethics of crossing thresholds without staying.",
     },
   ],
 
@@ -108,11 +112,14 @@ const SITE = {
   // Template: { title, venue, year, type, url }
   conferences: [
     {
-      title: "The Epistemology of Dirt: A Paradoxical Method for an Anthropology of the Margins",
-      venue: "ASAA/NZ Conference",
-      year:  "December 2025",
-      type:  "Oral Presentation",
-      url:   "https://static1.squarespace.com/static/563bdbb0e4b0b249b09076eb/t/69277b9c7a77366d4c4ba309/1764195228779/ASAANZ+Programme+BOOKLET+2025.pdf",
+      id:       "epistemology-dirt",
+      title:    "The Epistemology of Dirt: A Paradoxical Method for an Anthropology of the Margins",
+      venue:    "ASAA/NZ Conference",
+      year:     "December 2025",
+      type:     "Oral Presentation",
+      url:      "https://static1.squarespace.com/static/563bdbb0e4b0b249b09076eb/t/69277b9c7a77366d4c4ba309/1764195228779/ASAANZ+Programme+BOOKLET+2025.pdf",
+      abstract: "This paper proposes \"being dirt\" as an embodied method of positionality that extends Mary Douglas's concept of dirt as \"matter out of place.\" Departing from dirt as a boundary-threatening pollutant, the \"dirt\" discussed here refers to a structurally tolerated presence — persistently misaligned yet not expelled, remaining within the system through default containment. \"Being dirt\" is not a metaphor but a lived positional condition. It exists adjacent to the centre but remains unassimilated, permitted to linger precisely because it is perceived as harmless, negligible, or residual. Drawing on neurodivergent and queer experiences, this paper argues that certain forms of unsolicited openness rather reflect institutional tolerance of non-belonging. From such marginal positions, individuals are often more attuned to the tensions and ruptures embedded within social and institutional structures — fissures often invisible to those securely positioned within normative belonging. Echoing Haraway's insight on the epistemic potential of peripheral vision, this paper argues that 'being dirt,' through its persistent misplacement and unintegrated presence, acts as a cognitive probe that pierces classificatory orders to expose structural fractures. Rather than a mode of resistance or identity, \"being dirt\" denotes a logic of unclassifiability, lingering, and repetitive erasure that nonetheless refuses disappearance. Its analytical value lies not in offering a universally replicable method but in revealing that anthropological inquiry is fundamentally located in moments and locations already rendered peripheral or marked for erasure.",
+      keywords: ["Otherness", "Epistemology", "Embodied Positionality", "Methodology", "Margins"],
     },
   ],
 

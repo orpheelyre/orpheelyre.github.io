@@ -341,6 +341,14 @@ document.addEventListener('click', async e => {
     return;
   }
 
+  // Publication entry → detail window
+  const pubEntry = e.target.closest('[data-pub-id]');
+  if (pubEntry) { openPublicationDetail(pubEntry.dataset.pubId); return; }
+
+  // Conference entry → detail window
+  const confEntry = e.target.closest('[data-conf-id]');
+  if (confEntry) { openConferenceDetail(confEntry.dataset.confId); return; }
+
   // Now window actions
   const nowAction = e.target.closest('[data-now-action]');
   if (nowAction) {
@@ -1698,28 +1706,56 @@ function renderCV() {
   };
 }
 
+function openPublicationDetail(id) {
+  const p = SITE.publications.find(x => (x.id || x.title) === id);
+  if (!p) return;
+  const winId = 'pub-' + id;
+  if (wm.open?.[winId]) { wm.focus(wm.open[winId]); return; }
+  const html = `
+    <div class="pub-detail">
+      <div class="entry-type-badge">${escapeHtml(p.type)}</div>
+      <h2 class="pub-detail-title">${escapeHtml(p.title)}</h2>
+      <div class="pub-detail-meta">${escapeHtml(p.venue)} &nbsp;&middot;&nbsp; ${escapeHtml(p.date)}</div>
+      ${p.abstract ? `<p class="pub-detail-abstract">${escapeHtml(p.abstract)}</p>` : ''}
+      ${p.url ? `<a class="pub-detail-link" href="${escapeHtml(p.url)}" target="_blank" rel="noopener">&rarr; ${escapeHtml(p.url)}</a>` : ''}
+    </div>`;
+  wm.show(winId, { title: p.title, html, w: 480, h: 420 });
+}
+
+function openConferenceDetail(id) {
+  const c = SITE.conferences.find(x => (x.id || x.title) === id);
+  if (!c) return;
+  const winId = 'conf-' + id;
+  if (wm.open?.[winId]) { wm.focus(wm.open[winId]); return; }
+  const html = `
+    <div class="pub-detail">
+      <div class="entry-type-badge">${escapeHtml(c.type)}</div>
+      <h2 class="pub-detail-title">${escapeHtml(c.title)}</h2>
+      <div class="pub-detail-meta">${escapeHtml(c.venue)} &nbsp;&middot;&nbsp; ${escapeHtml(c.year)}</div>
+      ${c.abstract ? `<p class="pub-detail-abstract">${escapeHtml(c.abstract)}</p>` : ''}
+      ${c.keywords?.length ? `<div class="pub-detail-keywords">${c.keywords.map(k => `<span class="tag">${escapeHtml(k)}</span>`).join('')}</div>` : ''}
+      ${c.url ? `<a class="pub-detail-link" href="${escapeHtml(c.url)}" target="_blank" rel="noopener">&rarr; programme booklet</a>` : ''}
+    </div>`;
+  wm.show(winId, { title: c.title, html, w: 480, h: 440 });
+}
+
 function renderPublications() {
   const papers = SITE.publications.length
     ? SITE.publications.map(p => `
-        <div class="entry">
-          <div class="entry-type-badge">${p.type}</div>
-          <div class="entry-title">
-            ${p.url ? `<a href="${p.url}" target="_blank" rel="noopener">${p.title}</a>`
-                    : `${p.title}`}
-          </div>
-          <div class="entry-meta">${p.venue} &nbsp;&middot;&nbsp; ${p.date}</div>
+        <div class="entry entry-clickable" data-pub-id="${escapeHtml(p.id || p.title)}">
+          <div class="entry-type-badge">${escapeHtml(p.type)}</div>
+          <div class="entry-title">${escapeHtml(p.title)} <span class="entry-open-hint">&nearr;</span></div>
+          <div class="entry-meta">${escapeHtml(p.venue)} &nbsp;&middot;&nbsp; ${escapeHtml(p.date)}</div>
         </div>
       `).join('')
     : '<p class="empty">No papers yet.</p>';
 
   const confs = SITE.conferences.length
     ? SITE.conferences.map(c => `
-        <div class="entry">
-          <div class="entry-title">
-            ${c.url ? `<a href="${c.url}" target="_blank" rel="noopener">${c.title}</a>`
-                    : `${c.title}`}
-          </div>
-          <div class="entry-meta">${c.venue} &nbsp;&middot;&nbsp; ${c.year} &nbsp;&middot;&nbsp; ${c.type}</div>
+        <div class="entry entry-clickable" data-conf-id="${escapeHtml(c.id || c.title)}">
+          <div class="entry-title">${escapeHtml(c.title)} <span class="entry-open-hint">&nearr;</span></div>
+          <div class="entry-meta">${escapeHtml(c.venue)} &nbsp;&middot;&nbsp; ${escapeHtml(c.year)} &nbsp;&middot;&nbsp; ${escapeHtml(c.type)}</div>
+          ${c.keywords?.length ? `<div class="entry-keywords">${c.keywords.map(k => `<span class="tag">${escapeHtml(k)}</span>`).join('')}</div>` : ''}
         </div>
       `).join('')
     : '<p class="empty">Nothing here yet.</p>';

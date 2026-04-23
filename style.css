@@ -489,6 +489,17 @@ body {
   border-bottom: 1px solid var(--c-accent-bg);
 }
 .entry:last-child { border-bottom: none; }
+.entry-clickable { cursor: pointer; }
+.entry-clickable:hover .entry-title { text-decoration: underline; }
+.entry-open-hint { font-size: 10px; opacity: 0.5; }
+.entry-keywords { margin-top: 5px; }
+/* Publication detail window */
+.pub-detail { }
+.pub-detail-title { font-family: var(--font-ui); font-size: var(--sz-body); font-weight: bold; margin: 6px 0 4px; line-height: 1.4; }
+.pub-detail-meta { font-family: var(--font-ui); font-size: var(--sz-small); color: var(--c-text-muted); margin-bottom: 12px; }
+.pub-detail-abstract { font-family: var(--font-body); font-size: var(--sz-small); line-height: 1.6; color: var(--c-text); margin-bottom: 14px; }
+.pub-detail-keywords { margin-bottom: 12px; }
+.pub-detail-link { font-family: var(--font-ui); font-size: var(--sz-small); color: var(--c-link); word-break: break-all; }
 .entry-type-badge {
   display: inline-block;
   font-family: var(--font-ui);
