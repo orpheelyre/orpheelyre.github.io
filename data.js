@@ -151,7 +151,7 @@ const SITE = {
       url:         null,
       tags:        ["Critical Heritage Studies", "Contemporary Archaeology", "Landscape Archaeology"],
       status:      "In Progress",
-      mdFile:      null,
+      mdFile:      "projects/turau-aruhe-seacliff.md",
     },
     {
       id:          "urban-heritage-platform",
