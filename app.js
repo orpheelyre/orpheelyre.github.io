@@ -1717,7 +1717,7 @@ function openPublicationDetail(id) {
       <h2 class="pub-detail-title">${escapeHtml(p.title)}</h2>
       <div class="pub-detail-meta">${escapeHtml(p.venue)} &nbsp;&middot;&nbsp; ${escapeHtml(p.date)}</div>
       ${p.abstract ? `<p class="pub-detail-abstract">${escapeHtml(p.abstract)}</p>` : ''}
-      ${p.url ? `<a class="pub-detail-link" href="${escapeHtml(p.url)}" target="_blank" rel="noopener">&rarr; ${escapeHtml(p.url)}</a>` : ''}
+      ${p.url ? `<a class="pub-detail-link" href="${escapeHtml(p.url)}" target="_blank" rel="noopener">&rarr; ${escapeHtml(p.linkLabel || p.url)}</a>` : ''}
     </div>`;
   wm.show(winId, { title: p.title, html, w: 480, h: 420 });
 }
@@ -1734,7 +1734,7 @@ function openConferenceDetail(id) {
       <div class="pub-detail-meta">${escapeHtml(c.venue)} &nbsp;&middot;&nbsp; ${escapeHtml(c.year)}</div>
       ${c.abstract ? `<p class="pub-detail-abstract">${escapeHtml(c.abstract)}</p>` : ''}
       ${c.keywords?.length ? `<div class="pub-detail-keywords">${c.keywords.map(k => `<span class="tag">${escapeHtml(k)}</span>`).join('')}</div>` : ''}
-      ${c.url ? `<a class="pub-detail-link" href="${escapeHtml(c.url)}" target="_blank" rel="noopener">&rarr; programme booklet</a>` : ''}
+      ${c.url ? `<a class="pub-detail-link" href="${escapeHtml(c.url)}" target="_blank" rel="noopener">&rarr; ${escapeHtml(c.linkLabel || c.url)}</a>` : ''}
     </div>`;
   wm.show(winId, { title: c.title, html, w: 480, h: 440 });
 }
