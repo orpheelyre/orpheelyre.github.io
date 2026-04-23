@@ -10,7 +10,8 @@ Archaeology Programme, University of Otago, Aotearoa
 
 ---
 
-<img src="assets/seacliff-GIS.jpg" alt="GIS map of Tūrau Aruhe Seacliff study area" style="width:100%;display:block;margin-bottom:14px;border:2px solid var(--c-border);box-shadow:3px 3px 0 var(--c-shadow)">
+<img src="assets/seacliff site layout.jpg" alt="Site layout map of Tūrau Aruhe Seacliff" style="width:100%;display:block;margin-bottom:6px;border:2px solid var(--c-border);box-shadow:3px 3px 0 var(--c-shadow)">
+<p style="font-family:var(--font-ui);font-size:var(--sz-small);color:var(--c-text-muted);margin:0 0 14px">Site layout. Modified from Dr Natasha Phillips GIS dataset.</p>
 
 ## Overview
 
