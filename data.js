@@ -100,8 +100,8 @@ const SITE = {
     },
     {
       id:       "everywhere-border",
-      title:    "Everywhere is a Border, Everywhere a War",
-      type:     "Public Anthropology",
+      title:    "Everywhere is a Border, Everywhere a Wall",
+      type:     "Peer-reviewed Public Anthropology",
       venue:    "Allegra Lab",
       date:     "March 2026",
       url:      "https://allegralaboratory.net/everywhere-is-a-border-everywhere-a-wall/",
