@@ -1,0 +1,27 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "id": "coastal-otago-study-zone",
+      "properties": {
+        "label": "Coastal study zone"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [170.47, -45.91],
+            [170.55, -45.85],
+            [170.63, -45.79],
+            [170.70, -45.70],
+            [170.70, -45.58],
+            [170.56, -45.61],
+            [170.49, -45.72],
+            [170.47, -45.91]
+          ]
+        ]
+      }
+    }
+  ]
+}

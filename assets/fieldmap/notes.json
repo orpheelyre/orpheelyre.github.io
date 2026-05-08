@@ -1,0 +1,93 @@
+{
+  "sites": [
+    {
+      "site_id": "seacliff-core",
+      "title": "Seacliff Core",
+      "place": "Turau Aruhe Seacliff",
+      "visits": [
+        {
+          "id": "seacliff-feb",
+          "month": "2026-02",
+          "title": "Site Layout Pass",
+          "note": "Initial pass on site structure, memory anchors, and access edges. Logged areas where visibility shifts with light and weather.",
+          "tags": ["layout", "visibility", "baseline"],
+          "images": [
+            {
+              "src": "assets/seacliff%20site%20layout.jpg",
+              "alt": "Seacliff site layout field sketch.",
+              "caption": "Layout sketch and baseline notes."
+            }
+          ]
+        },
+        {
+          "id": "seacliff-mar",
+          "month": "2026-03",
+          "title": "Trace Return",
+          "note": "Returned to prior trace points. Recorded where plant regrowth now obscures earlier-visible features.",
+          "tags": ["return", "ecology", "trace"],
+          "images": []
+        },
+        {
+          "id": "seacliff-may",
+          "month": "2026-05",
+          "title": "Museum Link + Revisit",
+          "note": "Cross-referenced recovered object classes with collection notes, then revisited the same points in field for correspondence.",
+          "tags": ["revisit", "catalogue", "comparison"],
+          "images": [
+            {
+              "src": "assets/now/IMG_6437.jpg",
+              "alt": "A set of measuring tools and loupe.",
+              "caption": "Comparative material handling setup."
+            },
+            {
+              "src": "assets/seacliff%20site%20layout.jpg",
+              "alt": "Seacliff site layout sketch.",
+              "caption": "Re-opened against archival observations."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "site_id": "waikouaiti-node",
+      "title": "Waikouaiti Memory Node",
+      "place": "Waikouaiti",
+      "visits": [
+        {
+          "id": "waik-apr",
+          "month": "2026-04",
+          "title": "Memory Corridor Walk",
+          "note": "Collected oral-memory references linked to former movement corridors and compared with current access conditions.",
+          "tags": ["memory", "corridor", "oral history"],
+          "images": []
+        }
+      ]
+    },
+    {
+      "site_id": "otago-museum",
+      "title": "Otago Museum Collections",
+      "place": "Dunedin",
+      "visits": [
+        {
+          "id": "museum-may",
+          "month": "2026-05",
+          "title": "Collections Alignment",
+          "note": "Matched selected field classes against museum references. This is a good example of one site with multiple images.",
+          "tags": ["museum", "catalogue", "cross-reference"],
+          "images": [
+            {
+              "src": "assets/now/IMG_6437.jpg",
+              "alt": "Measurement setup in lab.",
+              "caption": "Object measurement workflow."
+            },
+            {
+              "src": "assets/seacliff%20site%20layout.jpg",
+              "alt": "Site sketch reference.",
+              "caption": "Field-to-collection correspondence marker."
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

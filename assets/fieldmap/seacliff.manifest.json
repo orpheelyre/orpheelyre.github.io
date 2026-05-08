@@ -1,0 +1,22 @@
+{
+  "title": "Seacliff Field Notes Atlas",
+  "subtitle": "Dunedin - Turau Aruhe Seacliff - Waikouaiti",
+  "description": "QGIS-ready layers with timeline, revisits, and cumulative display.",
+  "projectId": "turau-aruhe-seacliff",
+  "extent": [170.45, -45.93, 170.73, -45.55],
+  "defaultMonth": "2026-05",
+  "accumulateDefault": true,
+  "months": [
+    { "id": "2026-02", "label": "February 2026" },
+    { "id": "2026-03", "label": "March 2026" },
+    { "id": "2026-04", "label": "April 2026" },
+    { "id": "2026-05", "label": "May 2026" }
+  ],
+  "files": {
+    "areas": "areas.geojson",
+    "roads": "roads.geojson",
+    "paths": "paths.geojson",
+    "points": "points.geojson",
+    "notes": "notes.json"
+  }
+}

@@ -45,6 +45,30 @@ const SITE = {
       { date: "21 April 2026", text: "initial commit and framework on live." },
     ],
   },
+
+  // ── Seacliff field map (GeoJSON interface for QGIS export) ──────
+  // Recommended workflow:
+  // 1) Export vector layers from QGIS as GeoJSON (EPSG:4326)
+  // 2) Put files under assets/fieldmap/
+  // 3) Update assets/fieldmap/seacliff.manifest.json
+  fieldMap: {
+    title: "Seacliff Field Notes Atlas",
+    subtitle: "Dunedin → Tūrau Aruhe Seacliff → Waikouaiti",
+    description: "Monthly field notes map with timeline, revisits, and layered paths.",
+    projectId: "turau-aruhe-seacliff",
+    defaultMonth: "2026-05",
+    accumulateDefault: true,
+    extent: {
+      minLat: -45.93,
+      maxLat: -45.55,
+      minLon: 170.45,
+      maxLon: 170.73,
+    },
+    source: {
+      manifest: "assets/fieldmap/seacliff.manifest.json",
+    },
+  },
+
   // ── Guestbook ────────────────────────────────────────────────────
   // readUrl: public GET endpoint returning { entries: [...] }
   // writeUrl: POST endpoint accepting { name, mood, message, drawing? }
@@ -123,6 +147,17 @@ const SITE = {
       linkLabel: "Programme Booklet",
       abstract: "This paper proposes \"being dirt\" as an embodied method of positionality that extends Mary Douglas's concept of dirt as \"matter out of place.\" Departing from dirt as a boundary-threatening pollutant, the \"dirt\" discussed here refers to a structurally tolerated presence — persistently misaligned yet not expelled, remaining within the system through default containment. \"Being dirt\" is not a metaphor but a lived positional condition. It exists adjacent to the centre but remains unassimilated, permitted to linger precisely because it is perceived as harmless, negligible, or residual. Drawing on neurodivergent and queer experiences, this paper argues that certain forms of unsolicited openness rather reflect institutional tolerance of non-belonging. From such marginal positions, individuals are often more attuned to the tensions and ruptures embedded within social and institutional structures — fissures often invisible to those securely positioned within normative belonging. Echoing Haraway's insight on the epistemic potential of peripheral vision, this paper argues that 'being dirt,' through its persistent misplacement and unintegrated presence, acts as a cognitive probe that pierces classificatory orders to expose structural fractures. Rather than a mode of resistance or identity, \"being dirt\" denotes a logic of unclassifiability, lingering, and repetitive erasure that nonetheless refuses disappearance. Its analytical value lies not in offering a universally replicable method but in revealing that anthropological inquiry is fundamentally located in moments and locations already rendered peripheral or marked for erasure.",
       keywords: ["Otherness", "Epistemology", "Embodied Positionality", "Methodology", "Margins"],
+    },
+    {
+      id:       "lines-unsettled-turau-aruhe",
+      title:    "Lines of the Unsettled: Tracing Relational Heritage in Processual Landscapes at Tūrau Aruhe Seacliff",
+      venue:    "ACHS Conference 2026",
+      year:     "December 2026 (forthcoming)",
+      type:     "Accepted Individual Paper",
+      url:      "https://www.achs2026.nz",
+      linkLabel: "ACHS 2026 official site",
+      abstract: "Heritage management in geomorphically unstable landscapes unfolds under conditions of persistent destabilisation. At Tūrau Aruhe, ecological succession, geological disturbance, and anthropogenic intervention continually rework the ground through which the former Seacliff Asylum's afterlives are negotiated and encountered. Treating the landscape as a \"taskscape\" of movement, decay, and maintenance, this paper examines how such dynamics may strain heritage frameworks that rely on fixed references, investigating a potential friction between material reworking and curated narrative stability. In dialogue with the Tūrau Aruhe Seacliff initiative's emphasis on relational ethics and whakapapa, the analysis foregrounds non-intrusive methods and interpretive openness in examining a processual landscape. By triangulating LiDAR-derived terrain models, GNSS field observations, and archival representational sequences, the paper proposes a working framework that treats lines as an analytic device across three registers: material lines in the ground and infrastructure; narrative lines that render the site legible; and institutional reference lines that define heritage. Tracing where these lines align, diverge, or sever, the paper approaches heritage legibility as a relational accomplishment shaped by interdependencies between human and more-than-human agents, materials, whenua, institutional frames, and everyday practices. This analytical move from landscape-as-object to landscape-as-process offers one way to depart from singular, authoritative heritage narratives without presuming interpretive closure. By acknowledging the landscape as \"perpetually under construction,\" the paper asks how critical heritage studies might approach inherited dualisms as matters of ongoing alignment rather than fixed categories, taking instability as constitutive of place in response to the conference theme Tūhono. Tracing relations across the three registers, the paper considers what may be lost when interpretive accounts are prematurely stabilised, and asks how attending to such losses might open space for more relational ways of engaging processual landscapes.",
+      keywords: ["Processual Landscapes", "Taskscape", "Relational Heritage", "Institutional Afterlives", "People-Environment Relations"],
     },
   ],
 

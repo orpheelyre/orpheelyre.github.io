@@ -63,6 +63,14 @@ const SVG = {
     <line x1="13" y1="22" x2="22" y2="22" stroke="var(--icon-stroke)" stroke-width="1.5"/>
   </svg>`,
 
+  map: `<svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M4 7 L12 4 L20 7 L28 4 V24 L20 27 L12 24 L4 27 Z" fill="var(--icon-fill)" stroke="var(--icon-stroke)" stroke-width="1.5" stroke-linejoin="round"/>
+    <line x1="12" y1="4" x2="12" y2="24" stroke="var(--icon-stroke)" stroke-width="1.2"/>
+    <line x1="20" y1="7" x2="20" y2="27" stroke="var(--icon-stroke)" stroke-width="1.2"/>
+    <circle cx="17" cy="14" r="3.2" fill="var(--icon-fill)" stroke="var(--icon-stroke)" stroke-width="1.2"/>
+    <circle cx="17" cy="14" r="1.1" fill="var(--icon-stroke)"/>
+  </svg>`,
+
   sisyphus: `<svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
     <circle cx="22" cy="13" r="7" fill="var(--icon-fill)" stroke="var(--icon-stroke)" stroke-width="1.5"/>
     <path d="M17 10 Q20 8 24 11" fill="none" stroke="var(--icon-stroke)" stroke-width="0.9"/>
@@ -630,6 +638,12 @@ let guestbookPollTimer = null;
 let guestbookDrawCtx = null;
 let adminLoggedIn = sessionStorage.getItem('admin') === '1';
 let adminCatTimer = null;
+let fieldMapMonthIndex = 0;
+let fieldMapSelectedSiteId = '';
+let fieldMapAccumulate = true;
+let fieldMapDataset = null;
+let fieldMapLoadPromise = null;
+let fieldMapView = { x: 0, y: 0, w: 640, h: 380 };
 const activePinned = new Map(); // id → DOM element
 const ADMIN_CAT_FRAMES = [
   '/\\_/\\\n(=^.^=)\n(")(")\u007e',
@@ -1826,6 +1840,766 @@ function renderProjects() {
   return { tabs };
 }
 
+/* ── Seacliff field map ──────────────────────────────────────── */
+const FIELDMAP_BASE = {
+  width: 640,
+  height: 380,
+  padding: 26,
+  maxZoom: 6,
+};
+
+function clampNum(value, min, max) {
+  return Math.min(Math.max(value, min), max);
+}
+
+function parseMonthToken(value) {
+  const token = String(value || '').trim();
+  if (!token) return '';
+  return token.toLowerCase() === 'recent' ? '' : token;
+}
+
+function parseMonthTokens(raw) {
+  if (Array.isArray(raw)) return raw.map(parseMonthToken).filter(Boolean);
+  const token = String(raw || '').trim();
+  if (!token) return [];
+  return token.split(',').map(parseMonthToken).filter(Boolean);
+}
+
+function resolveFieldMapFile(baseUrl, maybeRelative) {
+  const raw = String(maybeRelative || '').trim();
+  if (!raw) return '';
+  if (/^https?:\/\//i.test(raw)) return raw;
+  try {
+    return new URL(raw, baseUrl).toString();
+  } catch (_) {
+    return raw;
+  }
+}
+
+async function fetchJsonSafe(url) {
+  if (!url) return null;
+  const res = await fetch(url, { cache: 'no-store' });
+  if (!res.ok) throw new Error(`Could not load ${url}`);
+  return res.json();
+}
+
+function normalizeExtent(raw) {
+  if (Array.isArray(raw) && raw.length >= 4) {
+    const minLon = Number(raw[0]);
+    const minLat = Number(raw[1]);
+    const maxLon = Number(raw[2]);
+    const maxLat = Number(raw[3]);
+    if ([minLon, minLat, maxLon, maxLat].every(Number.isFinite)) {
+      return { minLon, minLat, maxLon, maxLat };
+    }
+  }
+  if (raw && typeof raw === 'object') {
+    const minLon = Number(raw.minLon);
+    const minLat = Number(raw.minLat);
+    const maxLon = Number(raw.maxLon);
+    const maxLat = Number(raw.maxLat);
+    if ([minLon, minLat, maxLon, maxLat].every(Number.isFinite)) {
+      return { minLon, minLat, maxLon, maxLat };
+    }
+  }
+  return { minLon: 170.45, minLat: -45.93, maxLon: 170.73, maxLat: -45.55 };
+}
+
+function normalizeMonths(rawMonths) {
+  const list = Array.isArray(rawMonths) ? rawMonths : [];
+  const out = list.map((m, idx) => {
+    if (typeof m === 'string') return { id: parseMonthToken(m) || `month-${idx + 1}`, label: m };
+    const id = parseMonthToken(m?.id || m?.month || m?.key) || `month-${idx + 1}`;
+    const label = String(m?.label || m?.name || id);
+    return { id, label };
+  }).filter(m => m.id);
+  return out;
+}
+
+function normalizePointFeatures(geojson) {
+  const features = Array.isArray(geojson?.features) ? geojson.features : [];
+  return features
+    .map((f, idx) => {
+      if (f?.geometry?.type !== 'Point') return null;
+      const coords = Array.isArray(f.geometry.coordinates) ? f.geometry.coordinates : [];
+      const lon = Number(coords[0]);
+      const lat = Number(coords[1]);
+      if (!Number.isFinite(lat) || !Number.isFinite(lon)) return null;
+      const props = f.properties || {};
+      const siteId = String(props.site_id || props.id || f.id || `site-${idx + 1}`);
+      return {
+        id: String(f.id || siteId),
+        siteId,
+        lon,
+        lat,
+        title: String(props.title || props.name || siteId),
+        place: String(props.place || props.location || ''),
+        tags: parseMonthTokens(props.tags ? String(props.tags) : ''),
+        props,
+      };
+    })
+    .filter(Boolean);
+}
+
+function normalizeLineFeatures(geojson) {
+  const features = Array.isArray(geojson?.features) ? geojson.features : [];
+  const out = [];
+  features.forEach((f, idx) => {
+    const props = f.properties || {};
+    if (f?.geometry?.type === 'LineString') {
+      out.push({
+        id: String(f.id || props.id || `line-${idx + 1}`),
+        segments: [f.geometry.coordinates],
+        props,
+      });
+    } else if (f?.geometry?.type === 'MultiLineString') {
+      out.push({
+        id: String(f.id || props.id || `line-${idx + 1}`),
+        segments: f.geometry.coordinates,
+        props,
+      });
+    }
+  });
+  return out;
+}
+
+function normalizePolygonFeatures(geojson) {
+  const features = Array.isArray(geojson?.features) ? geojson.features : [];
+  const out = [];
+  features.forEach((f, idx) => {
+    const props = f.properties || {};
+    if (f?.geometry?.type === 'Polygon') {
+      out.push({
+        id: String(f.id || props.id || `area-${idx + 1}`),
+        polygons: [f.geometry.coordinates],
+        props,
+      });
+    } else if (f?.geometry?.type === 'MultiPolygon') {
+      out.push({
+        id: String(f.id || props.id || `area-${idx + 1}`),
+        polygons: f.geometry.coordinates,
+        props,
+      });
+    }
+  });
+  return out;
+}
+
+function normalizeImageList(imagesRaw) {
+  const list = Array.isArray(imagesRaw) ? imagesRaw : [];
+  return list
+    .map((img, idx) => {
+      if (typeof img === 'string') {
+        const src = String(img || '').trim();
+        if (!src) return null;
+        return { id: `img-${idx + 1}`, src, alt: '', caption: '' };
+      }
+      const src = String(img?.src || img?.url || '').trim();
+      if (!src) return null;
+      return {
+        id: String(img.id || `img-${idx + 1}`),
+        src,
+        alt: String(img.alt || ''),
+        caption: String(img.caption || ''),
+      };
+    })
+    .filter(Boolean);
+}
+
+function normalizeSiteNotes(notesRaw) {
+  const out = new Map();
+  if (!notesRaw) return out;
+
+  const sites = Array.isArray(notesRaw?.sites)
+    ? notesRaw.sites
+    : (Array.isArray(notesRaw) ? notesRaw : []);
+
+  sites.forEach((site, sIdx) => {
+    const siteId = String(site?.site_id || site?.id || `site-${sIdx + 1}`);
+    const visits = (Array.isArray(site?.visits) ? site.visits : [])
+      .map((visit, vIdx) => ({
+        id: String(visit?.id || `${siteId}-visit-${vIdx + 1}`),
+        month: parseMonthToken(visit?.month || visit?.month_id || ''),
+        title: String(visit?.title || ''),
+        note: String(visit?.note || ''),
+        tags: parseMonthTokens(visit?.tags),
+        images: normalizeImageList(visit?.images),
+      }))
+      .filter(v => v.month || v.note || v.images.length);
+    out.set(siteId, {
+      siteId,
+      title: String(site?.title || site?.name || siteId),
+      place: String(site?.place || ''),
+      visits,
+    });
+  });
+
+  return out;
+}
+
+function buildFieldMapFallbackDataset() {
+  const cfg = SITE?.fieldMap && typeof SITE.fieldMap === 'object' ? SITE.fieldMap : {};
+  const monthsRaw = Array.isArray(cfg.months) ? cfg.months : [];
+  const months = monthsRaw.map((month, idx) => ({
+    id: parseMonthToken(month?.id || month?.label || `month-${idx + 1}`),
+    label: String(month?.label || month?.id || `Month ${idx + 1}`),
+  }));
+  const monthById = new Map(months.map((m, idx) => [m.id, idx]));
+
+  const pointMap = new Map();
+  const noteSites = [];
+  monthsRaw.forEach((month, idx) => {
+    const monthId = months[idx]?.id || '';
+    const entries = Array.isArray(month?.entries) ? month.entries : [];
+    entries.forEach((entry, eIdx) => {
+      const siteId = String(entry?.siteId || entry?.id || `site-${idx + 1}-${eIdx + 1}`);
+      const lon = Number(entry?.lon);
+      const lat = Number(entry?.lat);
+      if (Number.isFinite(lon) && Number.isFinite(lat) && !pointMap.has(siteId)) {
+        pointMap.set(siteId, {
+          id: siteId,
+          siteId,
+          lon,
+          lat,
+          title: String(entry?.title || entry?.place || siteId),
+          place: String(entry?.place || ''),
+          tags: [],
+          props: { month_start: monthId },
+        });
+      }
+
+      const photo = String(entry?.photo || '').trim();
+      const images = photo ? [{ src: photo, alt: String(entry?.photoAlt || ''), caption: String(entry?.photoAlt || '') }] : [];
+      noteSites.push({
+        site_id: siteId,
+        title: String(entry?.title || entry?.place || siteId),
+        place: String(entry?.place || ''),
+        visits: [{
+          id: `${siteId}-${monthId || idx}`,
+          month: monthId,
+          note: String(entry?.note || ''),
+          images,
+          tags: Array.isArray(entry?.tags) ? entry.tags : [],
+        }],
+      });
+    });
+  });
+
+  const mergedSite = new Map();
+  noteSites.forEach(site => {
+    const existing = mergedSite.get(site.site_id) || {
+      site_id: site.site_id,
+      title: site.title,
+      place: site.place,
+      visits: [],
+    };
+    existing.visits.push(...site.visits);
+    mergedSite.set(site.site_id, existing);
+  });
+
+  const route = (Array.isArray(cfg.route) ? cfg.route : [])
+    .map(coord => {
+      const lat = Number(coord?.lat);
+      const lon = Number(coord?.lon);
+      if (!Number.isFinite(lat) || !Number.isFinite(lon)) return null;
+      return [lon, lat];
+    })
+    .filter(Boolean);
+
+  return {
+    title: String(cfg.title || 'Seacliff Field Notes Atlas'),
+    subtitle: String(cfg.subtitle || 'Dunedin to Waikouaiti'),
+    description: String(cfg.description || ''),
+    projectId: String(cfg.projectId || ''),
+    extent: normalizeExtent(cfg.extent),
+    months,
+    monthById,
+    defaultMonth: String(cfg.defaultMonth || months[months.length - 1]?.id || ''),
+    accumulateDefault: cfg.accumulateDefault !== false,
+    points: [...pointMap.values()],
+    paths: route.length > 1 ? [{ id: 'route-1', segments: [route], props: { month_start: months[0]?.id || '' } }] : [],
+    roads: [],
+    areas: [],
+    notes: normalizeSiteNotes({ sites: [...mergedSite.values()] }),
+  };
+}
+
+function deriveMonthsFromData(dataset) {
+  const set = new Set(dataset.months.map(m => m.id));
+  const pushMonth = month => { const token = parseMonthToken(month); if (token) set.add(token); };
+  dataset.points.forEach(point => {
+    const props = point.props || {};
+    pushMonth(props.month);
+    parseMonthTokens(props.months).forEach(pushMonth);
+    pushMonth(props.month_start);
+    pushMonth(props.month_end);
+  });
+  dataset.paths.forEach(path => {
+    const props = path.props || {};
+    pushMonth(props.month);
+    parseMonthTokens(props.months).forEach(pushMonth);
+    pushMonth(props.month_start);
+    pushMonth(props.month_end);
+  });
+  dataset.notes.forEach(site => site.visits.forEach(v => pushMonth(v.month)));
+  const months = [...set].sort().map(id => ({ id, label: id }));
+  dataset.months = months;
+  dataset.monthById = new Map(months.map((m, idx) => [m.id, idx]));
+}
+
+async function loadFieldMapDataset(force = false) {
+  if (fieldMapDataset && !force) return fieldMapDataset;
+  if (fieldMapLoadPromise && !force) return fieldMapLoadPromise;
+
+  const cfg = SITE?.fieldMap && typeof SITE.fieldMap === 'object' ? SITE.fieldMap : {};
+  const manifestPath = String(cfg?.source?.manifest || '').trim();
+
+  fieldMapLoadPromise = (async () => {
+    if (!manifestPath) {
+      fieldMapDataset = buildFieldMapFallbackDataset();
+      return fieldMapDataset;
+    }
+
+    try {
+      const manifest = await fetchJsonSafe(manifestPath);
+      const months = normalizeMonths(manifest?.months);
+      const monthById = new Map(months.map((m, idx) => [m.id, idx]));
+      const files = manifest?.files && typeof manifest.files === 'object' ? manifest.files : {};
+
+      const pointsUrl = resolveFieldMapFile(manifestPath, files.points);
+      const pathsUrl = resolveFieldMapFile(manifestPath, files.paths);
+      const roadsUrl = resolveFieldMapFile(manifestPath, files.roads);
+      const areasUrl = resolveFieldMapFile(manifestPath, files.areas);
+      const notesUrl = resolveFieldMapFile(manifestPath, files.notes);
+
+      const [pointsRaw, pathsRaw, roadsRaw, areasRaw, notesRaw] = await Promise.all([
+        fetchJsonSafe(pointsUrl),
+        fetchJsonSafe(pathsUrl),
+        fetchJsonSafe(roadsUrl),
+        fetchJsonSafe(areasUrl),
+        fetchJsonSafe(notesUrl),
+      ]);
+
+      const dataset = {
+        title: String(manifest?.title || cfg.title || 'Seacliff Field Notes Atlas'),
+        subtitle: String(manifest?.subtitle || cfg.subtitle || ''),
+        description: String(manifest?.description || cfg.description || ''),
+        projectId: String(manifest?.projectId || cfg.projectId || ''),
+        extent: normalizeExtent(manifest?.extent || cfg.extent),
+        months,
+        monthById,
+        defaultMonth: parseMonthToken(manifest?.defaultMonth || cfg.defaultMonth || ''),
+        accumulateDefault: manifest?.accumulateDefault !== false && cfg.accumulateDefault !== false,
+        points: normalizePointFeatures(pointsRaw),
+        paths: normalizeLineFeatures(pathsRaw),
+        roads: normalizeLineFeatures(roadsRaw),
+        areas: normalizePolygonFeatures(areasRaw),
+        notes: normalizeSiteNotes(notesRaw),
+      };
+
+      if (!dataset.months.length) deriveMonthsFromData(dataset);
+      if (!dataset.defaultMonth && dataset.months.length) {
+        dataset.defaultMonth = dataset.months[dataset.months.length - 1].id;
+      }
+
+      fieldMapDataset = dataset;
+      return dataset;
+    } catch (_) {
+      fieldMapDataset = buildFieldMapFallbackDataset();
+      return fieldMapDataset;
+    }
+  })();
+
+  try {
+    const data = await fieldMapLoadPromise;
+    if (!data.months.length) {
+      data.months = [{ id: 'all', label: 'All' }];
+      data.monthById = new Map([['all', 0]]);
+      data.defaultMonth = 'all';
+    }
+    const defaultIdx = data.monthById.get(data.defaultMonth);
+    if (Number.isInteger(defaultIdx)) fieldMapMonthIndex = defaultIdx;
+    else fieldMapMonthIndex = data.months.length - 1;
+    fieldMapAccumulate = data.accumulateDefault !== false;
+    fieldMapSelectedSiteId = '';
+    fieldMapView = { x: 0, y: 0, w: FIELDMAP_BASE.width, h: FIELDMAP_BASE.height };
+    return data;
+  } finally {
+    fieldMapLoadPromise = null;
+  }
+}
+
+function mapLonLatToCanvas(lon, lat, extent) {
+  const lonSpan = Math.max(0.0001, extent.maxLon - extent.minLon);
+  const latSpan = Math.max(0.0001, extent.maxLat - extent.minLat);
+  const xRatio = (lon - extent.minLon) / lonSpan;
+  const yRatio = (extent.maxLat - lat) / latSpan;
+  const x = FIELDMAP_BASE.padding + clampNum(xRatio, 0, 1) * (FIELDMAP_BASE.width - FIELDMAP_BASE.padding * 2);
+  const y = FIELDMAP_BASE.padding + clampNum(yRatio, 0, 1) * (FIELDMAP_BASE.height - FIELDMAP_BASE.padding * 2);
+  return { x: Number(x.toFixed(2)), y: Number(y.toFixed(2)) };
+}
+
+function lineToPath(coords, extent) {
+  const pathPoints = coords
+    .map(pair => {
+      const lon = Number(pair?.[0]);
+      const lat = Number(pair?.[1]);
+      if (!Number.isFinite(lon) || !Number.isFinite(lat)) return null;
+      return mapLonLatToCanvas(lon, lat, extent);
+    })
+    .filter(Boolean);
+  if (!pathPoints.length) return '';
+  return pathPoints.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ');
+}
+
+function polygonToPath(rings, extent) {
+  return rings
+    .map(ring => lineToPath(ring, extent))
+    .filter(Boolean)
+    .map(path => `${path} Z`)
+    .join(' ');
+}
+
+function getTemporalState(props, currentMonthIdx, accumulate, monthById) {
+  const month = parseMonthToken(props?.month || '');
+  const months = parseMonthTokens(props?.months);
+  const monthStart = parseMonthToken(props?.month_start || '');
+  const monthEnd = parseMonthToken(props?.month_end || '');
+
+  const explicit = [];
+  if (month && monthById.has(month)) explicit.push(monthById.get(month));
+  months.forEach(token => { if (monthById.has(token)) explicit.push(monthById.get(token)); });
+  if (explicit.length) {
+    const activeNow = explicit.includes(currentMonthIdx);
+    const hasPast = explicit.some(idx => idx <= currentMonthIdx);
+    const visible = accumulate ? hasPast : activeNow;
+    return { visible, activeNow, historic: visible && !activeNow };
+  }
+
+  const hasRange = monthStart || monthEnd;
+  if (hasRange) {
+    const startIdx = monthById.has(monthStart) ? monthById.get(monthStart) : 0;
+    const endIdx = monthById.has(monthEnd) ? monthById.get(monthEnd) : Number.MAX_SAFE_INTEGER;
+    const activeNow = currentMonthIdx >= startIdx && currentMonthIdx <= endIdx;
+    const visible = accumulate ? currentMonthIdx >= startIdx : activeNow;
+    return { visible, activeNow, historic: visible && !activeNow };
+  }
+
+  return { visible: true, activeNow: false, historic: false };
+}
+
+function getVisibleVisits(site, currentMonthIdx, accumulate, monthById) {
+  const visits = Array.isArray(site?.visits) ? site.visits : [];
+  return visits
+    .map(visit => ({ visit, idx: monthById.has(visit.month) ? monthById.get(visit.month) : -1 }))
+    .filter(({ idx }) => idx >= 0 && (accumulate ? idx <= currentMonthIdx : idx === currentMonthIdx))
+    .map(({ visit }) => visit);
+}
+
+function clampFieldMapView() {
+  const baseW = FIELDMAP_BASE.width;
+  const baseH = FIELDMAP_BASE.height;
+  const minW = baseW / FIELDMAP_BASE.maxZoom;
+  const minH = baseH / FIELDMAP_BASE.maxZoom;
+  fieldMapView.w = clampNum(fieldMapView.w, minW, baseW);
+  fieldMapView.h = clampNum(fieldMapView.h, minH, baseH);
+  fieldMapView.x = clampNum(fieldMapView.x, 0, baseW - fieldMapView.w);
+  fieldMapView.y = clampNum(fieldMapView.y, 0, baseH - fieldMapView.h);
+}
+
+function applyFieldMapView() {
+  clampFieldMapView();
+  const svg = document.getElementById('fieldmap-surface');
+  if (!svg) return;
+  svg.setAttribute('viewBox', `${fieldMapView.x} ${fieldMapView.y} ${fieldMapView.w} ${fieldMapView.h}`);
+}
+
+function zoomFieldMap(factor) {
+  const cx = fieldMapView.x + fieldMapView.w / 2;
+  const cy = fieldMapView.y + fieldMapView.h / 2;
+  const oldW = fieldMapView.w;
+  const oldH = fieldMapView.h;
+  const newW = oldW / factor;
+  const newH = oldH / factor;
+  fieldMapView.x = cx - (cx - fieldMapView.x) * (newW / oldW);
+  fieldMapView.y = cy - (cy - fieldMapView.y) * (newH / oldH);
+  fieldMapView.w = newW;
+  fieldMapView.h = newH;
+  applyFieldMapView();
+}
+
+function resetFieldMapView() {
+  fieldMapView = { x: 0, y: 0, w: FIELDMAP_BASE.width, h: FIELDMAP_BASE.height };
+  applyFieldMapView();
+}
+
+function renderFieldMapVisitCards(visits, monthLabelById) {
+  if (!visits.length) return '<div class="fieldmap-empty">No visible visits in this time window.</div>';
+  return visits.map(visit => {
+    const images = visit.images.length
+      ? `<div class="fieldmap-gallery">${visit.images.map(image => `
+          <figure class="fieldmap-gallery-item">
+            <img src="${escapeHtml(image.src)}" alt="${escapeHtml(image.alt || visit.title || 'Field image')}" loading="lazy" />
+            ${image.caption ? `<figcaption>${escapeHtml(image.caption)}</figcaption>` : ''}
+          </figure>`).join('')}</div>`
+      : '';
+    const tags = visit.tags.length
+      ? `<div class="fieldmap-visit-tags">${visit.tags.map(tag => `<span class="tag">${escapeHtml(tag)}</span>`).join('')}</div>`
+      : '';
+    return `<article class="fieldmap-visit">
+      <div class="fieldmap-visit-month">${escapeHtml(monthLabelById.get(visit.month) || visit.month)}</div>
+      ${visit.title ? `<div class="fieldmap-visit-title">${escapeHtml(visit.title)}</div>` : ''}
+      ${visit.note ? `<div class="fieldmap-visit-note">${escapeHtml(visit.note)}</div>` : ''}
+      ${tags}
+      ${images}
+    </article>`;
+  }).join('');
+}
+
+function renderFieldMapFromDataset(dataset) {
+  if (!dataset) return '<div class="fieldmap-wrap"><p class="empty">Field map is not ready yet.</p></div>';
+  const months = dataset.months;
+  fieldMapMonthIndex = clampNum(fieldMapMonthIndex, 0, months.length - 1);
+  const month = months[fieldMapMonthIndex];
+  const currentMonthIdx = fieldMapMonthIndex;
+  const monthLabelById = new Map(months.map(m => [m.id, m.label]));
+
+  const siteMap = new Map();
+  dataset.points.forEach(point => {
+    siteMap.set(point.siteId, {
+      siteId: point.siteId,
+      title: point.title,
+      place: point.place,
+      point,
+      notes: dataset.notes.get(point.siteId) || null,
+    });
+  });
+  dataset.notes.forEach((site, siteId) => {
+    if (!siteMap.has(siteId)) {
+      siteMap.set(siteId, {
+        siteId,
+        title: site.title,
+        place: site.place,
+        point: null,
+        notes: site,
+      });
+    }
+  });
+
+  const visibleSites = [];
+  const pointSvgs = [];
+  siteMap.forEach(site => {
+    const pointState = site.point
+      ? getTemporalState(site.point.props, currentMonthIdx, fieldMapAccumulate, dataset.monthById)
+      : { visible: false, activeNow: false, historic: false };
+    const visibleVisits = getVisibleVisits(site.notes, currentMonthIdx, fieldMapAccumulate, dataset.monthById);
+    const activeVisits = getVisibleVisits(site.notes, currentMonthIdx, false, dataset.monthById);
+    const visible = Boolean(site.point && pointState.visible) || visibleVisits.length > 0;
+    if (!visible || !site.point) return;
+    const activeNow = pointState.activeNow || activeVisits.length > 0;
+    visibleSites.push({ site, activeNow, visibleVisits });
+    const p = mapLonLatToCanvas(site.point.lon, site.point.lat, dataset.extent);
+    const isSelected = site.siteId === fieldMapSelectedSiteId;
+    pointSvgs.push(`<g class="fieldmap-point${activeNow ? ' is-current' : ' is-historic'}${isSelected ? ' is-active' : ''}" data-fieldmap-site="${escapeHtml(site.siteId)}" role="button" tabindex="0" aria-label="${escapeHtml(site.title)}">
+      <circle class="fieldmap-point-ring" cx="${p.x}" cy="${p.y}" r="${isSelected ? 8 : 6}" />
+      <circle class="fieldmap-point-core" cx="${p.x}" cy="${p.y}" r="${isSelected ? 3.2 : 2.4}" />
+    </g>`);
+  });
+
+  if (!visibleSites.length && siteMap.size) {
+    const first = [...siteMap.values()].find(site => site.point);
+    if (first) {
+      const p = mapLonLatToCanvas(first.point.lon, first.point.lat, dataset.extent);
+      pointSvgs.push(`<g class="fieldmap-point is-active" data-fieldmap-site="${escapeHtml(first.siteId)}" role="button" tabindex="0"><circle class="fieldmap-point-ring" cx="${p.x}" cy="${p.y}" r="8" /><circle class="fieldmap-point-core" cx="${p.x}" cy="${p.y}" r="3.2" /></g>`);
+      visibleSites.push({ site: first, activeNow: false, visibleVisits: getVisibleVisits(first.notes, currentMonthIdx, fieldMapAccumulate, dataset.monthById) });
+    }
+  }
+
+  if (!visibleSites.some(item => item.site.siteId === fieldMapSelectedSiteId)) {
+    fieldMapSelectedSiteId = visibleSites.find(item => item.activeNow)?.site.siteId || visibleSites[0]?.site.siteId || '';
+  }
+  const selectedBundle = visibleSites.find(item => item.site.siteId === fieldMapSelectedSiteId) || visibleSites[0] || null;
+  const selectedSite = selectedBundle?.site || null;
+  const selectedVisits = selectedBundle?.visibleVisits || [];
+
+  const roadsSvg = dataset.roads.map(road => road.segments
+    .map(segment => `<path class="fieldmap-road" d="${lineToPath(segment, dataset.extent)}" />`)
+    .join('')).join('');
+
+  const pathsSvg = dataset.paths.map(path => {
+    const temporal = getTemporalState(path.props, currentMonthIdx, fieldMapAccumulate, dataset.monthById);
+    if (!temporal.visible) return '';
+    const cls = temporal.activeNow ? 'fieldmap-path is-current' : 'fieldmap-path is-historic';
+    return path.segments.map(segment => `<path class="${cls}" d="${lineToPath(segment, dataset.extent)}" />`).join('');
+  }).join('');
+
+  const areasSvg = dataset.areas.map(area => area.polygons
+    .map(poly => `<path class="fieldmap-area" d="${polygonToPath(poly, dataset.extent)}" />`)
+    .join('')).join('');
+
+  const siteChips = visibleSites.map(({ site, activeNow }) => {
+    const active = site.siteId === fieldMapSelectedSiteId;
+    return `<button class="fieldmap-chip${active ? ' is-active' : ''}" data-fieldmap-site="${escapeHtml(site.siteId)}">${escapeHtml(site.title)}${activeNow ? ' *' : ''}</button>`;
+  }).join('');
+
+  const detailTitle = selectedSite ? escapeHtml(selectedSite.title) : 'No site selected';
+  const detailPlace = selectedSite ? escapeHtml(selectedSite.place || selectedSite.notes?.place || '') : '';
+
+  return `<div class="fieldmap-wrap">
+    <div class="fieldmap-head">
+      <div class="fieldmap-title">${escapeHtml(dataset.title)}</div>
+      <div class="fieldmap-subtitle">${escapeHtml(dataset.subtitle)}</div>
+      ${dataset.description ? `<div class="fieldmap-desc">${escapeHtml(dataset.description)}</div>` : ''}
+    </div>
+    <div class="fieldmap-toolbar">
+      <div class="fieldmap-timebar">
+        <label class="fieldmap-time-label" for="fieldmap-month-range">Month</label>
+        <input id="fieldmap-month-range" type="range" min="0" max="${months.length - 1}" step="1" value="${fieldMapMonthIndex}" />
+        <div class="fieldmap-time-value">${escapeHtml(month.label)}</div>
+      </div>
+      <label class="fieldmap-accumulate"><input id="fieldmap-accumulate" type="checkbox" ${fieldMapAccumulate ? 'checked' : ''} /> show previous months</label>
+      <div class="fieldmap-zoom-controls">
+        <button class="now-btn" data-fieldmap-action="zoom-out">-</button>
+        <button class="now-btn" data-fieldmap-action="zoom-reset">Reset</button>
+        <button class="now-btn" data-fieldmap-action="zoom-in">+</button>
+      </div>
+    </div>
+    <div class="fieldmap-main">
+      <div class="fieldmap-canvas-wrap">
+        <svg id="fieldmap-surface" class="fieldmap-canvas" viewBox="${fieldMapView.x} ${fieldMapView.y} ${fieldMapView.w} ${fieldMapView.h}" xmlns="http://www.w3.org/2000/svg" aria-label="Seacliff field map">
+          <rect x="1" y="1" width="${FIELDMAP_BASE.width - 2}" height="${FIELDMAP_BASE.height - 2}" class="fieldmap-bg" />
+          ${areasSvg}
+          ${roadsSvg}
+          ${pathsSvg}
+          ${pointSvgs.join('')}
+        </svg>
+        <div class="fieldmap-chips">${siteChips || '<span class="fieldmap-empty">No visible points in this month.</span>'}</div>
+      </div>
+      <aside class="fieldmap-detail">
+        ${detailPlace ? `<div class="fieldmap-detail-place">${detailPlace}</div>` : ''}
+        <div class="fieldmap-detail-title">${detailTitle}</div>
+        <div class="fieldmap-detail-meta">${fieldMapAccumulate ? 'Showing cumulative timeline.' : 'Showing selected month only.'}</div>
+        ${renderFieldMapVisitCards(selectedVisits, monthLabelById)}
+        ${dataset.projectId ? `<button class="now-btn now-btn-inline" data-fieldmap-action="open-project">Open Seacliff Project</button>` : ''}
+      </aside>
+    </div>
+  </div>`;
+}
+
+function bindFieldMapControls() {
+  const dataset = fieldMapDataset;
+  if (!dataset) return;
+
+  const slider = document.getElementById('fieldmap-month-range');
+  if (slider) {
+    slider.addEventListener('input', () => {
+      const next = Number(slider.value);
+      if (!Number.isFinite(next)) return;
+      fieldMapMonthIndex = next;
+      refreshFieldMapWindow();
+    });
+  }
+
+  const accumulate = document.getElementById('fieldmap-accumulate');
+  if (accumulate) {
+    accumulate.addEventListener('change', () => {
+      fieldMapAccumulate = Boolean(accumulate.checked);
+      refreshFieldMapWindow();
+    });
+  }
+
+  document.querySelectorAll('#win-fieldmap [data-fieldmap-site]').forEach(el => {
+    el.addEventListener('click', () => {
+      const siteId = String(el.getAttribute('data-fieldmap-site') || '');
+      if (!siteId) return;
+      fieldMapSelectedSiteId = siteId;
+      refreshFieldMapWindow();
+    });
+    el.addEventListener('keydown', evt => {
+      if (evt.key !== 'Enter' && evt.key !== ' ') return;
+      evt.preventDefault();
+      const siteId = String(el.getAttribute('data-fieldmap-site') || '');
+      if (!siteId) return;
+      fieldMapSelectedSiteId = siteId;
+      refreshFieldMapWindow();
+    });
+  });
+
+  const openBtn = document.querySelector('#win-fieldmap [data-fieldmap-action="open-project"]');
+  if (openBtn) {
+    openBtn.addEventListener('click', () => {
+      if (dataset.projectId) openProjectDetail(dataset.projectId);
+    });
+  }
+
+  document.querySelectorAll('#win-fieldmap [data-fieldmap-action]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const action = btn.getAttribute('data-fieldmap-action');
+      if (action === 'zoom-in') zoomFieldMap(1.25);
+      if (action === 'zoom-out') zoomFieldMap(0.8);
+      if (action === 'zoom-reset') resetFieldMapView();
+    });
+  });
+
+  const svg = document.getElementById('fieldmap-surface');
+  if (!svg) return;
+
+  let dragPan = null;
+  svg.addEventListener('pointerdown', evt => {
+    if (evt.button !== 0) return;
+    dragPan = {
+      x: evt.clientX,
+      y: evt.clientY,
+      viewX: fieldMapView.x,
+      viewY: fieldMapView.y,
+    };
+    svg.setPointerCapture(evt.pointerId);
+  });
+  svg.addEventListener('pointermove', evt => {
+    if (!dragPan) return;
+    const rect = svg.getBoundingClientRect();
+    const dxPx = evt.clientX - dragPan.x;
+    const dyPx = evt.clientY - dragPan.y;
+    const dx = dxPx * (fieldMapView.w / rect.width);
+    const dy = dyPx * (fieldMapView.h / rect.height);
+    fieldMapView.x = dragPan.viewX - dx;
+    fieldMapView.y = dragPan.viewY - dy;
+    applyFieldMapView();
+  });
+  const endPan = () => { dragPan = null; };
+  svg.addEventListener('pointerup', endPan);
+  svg.addEventListener('pointercancel', endPan);
+  svg.addEventListener('wheel', evt => {
+    evt.preventDefault();
+    zoomFieldMap(evt.deltaY < 0 ? 1.15 : 0.87);
+  }, { passive: false });
+}
+
+function renderFieldMapLoading() {
+  return `<div class="fieldmap-wrap"><p class="empty">Loading map data...</p></div>`;
+}
+
+async function openFieldMapWindow() {
+  if (!wm) return;
+  const existing = wm.open?.fieldmap;
+  if (existing) {
+    existing.querySelector('.win-body').innerHTML = `<div class="win-pad">${renderFieldMapLoading()}</div>`;
+    wm.focus(existing);
+  } else {
+    wm.show('fieldmap', { title: 'seacliff.map', html: renderFieldMapLoading(), w: 760, h: 500, x: 180, y: 90 });
+  }
+  await loadFieldMapDataset();
+  refreshFieldMapWindow();
+}
+
+function refreshFieldMapWindow() {
+  const existing = wm?.open?.fieldmap;
+  if (!existing) return;
+  existing.querySelector('.win-body').innerHTML = `<div class="win-pad">${renderFieldMapFromDataset(fieldMapDataset)}</div>`;
+  bindFieldMapControls();
+  applyFieldMapView();
+}
+
 /* ── Sound effects (Web Audio API) ───────────────────────────── */
 function playSound(type) {
   try {
@@ -2098,13 +2872,18 @@ function makeIconDefs() {
       action: () => openDevlogWindow(),
     },
     {
-      id: 'guestbook', label: 'guestbook', icon: SVG.terminal, iconKey: 'terminal',
+      id: 'fieldmap', label: 'seacliff.map', icon: SVG.map, iconKey: 'map',
       x: 30, y: 310,
+      action: () => openFieldMapWindow(),
+    },
+    {
+      id: 'guestbook', label: 'guestbook', icon: SVG.terminal, iconKey: 'terminal',
+      x: 30, y: 400,
       action: () => openGuestbookWindow(),
     },
     {
       id: 'game', label: 'game.exe', icon: SVG.sisyphus, iconKey: 'sisyphus',
-      x: 30, y: 400,
+      x: 30, y: 490,
       action: () => openGameWindow(),
     },
     // ── Left bottom: bin ─────────────────────────────────────

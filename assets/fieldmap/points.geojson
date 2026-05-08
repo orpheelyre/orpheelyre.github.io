@@ -1,0 +1,74 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "id": "dunedin-base",
+      "properties": {
+        "site_id": "dunedin-base",
+        "title": "Dunedin Base",
+        "place": "Dunedin"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [170.5028, -45.8788]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "waitati-edge",
+      "properties": {
+        "site_id": "waitati-edge",
+        "title": "Waitati Edge",
+        "place": "Waitati",
+        "month_start": "2026-03"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [170.5680, -45.7506]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "seacliff-core",
+      "properties": {
+        "site_id": "seacliff-core",
+        "title": "Seacliff Core",
+        "place": "Turau Aruhe Seacliff",
+        "month_start": "2026-02"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [170.6918, -45.6767]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "waikouaiti-node",
+      "properties": {
+        "site_id": "waikouaiti-node",
+        "title": "Waikouaiti Node",
+        "place": "Waikouaiti",
+        "month_start": "2026-04"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [170.6612, -45.5986]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "otago-museum",
+      "properties": {
+        "site_id": "otago-museum",
+        "title": "Otago Museum Collections",
+        "place": "Dunedin",
+        "month_start": "2026-05"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [170.5148, -45.8672]
+      }
+    }
+  ]
+}

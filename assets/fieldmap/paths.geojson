@@ -1,0 +1,73 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "id": "path-feb-core",
+      "properties": {
+        "month_start": "2026-02",
+        "month_end": "2026-02",
+        "label": "First reconnaissance"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [170.5028, -45.8788],
+          [170.5680, -45.7506],
+          [170.6918, -45.6767]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "path-mar-repeat",
+      "properties": {
+        "month_start": "2026-03",
+        "month_end": "2026-03",
+        "label": "Return transect"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [170.5680, -45.7506],
+          [170.6450, -45.7050],
+          [170.6918, -45.6767]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "path-apr-waik",
+      "properties": {
+        "month_start": "2026-04",
+        "month_end": "2026-04",
+        "label": "Memory corridor walk"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [170.6918, -45.6767],
+          [170.6830, -45.6400],
+          [170.6612, -45.5986]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "path-may-museum",
+      "properties": {
+        "month_start": "2026-05",
+        "month_end": "2026-05",
+        "label": "Archive-to-site bridge"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [170.5148, -45.8672],
+          [170.6100, -45.7600],
+          [170.6918, -45.6767]
+        ]
+      }
+    }
+  ]
+}

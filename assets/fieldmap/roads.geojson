@@ -1,0 +1,22 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "id": "state-highway-1-slice",
+      "properties": {
+        "label": "State Highway 1"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [170.5000, -45.8800],
+          [170.5600, -45.7900],
+          [170.6200, -45.7300],
+          [170.6700, -45.6600],
+          [170.6600, -45.6000]
+        ]
+      }
+    }
+  ]
+}
