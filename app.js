@@ -143,9 +143,10 @@ document.addEventListener('touchmove', e => {
   document.dispatchEvent(new MouseEvent('mousemove', touchCoord(e)));
 }, { passive: false });
 
-document.addEventListener('touchend', () => {
+document.addEventListener('touchend', e => {
   if (!drag.active) return;
-  document.dispatchEvent(new MouseEvent('mouseup'));
+  const t = e.changedTouches?.[0];
+  document.dispatchEvent(new MouseEvent('mouseup', t ? { clientX: t.clientX, clientY: t.clientY } : {}));
 });
 
 /* ── Icon positions (localStorage) ───────────────────────────── */

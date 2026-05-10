@@ -636,7 +636,7 @@ body {
   margin-bottom: 14px;
   padding-bottom: 14px;
   border-bottom: 1px solid var(--c-accent-bg);
-  font-family: var(--font-ui);
+  font-family: var(--font-body);
   font-size: var(--sz-body);
   color: var(--c-text);
   line-height: 1.6;
@@ -670,14 +670,14 @@ body {
   margin-bottom: 3px;
 }
 .exp-title {
-  font-family: var(--font-ui);
+  font-family: var(--font-body);
   font-size: var(--sz-body);
   font-weight: bold;
   color: var(--c-text);
   line-height: 1.4;
 }
 .exp-org {
-  font-family: var(--font-ui);
+  font-family: var(--font-body);
   font-size: var(--sz-body);
   font-style: italic;
   color: var(--c-text-muted);
@@ -703,7 +703,7 @@ body {
 
 /* Now window */
 .now-wrap {
-  font-family: var(--font-ui);
+  font-family: var(--font-body);
   font-size: var(--sz-body);
   color: var(--c-text);
   line-height: 1.5;
@@ -808,7 +808,7 @@ body {
 }
 .now-input,
 .now-textarea {
-  font-family: var(--font-ui);
+  font-family: var(--font-body);
   font-size: var(--sz-body);
   color: var(--c-text);
   background: var(--c-bg);
@@ -864,7 +864,7 @@ body {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  font-family: var(--font-ui);
+  font-family: var(--font-body);
   color: var(--c-text);
 }
 .fieldmap-head { display: flex; flex-direction: column; gap: 2px; }
