@@ -87,7 +87,7 @@
   --c-text-muted:     #aaaaaa;
   --c-link:           #cccccc;
   --c-tab-active:     #2a2a2a;
-  --c-tab-inactive:   #1a1a1a;
+  --c-tab-inactive:   #0e0e0e;
   --c-tab-text:       #dddddd;
   --icon-fill:        #2a2a2a;
   --icon-stroke:      #dddddd;
@@ -178,16 +178,22 @@ body {
   gap: 10px;
 }
 
-#theme-btn {
+#theme-btn,
+#reset-icons-btn {
   background: none;
   border: none;
-  font-size: 15px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  font-size: 14px;
   color: var(--c-menu-text);
-  padding: 0 2px;
+  padding: 0;
   line-height: 1;
   height: 18px;
 }
-#theme-btn:hover { opacity: 0.7; }
+#theme-btn:hover,
+#reset-icons-btn:hover { opacity: 0.7; }
 
 #clock {
   font-family: var(--font-ui);
@@ -407,6 +413,7 @@ body {
 .tab.active {
   background: var(--c-tab-active);
   z-index: 1;
+  font-weight: 700;
 }
 
 .tabs-panels {
@@ -629,7 +636,7 @@ body {
   margin-bottom: 14px;
   padding-bottom: 14px;
   border-bottom: 1px solid var(--c-accent-bg);
-  font-family: var(--font-body);
+  font-family: var(--font-ui);
   font-size: var(--sz-body);
   color: var(--c-text);
   line-height: 1.6;
@@ -663,14 +670,14 @@ body {
   margin-bottom: 3px;
 }
 .exp-title {
-  font-family: var(--font-body);
+  font-family: var(--font-ui);
   font-size: var(--sz-body);
   font-weight: bold;
   color: var(--c-text);
   line-height: 1.4;
 }
 .exp-org {
-  font-family: var(--font-body);
+  font-family: var(--font-ui);
   font-size: var(--sz-body);
   font-style: italic;
   color: var(--c-text-muted);
@@ -696,7 +703,7 @@ body {
 
 /* Now window */
 .now-wrap {
-  font-family: var(--font-body);
+  font-family: var(--font-ui);
   font-size: var(--sz-body);
   color: var(--c-text);
   line-height: 1.5;
@@ -801,7 +808,7 @@ body {
 }
 .now-input,
 .now-textarea {
-  font-family: var(--font-body);
+  font-family: var(--font-ui);
   font-size: var(--sz-body);
   color: var(--c-text);
   background: var(--c-bg);
@@ -857,7 +864,7 @@ body {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  font-family: var(--font-body);
+  font-family: var(--font-ui);
   color: var(--c-text);
 }
 .fieldmap-head { display: flex; flex-direction: column; gap: 2px; }
@@ -905,6 +912,64 @@ body {
   display: flex;
   align-items: center;
   gap: 4px;
+}
+
+/* ── System 6 range slider ───────────────────────────────── */
+.fieldmap-timebar input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 14px;
+  background: transparent;
+  cursor: pointer;
+  width: 100%;
+}
+.fieldmap-timebar input[type="range"]::-webkit-slider-runnable-track {
+  height: 2px;
+  background: var(--c-border);
+}
+.fieldmap-timebar input[type="range"]::-moz-range-track {
+  height: 2px;
+  background: var(--c-border);
+  border: none;
+}
+.fieldmap-timebar input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 11px;
+  height: 11px;
+  background: var(--c-bg);
+  border: 1.5px solid var(--c-border);
+  box-shadow: 1px 1px 0 var(--c-shadow);
+  margin-top: -4.5px;
+  border-radius: 0;
+}
+.fieldmap-timebar input[type="range"]::-moz-range-thumb {
+  width: 11px;
+  height: 11px;
+  background: var(--c-bg);
+  border: 1.5px solid var(--c-border);
+  box-shadow: 1px 1px 0 var(--c-shadow);
+  border-radius: 0;
+}
+
+/* ── System 6 checkbox ───────────────────────────────────── */
+.fieldmap-accumulate input[type="checkbox"] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 11px;
+  height: 11px;
+  border: 1.5px solid var(--c-border);
+  background: var(--c-bg);
+  cursor: pointer;
+  flex-shrink: 0;
+  position: relative;
+  border-radius: 0;
+}
+.fieldmap-accumulate input[type="checkbox"]:checked::after {
+  content: '';
+  position: absolute;
+  inset: 1px;
+  background: var(--c-text);
 }
 .fieldmap-zoom-controls {
   display: flex;
@@ -1180,7 +1245,7 @@ body {
 /* cv.md lock prompt */
 .cv-lock-pad { display: flex; flex-direction: column; gap: 10px; }
 .cv-lock-msg {
-  font-family: var(--font-body);
+  font-family: var(--font-ui);
   font-size: var(--sz-body);
   color: var(--c-text);
 }
@@ -1217,7 +1282,7 @@ body {
 /* now.txt edit lock prompt */
 .now-lock-pad { display: flex; flex-direction: column; gap: 10px; }
 .now-lock-msg {
-  font-family: var(--font-body);
+  font-family: var(--font-ui);
   font-size: var(--sz-body);
   color: var(--c-text);
 }
@@ -1259,7 +1324,7 @@ body {
   gap: 12px;
 }
 .mac-error-msg {
-  font-family: var(--font-body);
+  font-family: var(--font-ui);
   font-size: var(--sz-body);
   color: var(--c-text);
   line-height: 1.5;
@@ -1307,40 +1372,27 @@ body {
 ═══════════════════════════════════════════════════════════════ */
 @media (max-width: 768px) {
 
-  /* Desktop becomes a right-aligned flex column */
+  /* Mobile desktop: scrollable, icons are absolutely positioned */
   #desktop {
     overflow-y: auto;
     overflow-x: hidden;
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    gap: 10px;
-    padding: 16px 12px 32px;
   }
 
-  /* Icons: bigger, static (no absolute positioning on mobile) */
+  /* Icons: larger tap targets, absolute like desktop */
   .icon {
-    position: static !important;
     width: 72px;
     padding: 8px 4px;
-    align-items: center;
   }
 
-  /* Social-dock: left-aligned 2-column grid at the bottom */
   .social-dock {
-    display: flex !important;
-    flex-wrap: wrap;
-    align-self: flex-start;
-    width: 208px;
-    gap: 8px;
-    margin-top: 8px;
+    display: contents !important;
   }
 
   .icon-img {
-    width: 52px;
-    height: 52px;
+    width: 48px;
+    height: 48px;
   }
-  .icon-img svg { width: 48px; height: 48px; }
+  .icon-img svg { width: 44px; height: 44px; }
 
   .icon-label {
     font-size: 10px;

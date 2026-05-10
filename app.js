@@ -151,6 +151,45 @@ document.addEventListener('touchend', () => {
 /* ── Icon positions (localStorage) ───────────────────────────── */
 function loadIconPos(id)       { return JSON.parse(localStorage.getItem('icon:' + id) || 'null'); }
 function saveIconPos(id, x, y) { localStorage.setItem('icon:' + id, JSON.stringify({ x, y })); }
+function clearSavedIconPositions() {
+  Object.keys(localStorage)
+    .filter(k => k.startsWith('icon:'))
+    .forEach(k => localStorage.removeItem(k));
+}
+/* ── Mobile default grid positions ───────────────────────────── */
+function getMobilePos(id) {
+  const colL = 12;
+  const colR = window.innerWidth - 84; // 72px icon + 12px right margin
+  const rowH = 86;
+  const topY = 12;
+  const grid = {
+    linkedin:     { x: colL, y: topY + rowH * 0 },
+    instagram:    { x: colL, y: topY + rowH * 1 },
+    itchio:       { x: colL, y: topY + rowH * 2 },
+    publications: { x: colR, y: topY + rowH * 0 },
+    projects:     { x: colR, y: topY + rowH * 1 },
+    about:        { x: colR, y: topY + rowH * 2 },
+    guestbook:    { x: colR, y: topY + rowH * 3 },
+    fieldmap:     { x: colR, y: topY + rowH * 4 },
+    game:         { x: colR, y: topY + rowH * 5 },
+    bin:          { x: colR, y: topY + rowH * 6 },
+  };
+  return grid[id] || null;
+}
+
+function resetIconLayout() {
+  clearSavedIconPositions();
+  const isMobile = window.innerWidth <= 768;
+  const defsById = new Map(makeIconDefs().map(def => [def.id, def]));
+  document.querySelectorAll('.icon[data-icon-id]').forEach(el => {
+    const id = el.dataset.iconId;
+    const def = defsById.get(id);
+    if (!def) return;
+    const pos = (isMobile && getMobilePos(id)) || { x: def.x, y: def.y };
+    el.style.left = pos.x + 'px';
+    el.style.top  = pos.y + 'px';
+  });
+}
 
 /* ── Window Manager ───────────────────────────────────────────── */
 class WM {
@@ -406,7 +445,6 @@ document.addEventListener('click', async e => {
       nowUploadedPictureData = '';
       nowPictureRemoved = false;
       openNowWindow();
-      refreshDevlogWindow();
     } else if (action === 'reset') {
       if (!(await resetNowData())) return;
       nowEditing = false;
@@ -414,7 +452,6 @@ document.addEventListener('click', async e => {
       nowUploadedPictureData = '';
       nowPictureRemoved = false;
       openNowWindow();
-      refreshDevlogWindow();
     }
     return;
   }
@@ -425,14 +462,14 @@ document.addEventListener('click', async e => {
     const action = devlogAction.dataset.devlogAction;
     if (action === 'edit') {
       devlogEditing = true;
-      openDevlogWindow();
+      openNowWindow();
     } else if (action === 'cancel') {
       devlogEditing = false;
-      refreshDevlogWindow();
+      openNowWindow();
     } else if (action === 'save') {
       if (!(await saveNowData(readDevlogFormData()))) return;
       devlogEditing = false;
-      refreshDevlogWindow();
+      openNowWindow();
     }
     return;
   }
@@ -447,13 +484,8 @@ document.addEventListener('click', async e => {
     if ((expected && entered === expected) || (!expected && entered)) {
       setNowAdminSessionPassword(entered);
       wm.close(lockId);
-      if (lockId === 'devlog-lock') {
-        devlogEditing = true;
-        openDevlogWindow();
-      } else {
-        nowEditing = true;
-        openNowWindow();
-      }
+      nowEditing = true;
+      openNowWindow();
     } else {
       lockWin?.querySelector('.now-lock-error')?.classList.add('visible');
       input?.select();
@@ -857,7 +889,6 @@ function applyNowSharedData(data, { persistLocal = true, refresh = true } = {}) 
   }
   if (changed && refresh) {
     if (!nowEditing && wm?.open?.now) openNowWindow();
-    if (!devlogEditing && wm?.open?.devlog) refreshDevlogWindow();
   }
   return changed;
 }
@@ -1141,7 +1172,7 @@ function startNowPenguinAnimation() {
   }, 260);
 }
 
-function renderNow() {
+function renderNowMainPanel() {
   const nowData = getNowData();
   const focusHtml = nowData.focus.map(item => `<li>${escapeHtml(item)}</li>`).join('') || '<li>Click Edit to add focus items.</li>';
   const pictureHtml = nowData.picture
@@ -1195,58 +1226,7 @@ function renderNow() {
   `;
 }
 
-function openNowWindow() {
-  if (!wm) return;
-  const existing = wm.open?.now;
-  if (existing) {
-    existing.querySelector('.win-body').innerHTML = `<div class="win-pad">${renderNow()}</div>`;
-    wm.focus(existing);
-    if (nowEditing) bindNowEditMediaControls();
-    startNowPenguinAnimation();
-    return;
-  }
-  wm.show('now', { title: 'now.live', html: renderNow(), w: 340, h: 360, x: 350, y: 72 });
-  if (nowEditing) bindNowEditMediaControls();
-  startNowPenguinAnimation();
-}
-
-function openNowEditPasswordPrompt() {
-  if (wm.open['now-lock']) { wm.focus(wm.open['now-lock']); return; }
-  wm.show('now-lock', {
-    title: 'now.live',
-    html: `<div class="now-lock-pad">
-      <div class="now-lock-msg">Admin password required to edit this file.</div>
-      <input class="now-lock-input" type="password" placeholder="Password" />
-      <div class="now-lock-error">Incorrect password.</div>
-      <div class="now-lock-actions">
-        <button class="now-lock-cancel">Cancel</button>
-        <button class="now-lock-ok">Unlock</button>
-      </div>
-    </div>`,
-    w: 280, h: 175,
-  });
-  setTimeout(() => document.querySelector('#win-now-lock .now-lock-input')?.focus(), 50);
-}
-
-function openDevlogEditPasswordPrompt() {
-  if (wm.open['devlog-lock']) { wm.focus(wm.open['devlog-lock']); return; }
-  wm.show('devlog-lock', {
-    title: 'devlog.md',
-    html: `<div class="now-lock-pad">
-      <div class="now-lock-msg">Admin password required to update this file.</div>
-      <input class="now-lock-input" type="password" placeholder="Password" />
-      <div class="now-lock-error">Incorrect password.</div>
-      <div class="now-lock-actions">
-        <button class="now-lock-cancel">Cancel</button>
-        <button class="now-lock-ok">Unlock</button>
-      </div>
-    </div>`,
-    w: 280, h: 175,
-  });
-  setTimeout(() => document.querySelector('#win-devlog-lock .now-lock-input')?.focus(), 50);
-}
-
-function renderDevlog() {
+function renderNowDevlogPanel() {
   const nowData = getNowData();
   const controls = devlogEditing
     ? `<button class="now-btn" data-devlog-action="save">Save</button>
@@ -1271,21 +1251,44 @@ function renderDevlog() {
   return `<div class="devlog-wrap"><div class="now-actions">${controls}</div>${body}</div>`;
 }
 
-function openDevlogWindow() {
-  if (!wm) return;
-  const existing = wm.open?.devlog;
-  if (existing) {
-    existing.querySelector('.win-body').innerHTML = `<div class="win-pad">${renderDevlog()}</div>`;
-    wm.focus(existing);
-    return;
-  }
-  wm.show('devlog', { title: 'devlog.md', html: renderDevlog(), w: 400, h: 360, x: 82, y: 220 });
+function renderNowTabs() {
+  return [
+    { id: 'main', label: 'now', html: `<div class="win-pad">${renderNowMainPanel()}</div>` },
+    { id: 'devlog', label: 'devlog', html: `<div class="win-pad">${renderNowDevlogPanel()}</div>` },
+  ];
 }
 
-function refreshDevlogWindow() {
-  const win = wm?.open?.devlog;
-  if (!win) return;
-  win.querySelector('.win-body').innerHTML = `<div class="win-pad">${renderDevlog()}</div>`;
+function openNowWindow() {
+  if (!wm) return;
+  const existing = wm.open?.now;
+  if (existing) {
+    existing.querySelector('.win-body').innerHTML = buildTabs('now', renderNowTabs());
+    wm.focus(existing);
+    if (nowEditing) bindNowEditMediaControls();
+    startNowPenguinAnimation();
+    return;
+  }
+  wm.show('now', { title: 'now.live', tabs: renderNowTabs(), w: 380, h: 420, x: 350, y: 72 });
+  if (nowEditing) bindNowEditMediaControls();
+  startNowPenguinAnimation();
+}
+
+function openNowEditPasswordPrompt() {
+  if (wm.open['now-lock']) { wm.focus(wm.open['now-lock']); return; }
+  wm.show('now-lock', {
+    title: 'now.live',
+    html: `<div class="now-lock-pad">
+      <div class="now-lock-msg">Admin password required to edit this file.</div>
+      <input class="now-lock-input" type="password" placeholder="Password" />
+      <div class="now-lock-error">Incorrect password.</div>
+      <div class="now-lock-actions">
+        <button class="now-lock-cancel">Cancel</button>
+        <button class="now-lock-ok">Unlock</button>
+      </div>
+    </div>`,
+    w: 280, h: 175,
+  });
+  setTimeout(() => document.querySelector('#win-now-lock .now-lock-input')?.focus(), 50);
 }
 
 /* ── Guestbook ────────────────────────────────────────────────── */
@@ -1583,7 +1586,6 @@ function setAdminLoggedIn(val) {
   }
   if (wm?.open?.['admin']) openAdminLoginWindow();
   if (wm?.open?.now) openNowWindow();
-  if (wm?.open?.devlog) openDevlogWindow();
   if (wm?.open?.guestbook) refreshGuestbookTerminal();
   // Sync unpin button on existing pinned notes immediately (no fetch needed)
   activePinned.forEach((el, id) => {
@@ -2586,7 +2588,7 @@ async function openFieldMapWindow() {
     existing.querySelector('.win-body').innerHTML = `<div class="win-pad">${renderFieldMapLoading()}</div>`;
     wm.focus(existing);
   } else {
-    wm.show('fieldmap', { title: 'seacliff.map', html: renderFieldMapLoading(), w: 760, h: 500, x: 180, y: 90 });
+    wm.show('fieldmap', { title: 'fieldnote.gpkg', html: renderFieldMapLoading(), w: 760, h: 500, x: 180, y: 90 });
   }
   await loadFieldMapDataset();
   refreshFieldMapWindow();
@@ -2820,7 +2822,7 @@ function openGameWindow() {
      </div>`;
 
   wm.show('game', {
-    title: 'game.exe',
+    title: 'game.app',
     html,
     nopad:       true,
     w:           defW,
@@ -2831,14 +2833,18 @@ function openGameWindow() {
 
 /* ── Desktop icon definitions ─────────────────────────────────── */
 function makeIconDefs() {
-  const rX  = Math.max(window.innerWidth  - 108, 500);
-  const bH  = window.innerHeight - 28;  // desktop height (below 28px menubar)
+  const rX      = Math.max(window.innerWidth  - 108, 500);
+  const bH      = window.innerHeight - 28;
+  const rowStep = 90;
+  const topY    = 40;
+  const leftColX  = 30;
+  const rightColX = rX;
 
   return [
-    // ── Right top: folders ───────────────────────────────────
+    // ── Right column: content folders ────────────────────────
     {
       id: 'publications', label: 'publication', icon: SVG.folder, iconKey: 'folder',
-      x: rX, y: 40,
+      x: rightColX, y: topY,
       action: () => {
         const p = renderPublications();
         wm.show('publications', { title: 'publication', tabs: p.tabs, w: 480, h: 400 });
@@ -2846,60 +2852,56 @@ function makeIconDefs() {
     },
     {
       id: 'projects', label: 'Projects', icon: SVG.folder, iconKey: 'folder',
-      x: rX, y: 130,
+      x: rightColX, y: topY + rowStep,
       action: () => {
         const p = renderProjects();
         wm.show('projects', { title: 'Projects', tabs: p.tabs, w: 480, h: 400 });
       },
     },
-    // ── Left top: md files ───────────────────────────────────
     {
       id: 'about', label: 'about.md', icon: SVG.document, iconKey: 'document',
-      x: 30, y: 40,
+      x: rightColX, y: topY + rowStep * 2,
       action: () => wm.show('about', { title: 'about.md', html: renderAbout(), w: 400, h: 440 }),
     },
-    {
-      id: 'cv', label: 'cv.md', icon: SVG.document, iconKey: 'document',
-      x: 30, y: 130,
-      action: () => {
-        const cv = renderCV();
-        wm.show('cv', { title: 'cv.md', tabs: cv.tabs, w: 520, h: 460 });
-      },
-    },
-    {
-      id: 'devlog', label: 'devlog.md', icon: SVG.document, iconKey: 'document',
-      x: 30, y: 220,
-      action: () => openDevlogWindow(),
-    },
-    {
-      id: 'fieldmap', label: 'seacliff.map', icon: SVG.map, iconKey: 'map',
-      x: 30, y: 310,
-      action: () => openFieldMapWindow(),
-    },
+    // ── Left column: tools ───────────────────────────────────
     {
       id: 'guestbook', label: 'guestbook', icon: SVG.terminal, iconKey: 'terminal',
-      x: 30, y: 400,
+      x: leftColX, y: topY,
       action: () => openGuestbookWindow(),
     },
     {
-      id: 'game', label: 'game.exe', icon: SVG.sisyphus, iconKey: 'sisyphus',
-      x: 30, y: 490,
+      id: 'fieldmap', label: 'fieldnote.gpkg', icon: SVG.map, iconKey: 'map',
+      x: leftColX, y: topY + rowStep,
+      action: () => openFieldMapWindow(),
+    },
+    {
+      id: 'game', label: 'game.app', icon: SVG.sisyphus, iconKey: 'sisyphus',
+      x: leftColX, y: topY + rowStep * 2,
       action: () => openGameWindow(),
     },
     // ── Left bottom: bin ─────────────────────────────────────
     {
       id: 'bin', label: 'Bin', icon: SVG.trash, iconKey: 'trash',
-      x: 30, y: bH - 100,
+      x: leftColX, y: bH - 100,
       action: () => wm.show('bin', { title: 'Bin', html: renderBin(), w: 320, h: 280 }),
     },
-    // ── Right bottom: social (stacked from bottom) ───────────
+    // ── cv (hidden / bin) ────────────────────────────────────
+    {
+      id: 'cv', label: 'cv.md', icon: SVG.document, iconKey: 'document',
+      x: Math.round(window.innerWidth / 2), y: Math.round(bH / 2),
+      action: () => {
+        const cv = renderCV();
+        wm.show('cv', { title: 'cv.md', tabs: cv.tabs, w: 520, h: 460 });
+      },
+    },
+    // ── Right bottom: social ─────────────────────────────────
     ...SITE.social.map((s, i) => ({
       id:      s.id,
       label:   s.label,
       icon:    SVG[s.icon] || SVG.document,
       iconKey: s.icon,
       social:  true,
-      x:      rX,
+      x:      rightColX,
       y:      bH - 90 - (SITE.social.length - 1 - i) * 90,
       action: () => window.open(s.url, '_blank', 'noopener,noreferrer'),
     })),
@@ -2916,8 +2918,10 @@ function createIcon(def) {
   if (def.social) el.dataset.iconType = 'social';
 
   const saved = loadIconPos(def.id);
-  el.style.left = (saved ? saved.x : def.x) + 'px';
-  el.style.top  = (saved ? saved.y : def.y) + 'px';
+  const isMobile = window.innerWidth <= 768;
+  const defaultPos = (isMobile && getMobilePos(def.id)) || { x: def.x, y: def.y };
+  el.style.left = (saved ? saved.x : defaultPos.x) + 'px';
+  el.style.top  = (saved ? saved.y : defaultPos.y) + 'px';
 
   el.innerHTML = `
     <div class="icon-img">${def.icon}</div>
@@ -3058,6 +3062,9 @@ document.getElementById('theme-btn').addEventListener('click', () => {
   const html = document.documentElement;
   html.dataset.theme = html.dataset.theme === 'dark' ? 'light' : 'dark';
   localStorage.setItem('theme', html.dataset.theme);
+});
+document.getElementById('reset-icons-btn')?.addEventListener('click', () => {
+  resetIconLayout();
 });
 (function () {
   const saved = localStorage.getItem('theme');
