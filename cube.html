@@ -1,0 +1,747 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mirror Cube · Orlan Y. Syshui</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #0a0a0a; --fg: #e8e8e8; --dim: #555; --accent: #b8b8b8;
+      --panel-bg: #0f0f0f; --panel-border: #222;
+      --font: 'Space Mono', monospace;
+    }
+    html, body { width: 100%; height: 100%; background: var(--bg); color: var(--fg);
+      font-family: var(--font); overflow: hidden; }
+
+    /* ── canvas + SVG overlay ── */
+    #c {
+      position: fixed; inset: 0;
+      transition: right 0.4s cubic-bezier(0.4,0,0.2,1);
+    }
+    body.panel-open #c { right: 60%; }
+
+    #tags {
+      position: fixed; inset: 0; pointer-events: none; z-index: 10; overflow: visible;
+      transition: right 0.4s cubic-bezier(0.4,0,0.2,1);
+    }
+    body.panel-open #tags { right: 60%; }
+
+    /* ── content panel ── */
+    #panel {
+      position: fixed; top: 0; right: 0; width: 60%; height: 100%;
+      background: var(--panel-bg); border-left: 1px solid var(--panel-border);
+      transform: translateX(100%);
+      transition: transform 0.4s cubic-bezier(0.4,0,0.2,1);
+      overflow-y: auto; z-index: 20; padding: 52px 40px 40px;
+    }
+    body.panel-open #panel { transform: translateX(0); }
+
+    #panel-close {
+      position: absolute; top: 14px; left: 16px;
+      background: none; border: 1px solid var(--panel-border); color: var(--dim);
+      font-family: var(--font); font-size: 10px; padding: 4px 8px;
+      cursor: pointer; letter-spacing: 0.08em;
+    }
+    #panel-close:hover { color: var(--fg); border-color: var(--accent); }
+
+    #panel-id   { font-size: 9px; color: var(--dim); letter-spacing: 0.2em; margin-bottom: 6px; }
+    #panel-title { font-size: 20px; font-weight: 700; letter-spacing: -0.01em;
+      margin-bottom: 20px; line-height: 1.2; }
+    #panel-body { font-size: 12px; line-height: 1.85; color: #999; }
+    #panel-body p { margin-bottom: 1em; }
+    #panel-body a { color: var(--accent); }
+    #panel-links { margin-top: 20px; display: flex; flex-direction: column; gap: 6px; }
+    .panel-link {
+      font-size: 10px; color: var(--dim); letter-spacing: 0.1em;
+      background: none; border: 1px solid var(--panel-border); padding: 6px 10px;
+      cursor: pointer; font-family: var(--font); text-align: left; text-decoration: none;
+      display: block;
+    }
+    .panel-link:hover { color: var(--fg); border-color: var(--accent); }
+
+    /* ── top UI bar ── */
+    #ui {
+      position: fixed; top: 0; left: 0; right: 0; height: 36px;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 14px; z-index: 30; pointer-events: none;
+    }
+    #ui > * { pointer-events: all; }
+    #ui-title { font-size: 10px; color: var(--dim); letter-spacing: 0.12em; }
+    #ui-right  { display: flex; gap: 10px; align-items: center; }
+
+    .ui-btn {
+      background: none; border: none; color: var(--dim); font-family: var(--font);
+      font-size: 10px; cursor: pointer; letter-spacing: 0.1em; padding: 2px 0;
+      text-decoration: none;
+    }
+    .ui-btn:hover { color: var(--fg); }
+
+    /* ── tag labels ── */
+    .tag-label {
+      position: fixed; font-family: var(--font); font-size: 9px;
+      letter-spacing: 0.1em; color: var(--accent); pointer-events: none;
+      white-space: nowrap; transform: translateY(-50%);
+    }
+
+    /* ── status messages ── */
+    #status {
+      position: fixed; bottom: 20px; left: 50%;
+      transform: translateX(-50%);
+      font-size: 9px; color: var(--dim); letter-spacing: 0.12em;
+      z-index: 40; opacity: 0; transition: opacity 0.3s; white-space: nowrap;
+    }
+    #status.show { opacity: 1; }
+
+    /* ── solve toast ── */
+    #solve-toast {
+      position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+      font-size: 10px; color: var(--fg); letter-spacing: 0.1em; z-index: 40;
+      background: var(--panel-bg); border: 1px solid var(--accent);
+      padding: 8px 16px; opacity: 0; transition: opacity 0.6s; pointer-events: none;
+      display: flex; gap: 10px; align-items: center;
+    }
+    #solve-toast.show { opacity: 1; pointer-events: all; }
+    #solve-toast button {
+      background: none; border: 1px solid var(--panel-border); color: var(--dim);
+      font-family: var(--font); font-size: 9px; padding: 3px 7px; cursor: pointer;
+      letter-spacing: 0.08em;
+    }
+    #solve-toast button:hover { color: var(--fg); }
+
+    /* ── hint ── */
+    #hint {
+      position: fixed; bottom: 20px; right: 20px;
+      font-size: 9px; color: #333; letter-spacing: 0.08em; z-index: 30;
+      line-height: 1.6; text-align: right; pointer-events: none;
+      transition: opacity 1s;
+    }
+
+    /* ── mobile fallback ── */
+    #mobile-grid {
+      display: none;
+      position: fixed; inset: 0; overflow-y: auto;
+      padding: 48px 16px 24px;
+      flex-direction: column; gap: 0;
+    }
+    .mobile-layer-label {
+      font-size: 9px; color: var(--dim); letter-spacing: 0.2em;
+      padding: 16px 0 8px; border-bottom: 1px solid var(--panel-border); margin-bottom: 4px;
+    }
+    .mobile-row { display: flex; gap: 4px; margin-bottom: 4px; }
+    .mobile-cell {
+      flex: 1; aspect-ratio: 1; background: #141414; border: 1px solid #1e1e1e;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      cursor: pointer; gap: 3px; transition: background 0.15s;
+    }
+    .mobile-cell:hover { background: #1e1e1e; }
+    .mobile-cell .cid  { font-size: 7px; color: #444; letter-spacing: 0.1em; }
+    .mobile-cell .ctitle { font-size: 9px; color: var(--dim); }
+
+    @media (max-width: 640px) {
+      #c, #tags, #hint { display: none; }
+      #mobile-grid     { display: flex; }
+      body.panel-open #panel { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+
+<canvas id="c"></canvas>
+<svg id="tags" xmlns="http://www.w3.org/2000/svg"></svg>
+
+<div id="panel">
+  <button id="panel-close">✕ close</button>
+  <div id="panel-id"></div>
+  <div id="panel-title"></div>
+  <div id="panel-body"></div>
+  <div id="panel-links"></div>
+</div>
+
+<div id="ui">
+  <span id="ui-title">mirror cube</span>
+  <div id="ui-right">
+    <button class="ui-btn" id="lang-btn">EN</button>
+    <a class="ui-btn" href="index.html">← back</a>
+  </div>
+</div>
+
+<div id="hint">click · open<br>hold + drag · rotate layer<br>drag · orbit</div>
+<div id="status"></div>
+<div id="solve-toast">✦ solved <button id="solve-open">open core</button></div>
+
+<div id="mobile-grid"></div>
+
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.165.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.165.0/examples/jsm/"
+  }
+}
+</script>
+
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+
+// ── i18n ──────────────────────────────────────────────────────────────────
+let LANG = 'en';
+const STRINGS = {
+  en: { scrambling: 'scrambling...', hint: 'click · open\nhold + drag · rotate layer\ndrag · orbit' },
+  zh: {},
+};
+function t(k) { return (LANG === 'zh' && STRINGS.zh[k]) ? STRINGS.zh[k] : (STRINGS.en[k] || k); }
+
+// ── Pieces data ───────────────────────────────────────────────────────────
+// gx=0..2 (left→right), gy=0..2 (bottom→top), gz=0..2 (back→front)
+// C=gy2 Context · E=gy1 Excavation · T=gy0 Theory
+const PIECES_DATA = [
+  // C — Context (top layer, gy=2)
+  { id:'C-01', title:'Place',       gx:0,gy:2,gz:0,
+    content:'<p>The situatedness of knowledge. Where we stand when we speak, and how that position shapes what can be known.</p>' },
+  { id:'C-02', title:'Time',        gx:1,gy:2,gz:0,
+    content:'<p>Stratigraphy as argument. The past is not yet over — it accumulates, reworks, sediments into the present.</p>' },
+  { id:'C-03', title:'Memory',      gx:2,gy:2,gz:0,
+    content:'<p>How surfaces hold trace. The politics of what gets remembered, by whom, and in what form.</p>' },
+  { id:'C-04', title:'Landscape',   gx:0,gy:2,gz:1,
+    content:'<p>Not backdrop but agent. Ground that moves, vegetation that obscures and reveals. Landscape as process.</p>' },
+  { id:'C-05', title:'Heritage',    gx:1,gy:2,gz:1,
+    content:'<p>The politics of preservation. Authorised heritage discourse and what falls outside the frame.</p>' },
+  { id:'C-06', title:'Archive',     gx:2,gy:2,gz:1,
+    content:'<p>Institutional memory and its gaps. The distance between document and deposit, record and ruin.</p>' },
+  { id:'C-07', title:'Institution', gx:0,gy:2,gz:2,
+    content:'<p>The bureaucratic life of sites. Care and neglect as policy. How institutions accumulate afterlives.</p>' },
+  { id:'C-08', title:'Community',   gx:1,gy:2,gz:2,
+    content:'<p>Who claims a site. Whose knowledge counts. The relational web within which heritage is made legible.</p>' },
+  { id:'C-09', title:'Policy',      gx:2,gy:2,gz:2,
+    content:'<p>Where legislation meets landscape. The edge cases of protection, and the slow work of zoning change.</p>' },
+
+  // E — Excavation (middle layer, gy=1)
+  { id:'E-01', title:'Method',      gx:0,gy:1,gz:0,
+    content:'<p>How we get to knowing. The bias built into technique — every method frames what can be found.</p>' },
+  { id:'E-02', title:'Survey',      gx:1,gy:1,gz:0,
+    content:'<p>Walking as research. Coverage, gaps, conditions of observation. The body as instrument in the field.</p>' },
+  { id:'E-03', title:'Sensing',     gx:2,gy:1,gz:0,
+    content:'<p>LiDAR, aerial photography, multispectral analysis. Seeing without touching — and what that costs.</p>' },
+  { id:'E-04', title:'GIS',         gx:0,gy:1,gz:1,
+    content:'<p>Spatial argument. Layers as claims. The interpretive work hidden inside cartographic convention.</p>' },
+  { id:'E-05', title:'Core',        gx:1,gy:1,gz:1, hidden:true,
+    content:'<p>The invisible centre. Only accessible when everything else is in its place.</p>' },
+  { id:'E-06', title:'Field',       gx:2,gy:1,gz:1,
+    content:'<p>Presence as instrument. The knowing body in the trench, mud as data, discomfort as method.</p>' },
+  { id:'E-07', title:'Material',    gx:0,gy:1,gz:2,
+    content:'<p>What objects do. Thing-power and the agency distributed across artefacts and assemblages.</p>' },
+  { id:'E-08', title:'Analysis',    gx:1,gy:1,gz:2,
+    content:'<p>From data to interpretation. The inferential leap, and the responsibility it carries.</p>' },
+  { id:'E-09', title:'Record',      gx:2,gy:1,gz:2,
+    content:'<p>The archive we make while we work. Field notes as argument, drawing as observation.</p>' },
+
+  // T — Theory (bottom layer, gy=0)
+  { id:'T-01', title:'Phenom.',     gx:0,gy:0,gz:0,
+    content:'<p>Phenomenology: lived experience as evidence. Perception before cognition. The body that perceives before the mind that categorises.</p>' },
+  { id:'T-02', title:'Process',     gx:1,gy:0,gz:0,
+    content:'<p>Processual thinking: sites as events, not objects. Becoming over being. The landscape perpetually under construction.</p>' },
+  { id:'T-03', title:'Assemblage',  gx:2,gy:0,gz:0,
+    content:'<p>Emergent wholes from heterogeneous parts. Relations precede entities. DeLanda after Deleuze.</p>' },
+  { id:'T-04', title:'Taskscape',   gx:0,gy:0,gz:1,
+    content:'<p>Tim Ingold\'s interlocking rhythms of dwelling and movement. The landscape as the congealment of past activity.</p>' },
+  { id:'T-05', title:'Visibility',  gx:1,gy:0,gz:1,
+    content:'<p>What can be seen, from where, and by whom. The politics of legibility and the labour of making visible.</p>' },
+  { id:'T-06', title:'Relational',  gx:2,gy:0,gz:1,
+    content:'<p>Whakapapa as method. Sites constituted through connection. Heritage as a web of relations in time.</p>' },
+  { id:'T-07', title:'Embodiment',  gx:0,gy:0,gz:2,
+    content:'<p>The knowing body. Positionality as epistemology. What it means to research from a particular flesh.</p>' },
+  { id:'T-08', title:'Afterlife',   gx:1,gy:0,gz:2,
+    content:'<p>What persists beyond function. The second histories of institutions, asylum walls, and abandoned infrastructure.</p>' },
+  { id:'T-09', title:'Semiotics',   gx:2,gy:0,gz:2,
+    content:'<p>Signs in soil. Meaning made from material residue. The interpretive gap between trace and text.</p>' },
+];
+
+// ── Mirror Cube geometry ──────────────────────────────────────────────────
+const XS = [0.6, 1.0, 1.4];
+const YS = [0.7, 1.0, 1.3];
+const ZS = [0.65, 1.0, 1.35];
+const GAP = 0.018;
+
+function centers(sizes) {
+  return [-(sizes[1]/2 + sizes[0]/2), 0, sizes[1]/2 + sizes[2]/2];
+}
+const XC = centers(XS), YC = centers(YS), ZC = centers(ZS);
+
+// ── Renderer ──────────────────────────────────────────────────────────────
+const isMobile = window.innerWidth <= 640;
+
+const canvas  = document.getElementById('c');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.1;
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x080808);
+
+const pmrem = new THREE.PMREMGenerator(renderer);
+scene.environment = pmrem.fromScene(new RoomEnvironment(0.04)).texture;
+pmrem.dispose();
+
+const camera = new THREE.PerspectiveCamera(42, window.innerWidth / window.innerHeight, 0.1, 100);
+camera.position.set(3.8, 3.0, 4.8);
+
+const controls = new OrbitControls(camera, canvas);
+controls.enableDamping = true;
+controls.dampingFactor = 0.06;
+controls.enableZoom = true;
+controls.minDistance = 3.5;
+controls.maxDistance = 14;
+controls.enablePan = false;
+controls.autoRotate = true;
+controls.autoRotateSpeed = 0.4;
+
+// Lights
+scene.add(new THREE.AmbientLight(0xffffff, 0.25));
+const key = new THREE.DirectionalLight(0xffffff, 1.8);
+key.position.set(5, 8, 6); scene.add(key);
+const fill = new THREE.DirectionalLight(0x9999ff, 0.4);
+fill.position.set(-4, -1, -5); scene.add(fill);
+const rim = new THREE.DirectionalLight(0xffffcc, 0.3);
+rim.position.set(0, -5, -3); scene.add(rim);
+
+// ── Build pieces ──────────────────────────────────────────────────────────
+const cubeGroup = new THREE.Group();
+scene.add(cubeGroup);
+
+const pieceMeshes = [];
+
+function makeMat(gx, gy, gz) {
+  const base = new THREE.Color(0xaaaaaa);
+  base.offsetHSL(0, 0, ((gx + gy + gz) - 3) * 0.008);
+  return new THREE.MeshStandardMaterial({
+    color: base,
+    metalness: 0.88,
+    roughness: 0.12 + (gx + gz) * 0.008,
+    envMapIntensity: 1.2,
+  });
+}
+
+for (const pd of PIECES_DATA) {
+  if (pd.hidden) continue;
+  const { gx, gy, gz } = pd;
+  const mesh = new THREE.Mesh(
+    new THREE.BoxGeometry(XS[gx]-GAP, YS[gy]-GAP, ZS[gz]-GAP),
+    makeMat(gx, gy, gz)
+  );
+  mesh.position.set(XC[gx], YC[gy], ZC[gz]);
+  mesh.userData = { pd, gx, gy, gz, origGx:gx, origGy:gy, origGz:gz };
+  cubeGroup.add(mesh);
+  pieceMeshes.push(mesh);
+}
+
+// ── Layer rotation ─────────────────────────────────────────────────────────
+let isRotating = false;
+let totalMoves = 0;
+
+function getLayer(axis, idx) {
+  return pieceMeshes.filter(m => m.userData[axis] === idx);
+}
+
+const AXIS_VEC = { gx: new THREE.Vector3(1,0,0), gy: new THREE.Vector3(0,1,0), gz: new THREE.Vector3(0,0,1) };
+
+function rotateLayer(axis, layerIdx, dir) {
+  return new Promise(resolve => {
+    if (isRotating) { resolve(); return; }
+    isRotating = true;
+    const layer = getLayer(axis, layerIdx);
+    const pivot = new THREE.Object3D();
+    cubeGroup.add(pivot);
+    layer.forEach(m => { cubeGroup.remove(m); pivot.attach(m); });
+
+    const target = dir * Math.PI / 2;
+    const duration = 220;
+    const t0 = performance.now();
+    let prev = 0;
+
+    function step(now) {
+      const p = Math.min((now - t0) / duration, 1);
+      const e = p < 0.5 ? 2*p*p : -1+(4-2*p)*p;
+      const angle = target * e;
+      pivot.rotateOnAxis(AXIS_VEC[axis], angle - prev);
+      prev = angle;
+      if (p < 1) { requestAnimationFrame(step); return; }
+
+      layer.forEach(m => {
+        pivot.remove(m);
+        cubeGroup.attach(m);
+        ['x','y','z'].forEach(k => { m.position[k] = Math.round(m.position[k]*1000)/1000; });
+      });
+      cubeGroup.remove(pivot);
+      updateGrid(axis, layerIdx, dir);
+      isRotating = false;
+      resolve();
+    }
+    requestAnimationFrame(step);
+  });
+}
+
+function updateGrid(axis, layerIdx, dir) {
+  const layer = pieceMeshes.filter(m => m.userData[axis] === layerIdx);
+  for (const m of layer) {
+    const { gx, gy, gz } = m.userData;
+    let nx = gx, ny = gy, nz = gz;
+    if (axis === 'gy') {
+      // rotate XZ: +dir=+Y → (x,z)→(gz, 2-gx)   -dir → (2-gz, gx)
+      if (dir > 0) { nx = gz;     nz = 2 - gx; }
+      else         { nx = 2 - gz; nz = gx; }
+    } else if (axis === 'gx') {
+      // rotate YZ: +dir=+X → (y,z)→(2-gz, gy)
+      if (dir > 0) { ny = 2 - gz; nz = gy; }
+      else         { ny = gz;     nz = 2 - gy; }
+    } else { // gz
+      // rotate XY: +dir=+Z → (x,y)→(2-gy, gx)
+      if (dir > 0) { nx = 2 - gy; ny = gx; }
+      else         { nx = gy;     ny = 2 - gx; }
+    }
+    m.userData.gx = nx; m.userData.gy = ny; m.userData.gz = nz;
+  }
+  totalMoves++;
+  checkSolved();
+}
+
+function checkSolved() {
+  if (totalMoves === 0) return;
+  const ok = pieceMeshes.every(m =>
+    m.userData.gx === m.userData.origGx &&
+    m.userData.gy === m.userData.origGy &&
+    m.userData.gz === m.userData.origGz
+  );
+  if (ok) onSolved();
+}
+
+// ── Date-seeded scramble ──────────────────────────────────────────────────
+function rng32(seed) {
+  let s = seed | 0;
+  return () => {
+    s = s + 0x6D2B79F5 | 0;
+    let t = Math.imul(s ^ s>>>15, 1 | s);
+    t = t + Math.imul(t ^ t>>>7, 61 | t) ^ t;
+    return ((t ^ t>>>14) >>> 0) / 4294967296;
+  };
+}
+function dateSeed() {
+  const d = new Date();
+  return d.getFullYear() * 10000 + (d.getMonth()+1) * 100 + d.getDate();
+}
+
+const AXES = ['gx','gy','gz'];
+const statusEl = document.getElementById('status');
+
+async function scramble() {
+  const rand = rng32(dateSeed());
+  const n = 16 + Math.floor(rand() * 5);
+  showStatus('scrambling...');
+  controls.enabled = false;
+  controls.autoRotate = false;
+
+  let lastAxis = '', lastLayer = -1;
+  for (let i = 0; i < n; i++) {
+    let axis, layer;
+    do {
+      axis  = AXES[Math.floor(rand() * 3)];
+      layer = Math.floor(rand() * 3);
+    } while (axis === lastAxis && layer === lastLayer);
+    const dir = rand() > 0.5 ? 1 : -1;
+    lastAxis = axis; lastLayer = layer;
+    totalMoves = 0; // don't trigger solve during scramble
+    await rotateLayer(axis, layer, dir);
+    await sleep(60);
+  }
+  totalMoves = 1; // mark as scrambled
+  hideStatus();
+  controls.enabled = true;
+  controls.autoRotate = true;
+
+  // Fade hint after 6s
+  setTimeout(() => { document.getElementById('hint').style.opacity = '0'; }, 6000);
+}
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+function showStatus(msg) { statusEl.textContent = msg; statusEl.classList.add('show'); }
+function hideStatus() { statusEl.classList.remove('show'); }
+
+// ── Hover tag lines ───────────────────────────────────────────────────────
+const tagsSVG = document.getElementById('tags');
+const raycaster = new THREE.Raycaster();
+const mouse2 = new THREE.Vector2();
+let hoveredMesh = null;
+
+function screenPos(mesh) {
+  const v = new THREE.Vector3();
+  mesh.getWorldPosition(v);
+  v.project(camera);
+  return {
+    x: (v.x + 1) / 2 * window.innerWidth,
+    y: (1 - v.y) / 2 * window.innerHeight,
+    behind: v.z > 1,
+  };
+}
+
+function updateTags() {
+  tagsSVG.innerHTML = '';
+  document.querySelectorAll('.tag-label').forEach(e => e.remove());
+  if (!hoveredMesh) return;
+  const { x, y, behind } = screenPos(hoveredMesh);
+  if (behind) return;
+
+  const pd = hoveredMesh.userData.pd;
+  // Decide label side: left half → label right, right half → label left
+  const goRight = x < window.innerWidth * 0.5;
+  const lx = goRight ? x + 36 : x - 36;
+  const anchor = goRight ? lx - 2 : lx + 2;
+
+  const line = document.createElementNS('http://www.w3.org/2000/svg','line');
+  line.setAttribute('x1', x); line.setAttribute('y1', y);
+  line.setAttribute('x2', anchor); line.setAttribute('y2', y);
+  line.setAttribute('stroke','rgba(180,180,180,0.35)');
+  line.setAttribute('stroke-width','0.6');
+  tagsSVG.appendChild(line);
+
+  const dot = document.createElementNS('http://www.w3.org/2000/svg','circle');
+  dot.setAttribute('cx', x); dot.setAttribute('cy', y);
+  dot.setAttribute('r','2'); dot.setAttribute('fill','rgba(180,180,180,0.6)');
+  tagsSVG.appendChild(dot);
+
+  const lbl = document.createElement('div');
+  lbl.className = 'tag-label';
+  lbl.textContent = `${pd.id} · ${pd.title}`;
+  lbl.style.left = (goRight ? lx : lx) + 'px';
+  lbl.style.top  = y + 'px';
+  if (!goRight) lbl.style.transform = 'translateX(-100%) translateY(-50%)';
+  document.body.appendChild(lbl);
+}
+
+function getHit(cx, cy) {
+  const rect = canvas.getBoundingClientRect();
+  mouse2.x = ((cx - rect.left) / rect.width)  * 2 - 1;
+  mouse2.y = -((cy - rect.top)  / rect.height) * 2 + 1;
+  raycaster.setFromCamera(mouse2, camera);
+  const hits = raycaster.intersectObjects(pieceMeshes);
+  return hits.length ? hits[0].object : null;
+}
+
+// ── Panel ─────────────────────────────────────────────────────────────────
+const panel      = document.getElementById('panel');
+const panelId    = document.getElementById('panel-id');
+const panelTitle = document.getElementById('panel-title');
+const panelBody  = document.getElementById('panel-body');
+const panelLinks = document.getElementById('panel-links');
+let activeMesh = null;
+
+function openPanel(mesh) {
+  const { pd } = mesh.userData;
+  if (pd.hidden) return;
+  panelId.textContent    = pd.id;
+  panelTitle.textContent = pd.title;
+  panelBody.innerHTML    = pd.content;
+  panelLinks.innerHTML   = pd.links ? pd.links.map(l =>
+    `<a class="panel-link" href="${l.url}" target="_blank">${l.label}</a>`
+  ).join('') : '';
+  document.body.classList.add('panel-open');
+  activeMesh = mesh;
+  controls.autoRotate = false;
+
+  // Subtle cube tilt toward clicked piece
+  nudgeCube(mesh.userData.gx, mesh.userData.gz);
+}
+
+function closePanel() {
+  document.body.classList.remove('panel-open');
+  activeMesh = null;
+  controls.autoRotate = true;
+}
+
+function nudgeCube(gx, gz) {
+  const targetY = ((gx - 1) * -0.4);
+  const targetX = ((gz - 1) * 0.2);
+  const from = { y: cubeGroup.rotation.y, x: cubeGroup.rotation.x };
+  const t0 = performance.now();
+  const dur = 600;
+  function step(now) {
+    const p = Math.min((now-t0)/dur, 1);
+    const e = 1 - Math.pow(1-p, 3);
+    cubeGroup.rotation.y = from.y + (targetY - from.y) * e;
+    cubeGroup.rotation.x = from.x + (targetX - from.x) * e;
+    if (p < 1) requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+}
+
+document.getElementById('panel-close').addEventListener('click', closePanel);
+
+// ── Pointer interaction ───────────────────────────────────────────────────
+let pdTime = 0, pdPos = {x:0,y:0}, pdMesh = null;
+let layerDrag = null, draggingLayer = false;
+
+canvas.addEventListener('pointermove', e => {
+  const h = getHit(e.clientX, e.clientY);
+  if (h !== hoveredMesh) {
+    hoveredMesh = h;
+    canvas.style.cursor = h ? 'pointer' : 'default';
+  }
+
+  if (draggingLayer && layerDrag && !isRotating) {
+    const dx = e.clientX - layerDrag.sx;
+    const dy = e.clientY - layerDrag.sy;
+    if (!layerDrag.axis && Math.hypot(dx,dy) > 8) {
+      layerDrag.axis     = Math.abs(dx) > Math.abs(dy) ? 'gy' : 'gz';
+      layerDrag.layerIdx = Math.abs(dx) > Math.abs(dy)
+        ? layerDrag.mesh.userData.gy
+        : layerDrag.mesh.userData.gz;
+    }
+    if (layerDrag.axis && Math.hypot(dx,dy) > 22) {
+      const a = layerDrag.axis, li = layerDrag.layerIdx;
+      const dir = a === 'gy' ? (dx > 0 ? 1 : -1) : (dy > 0 ? -1 : 1);
+      draggingLayer = false; layerDrag = null;
+      controls.enabled = true;
+      rotateLayer(a, li, dir);
+    }
+  }
+});
+
+canvas.addEventListener('pointerdown', e => {
+  if (e.button !== 0) return;
+  const hit = getHit(e.clientX, e.clientY);
+  if (!hit) return;
+  pdTime = Date.now(); pdPos = {x:e.clientX, y:e.clientY}; pdMesh = hit;
+
+  const holdTimer = setTimeout(() => {
+    if (!pdMesh) return;
+    draggingLayer = true;
+    layerDrag = { mesh: pdMesh, sx: e.clientX, sy: e.clientY, axis: null, layerIdx: null };
+    controls.enabled = false;
+  }, 280);
+
+  function onUp(upE) {
+    canvas.removeEventListener('pointerup', onUp);
+    clearTimeout(holdTimer);
+    if (draggingLayer) {
+      draggingLayer = false;
+      if (layerDrag) { layerDrag = null; controls.enabled = true; }
+      pdMesh = null; return;
+    }
+    const moved = Math.hypot(upE.clientX-pdPos.x, upE.clientY-pdPos.y);
+    if (moved < 6 && pdMesh) {
+      if (activeMesh === pdMesh) closePanel();
+      else openPanel(pdMesh);
+    }
+    pdMesh = null;
+  }
+  canvas.addEventListener('pointerup', onUp);
+});
+
+// ── Solve ─────────────────────────────────────────────────────────────────
+let solved = false;
+function onSolved() {
+  if (solved) return; solved = true;
+  // Reveal E-05 (golden center)
+  const pd = PIECES_DATA.find(p => p.id === 'E-05');
+  const mesh = new THREE.Mesh(
+    new THREE.BoxGeometry(XS[1]-GAP, YS[1]-GAP, ZS[1]-GAP),
+    new THREE.MeshStandardMaterial({ color:0xd4af37, metalness:0.7, roughness:0.2, emissive:0x332200 })
+  );
+  mesh.position.set(XC[1], YC[1], ZC[1]);
+  mesh.userData = { pd, gx:1,gy:1,gz:1, origGx:1,origGy:1,origGz:1 };
+  cubeGroup.add(mesh);
+  pieceMeshes.push(mesh);
+  document.getElementById('solve-toast').classList.add('show');
+}
+
+document.getElementById('solve-open').addEventListener('click', () => {
+  const pd = PIECES_DATA.find(p => p.id === 'E-05');
+  panelId.textContent    = 'E-05';
+  panelTitle.textContent = 'Core';
+  panelBody.innerHTML    = '<p>The invisible centre, now visible.</p><p>Leave a note. (Guestbook coming soon.)</p>';
+  panelLinks.innerHTML   = '';
+  document.body.classList.add('panel-open');
+});
+
+// ── Language toggle ───────────────────────────────────────────────────────
+document.getElementById('lang-btn').addEventListener('click', () => {
+  LANG = LANG === 'en' ? 'zh' : 'en';
+  document.getElementById('lang-btn').textContent = LANG.toUpperCase();
+  // TODO: populate STRINGS.zh and apply
+});
+
+// ── Resize ────────────────────────────────────────────────────────────────
+window.addEventListener('resize', () => {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+});
+
+// Handle panel open/close renderer update
+const observer = new MutationObserver(() => {
+  // Give CSS transition time, then renderer matches visible canvas area
+  setTimeout(() => {
+    const w = document.body.classList.contains('panel-open')
+      ? window.innerWidth * 0.4
+      : window.innerWidth;
+    camera.aspect = w / window.innerHeight;
+    camera.updateProjectionMatrix();
+  }, 420);
+});
+observer.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+
+// ── Render loop ───────────────────────────────────────────────────────────
+function animate() {
+  requestAnimationFrame(animate);
+  controls.update();
+  if (!isRotating) updateTags();
+  renderer.render(scene, camera);
+}
+animate();
+
+// ── Mobile grid fallback ──────────────────────────────────────────────────
+if (isMobile) {
+  const container = document.getElementById('mobile-grid');
+  const layers = [
+    { label: 'C — Context',    pieces: PIECES_DATA.filter(p => p.gy === 2) },
+    { label: 'E — Excavation', pieces: PIECES_DATA.filter(p => p.gy === 1 && !p.hidden) },
+    { label: 'T — Theory',     pieces: PIECES_DATA.filter(p => p.gy === 0) },
+  ];
+  for (const layer of layers) {
+    const lbl = document.createElement('div');
+    lbl.className = 'mobile-layer-label';
+    lbl.textContent = layer.label;
+    container.appendChild(lbl);
+    for (let row = 0; row < 3; row++) {
+      const rowEl = document.createElement('div');
+      rowEl.className = 'mobile-row';
+      for (let col = 0; col < 3; col++) {
+        const pd = layer.pieces.find(p => p.gz === row && p.gx === col) || layer.pieces[row*3+col];
+        if (!pd) continue;
+        const cell = document.createElement('div');
+        cell.className = 'mobile-cell';
+        cell.innerHTML = `<span class="cid">${pd.id}</span><span class="ctitle">${pd.title}</span>`;
+        cell.addEventListener('click', () => {
+          panelId.textContent    = pd.id;
+          panelTitle.textContent = pd.title;
+          panelBody.innerHTML    = pd.content;
+          panelLinks.innerHTML   = '';
+          document.body.classList.add('panel-open');
+        });
+        rowEl.appendChild(cell);
+      }
+      container.appendChild(rowEl);
+    }
+  }
+}
+
+// ── Start scramble ────────────────────────────────────────────────────────
+setTimeout(scramble, 900);
+</script>
+</body>
+</html>
