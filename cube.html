@@ -16,25 +16,16 @@
     html, body { width: 100%; height: 100%; background: var(--bg); color: var(--fg);
       font-family: var(--font); overflow: hidden; }
 
-    /* ── canvas + SVG overlay ── */
-    #c {
-      position: fixed; inset: 0;
-      transition: right 0.4s cubic-bezier(0.4,0,0.2,1);
-    }
-    body.panel-open #c { right: 60%; }
+    /* ── canvas + SVG overlay — always full screen ── */
+    #c { position: fixed; inset: 0; }
+    #tags { position: fixed; inset: 0; pointer-events: none; z-index: 10; overflow: visible; }
 
-    #tags {
-      position: fixed; inset: 0; pointer-events: none; z-index: 10; overflow: visible;
-      transition: right 0.4s cubic-bezier(0.4,0,0.2,1);
-    }
-    body.panel-open #tags { right: 60%; }
-
-    /* ── content panel ── */
+    /* ── content panel — overlay, cube untouched ── */
     #panel {
-      position: fixed; top: 0; right: 0; width: 60%; height: 100%;
+      position: fixed; top: 0; right: 0; width: 44%; height: 100%;
       background: var(--panel-bg); border-left: 1px solid var(--panel-border);
       transform: translateX(100%);
-      transition: transform 0.4s cubic-bezier(0.4,0,0.2,1);
+      transition: transform 0.45s cubic-bezier(0.4,0,0.2,1);
       overflow-y: auto; z-index: 20; padding: 52px 40px 40px;
     }
     body.panel-open #panel { transform: translateX(0); }
@@ -168,7 +159,7 @@
   </div>
 </div>
 
-<div id="hint">click · open<br>hold + drag · rotate layer<br>drag · orbit</div>
+<div id="hint">click · open<br>drag on piece · rotate layer<br>drag · orbit</div>
 <div id="status"></div>
 <div id="solve-toast">✦ solved <button id="solve-open">open core</button></div>
 
@@ -191,7 +182,7 @@ import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 // ── i18n ──────────────────────────────────────────────────────────────────
 let LANG = 'en';
 const STRINGS = {
-  en: { scrambling: 'scrambling...', hint: 'click · open\nhold + drag · rotate layer\ndrag · orbit' },
+  en: { scrambling: 'scrambling...', hint: 'click · open\ndrag on piece · rotate layer\ndrag · orbit' },
   zh: {},
 };
 function t(k) { return (LANG === 'zh' && STRINGS.zh[k]) ? STRINGS.zh[k] : (STRINGS.en[k] || k); }
@@ -297,12 +288,9 @@ camera.position.set(3.8, 3.0, 4.8);
 const controls = new OrbitControls(camera, canvas);
 controls.enableDamping = true;
 controls.dampingFactor = 0.06;
-controls.enableZoom = true;
-controls.minDistance = 3.5;
-controls.maxDistance = 14;
+controls.enableZoom = false;
 controls.enablePan = false;
-controls.autoRotate = true;
-controls.autoRotateSpeed = 0.4;
+controls.autoRotate = false;
 
 // Lights (brighter for white bg)
 scene.add(new THREE.AmbientLight(0xffffff, 0.5));
@@ -401,28 +389,26 @@ function rotateLayer(axis, layerIdx, dir) {
   });
 }
 
+let isScrambling = false;
+
 function updateGrid(axis, layerIdx, dir) {
   const layer = pieceMeshes.filter(m => m.userData[axis] === layerIdx);
   for (const m of layer) {
     const { gx, gy, gz } = m.userData;
     let nx = gx, ny = gy, nz = gz;
     if (axis === 'gy') {
-      // rotate XZ: +dir=+Y → (x,z)→(gz, 2-gx)   -dir → (2-gz, gx)
       if (dir > 0) { nx = gz;     nz = 2 - gx; }
       else         { nx = 2 - gz; nz = gx; }
     } else if (axis === 'gx') {
-      // rotate YZ: +dir=+X → (y,z)→(2-gz, gy)
       if (dir > 0) { ny = 2 - gz; nz = gy; }
       else         { ny = gz;     nz = 2 - gy; }
-    } else { // gz
-      // rotate XY: +dir=+Z → (x,y)→(2-gy, gx)
+    } else {
       if (dir > 0) { nx = 2 - gy; ny = gx; }
       else         { nx = gy;     ny = 2 - gx; }
     }
     m.userData.gx = nx; m.userData.gy = ny; m.userData.gz = nz;
   }
-  totalMoves++;
-  checkSolved();
+  if (!isScrambling) { totalMoves++; checkSolved(); }
 }
 
 function checkSolved() {
@@ -451,15 +437,26 @@ function dateSeed() {
 }
 
 const AXES = ['gx','gy','gz'];
-const statusEl = document.getElementById('status');
 
-async function scramble() {
+function applyMoveInstant(axis, layerIdx, dir) {
+  const layer = getLayer(axis, layerIdx);
+  const pivot = new THREE.Object3D();
+  cubeGroup.add(pivot);
+  layer.forEach(m => { cubeGroup.remove(m); pivot.attach(m); });
+  pivot.rotateOnAxis(AXIS_VEC[axis], dir * Math.PI / 2);
+  layer.forEach(m => {
+    pivot.remove(m);
+    cubeGroup.attach(m);
+    ['x','y','z'].forEach(k => { m.position[k] = Math.round(m.position[k]*1000)/1000; });
+  });
+  cubeGroup.remove(pivot);
+  updateGrid(axis, layerIdx, dir);
+}
+
+function scrambleFast() {
+  isScrambling = true;
   const rand = rng32(dateSeed());
-  const n = 16 + Math.floor(rand() * 5);
-  showStatus('scrambling...');
-  controls.enabled = false;
-  controls.autoRotate = false;
-
+  const n = 18 + Math.floor(rand() * 4);
   let lastAxis = '', lastLayer = -1;
   for (let i = 0; i < n; i++) {
     let axis, layer;
@@ -469,22 +466,25 @@ async function scramble() {
     } while (axis === lastAxis && layer === lastLayer);
     const dir = rand() > 0.5 ? 1 : -1;
     lastAxis = axis; lastLayer = layer;
-    totalMoves = 0; // don't trigger solve during scramble
-    await rotateLayer(axis, layer, dir);
-    await sleep(60);
+    applyMoveInstant(axis, layer, dir);
   }
-  totalMoves = 1; // mark as scrambled
-  hideStatus();
-  controls.enabled = true;
-  controls.autoRotate = true;
-
-  // Fade hint after 6s
-  setTimeout(() => { document.getElementById('hint').style.opacity = '0'; }, 6000);
+  isScrambling = false;
+  totalMoves = 1;
 }
 
-function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
-function showStatus(msg) { statusEl.textContent = msg; statusEl.classList.add('show'); }
-function hideStatus() { statusEl.classList.remove('show'); }
+// ── Auto-solve (admin key: backtick) ─────────────────────────────────────
+function autoSolve() {
+  for (const m of pieceMeshes) {
+    const { origGx, origGy, origGz } = m.userData;
+    m.userData.gx = origGx; m.userData.gy = origGy; m.userData.gz = origGz;
+    m.position.set(XC[origGx], YC[origGy], ZC[origGz]);
+    m.rotation.set(0, 0, 0);
+  }
+  totalMoves = 0;
+  solved = false;
+  document.getElementById('solve-toast').classList.remove('show');
+}
+document.addEventListener('keydown', e => { if (e.key === '`') autoSolve(); });
 
 // ── Hover tag lines ───────────────────────────────────────────────────────
 const tagsSVG = document.getElementById('tags');
@@ -554,6 +554,19 @@ const panelBody  = document.getElementById('panel-body');
 const panelLinks = document.getElementById('panel-links');
 let activeMesh = null;
 
+function tweenTarget(toX) {
+  const fromX = controls.target.x;
+  const t0 = performance.now();
+  const dur = 450;
+  function step(now) {
+    const p = Math.min((now-t0)/dur, 1);
+    const e = 1 - Math.pow(1-p, 3);
+    controls.target.x = fromX + (toX - fromX) * e;
+    if (p < 1) requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+}
+
 function openPanel(mesh) {
   const { pd } = mesh.userData;
   if (pd.hidden) return;
@@ -565,95 +578,71 @@ function openPanel(mesh) {
   ).join('') : '';
   document.body.classList.add('panel-open');
   activeMesh = mesh;
-  controls.autoRotate = false;
-
-  // Subtle cube tilt toward clicked piece
-  nudgeCube(mesh.userData.gx, mesh.userData.gz);
+  tweenTarget(-0.7);
 }
 
 function closePanel() {
   document.body.classList.remove('panel-open');
   activeMesh = null;
-  controls.autoRotate = true;
-}
-
-function nudgeCube(gx, gz) {
-  const targetY = ((gx - 1) * -0.4);
-  const targetX = ((gz - 1) * 0.2);
-  const from = { y: cubeGroup.rotation.y, x: cubeGroup.rotation.x };
-  const t0 = performance.now();
-  const dur = 600;
-  function step(now) {
-    const p = Math.min((now-t0)/dur, 1);
-    const e = 1 - Math.pow(1-p, 3);
-    cubeGroup.rotation.y = from.y + (targetY - from.y) * e;
-    cubeGroup.rotation.x = from.x + (targetX - from.x) * e;
-    if (p < 1) requestAnimationFrame(step);
-  }
-  requestAnimationFrame(step);
+  tweenTarget(0);
 }
 
 document.getElementById('panel-close').addEventListener('click', closePanel);
 
 // ── Pointer interaction ───────────────────────────────────────────────────
-let pdTime = 0, pdPos = {x:0,y:0}, pdMesh = null;
-let layerDrag = null, draggingLayer = false;
+// drag on empty → orbit (OrbitControls handles it)
+// drag on piece → rotate layer (we intercept, disable orbit)
+// click on piece (no drag) → open/close panel
+let pdPos = null, pdMesh = null, layerDrag = null;
 
 canvas.addEventListener('pointermove', e => {
-  const h = getHit(e.clientX, e.clientY);
-  if (h !== hoveredMesh) {
-    hoveredMesh = h;
-    canvas.style.cursor = h ? 'pointer' : 'default';
+  // hover
+  if (!pdMesh) {
+    const h = getHit(e.clientX, e.clientY);
+    if (h !== hoveredMesh) { hoveredMesh = h; canvas.style.cursor = h ? 'pointer' : 'default'; }
   }
 
-  if (draggingLayer && layerDrag && !isRotating) {
-    const dx = e.clientX - layerDrag.sx;
-    const dy = e.clientY - layerDrag.sy;
-    if (!layerDrag.axis && Math.hypot(dx,dy) > 8) {
-      layerDrag.axis     = Math.abs(dx) > Math.abs(dy) ? 'gy' : 'gz';
-      layerDrag.layerIdx = Math.abs(dx) > Math.abs(dy)
-        ? layerDrag.mesh.userData.gy
-        : layerDrag.mesh.userData.gz;
-    }
-    if (layerDrag.axis && Math.hypot(dx,dy) > 22) {
-      const a = layerDrag.axis, li = layerDrag.layerIdx;
-      const dir = a === 'gy' ? (dx > 0 ? 1 : -1) : (dy > 0 ? -1 : 1);
-      draggingLayer = false; layerDrag = null;
-      controls.enabled = true;
-      rotateLayer(a, li, dir);
-    }
+  if (!layerDrag || isRotating) return;
+  const dx = e.clientX - layerDrag.sx;
+  const dy = e.clientY - layerDrag.sy;
+  if (!layerDrag.axis && Math.hypot(dx, dy) > 7) {
+    layerDrag.axis     = Math.abs(dx) > Math.abs(dy) ? 'gy' : 'gz';
+    layerDrag.layerIdx = Math.abs(dx) > Math.abs(dy)
+      ? layerDrag.mesh.userData.gy
+      : layerDrag.mesh.userData.gz;
+  }
+  if (layerDrag.axis && Math.hypot(dx, dy) > 20) {
+    const { axis, layerIdx, mesh } = layerDrag;
+    const dir = axis === 'gy' ? (dx > 0 ? 1 : -1) : (dy > 0 ? -1 : 1);
+    layerDrag = null;
+    controls.enabled = true;
+    rotateLayer(axis, layerIdx, dir);
   }
 });
 
 canvas.addEventListener('pointerdown', e => {
   if (e.button !== 0) return;
   const hit = getHit(e.clientX, e.clientY);
-  if (!hit) return;
-  pdTime = Date.now(); pdPos = {x:e.clientX, y:e.clientY}; pdMesh = hit;
-
-  const holdTimer = setTimeout(() => {
-    if (!pdMesh) return;
-    draggingLayer = true;
-    layerDrag = { mesh: pdMesh, sx: e.clientX, sy: e.clientY, axis: null, layerIdx: null };
+  pdPos = { x: e.clientX, y: e.clientY };
+  pdMesh = hit;
+  if (hit) {
     controls.enabled = false;
-  }, 280);
+    layerDrag = { mesh: hit, sx: e.clientX, sy: e.clientY, axis: null, layerIdx: null };
+  }
+});
 
-  function onUp(upE) {
-    canvas.removeEventListener('pointerup', onUp);
-    clearTimeout(holdTimer);
-    if (draggingLayer) {
-      draggingLayer = false;
-      if (layerDrag) { layerDrag = null; controls.enabled = true; }
-      pdMesh = null; return;
-    }
-    const moved = Math.hypot(upE.clientX-pdPos.x, upE.clientY-pdPos.y);
-    if (moved < 6 && pdMesh) {
+canvas.addEventListener('pointerup', e => {
+  controls.enabled = true;
+  const wasDragging = layerDrag?.axis != null;
+  layerDrag = null;
+  if (!wasDragging && pdMesh) {
+    const moved = Math.hypot(e.clientX - pdPos.x, e.clientY - pdPos.y);
+    if (moved < 6) {
       if (activeMesh === pdMesh) closePanel();
       else openPanel(pdMesh);
     }
-    pdMesh = null;
   }
-  canvas.addEventListener('pointerup', onUp);
+  pdMesh = null; pdPos = null;
 });
 
 // ── Solve ─────────────────────────────────────────────────────────────────
@@ -696,22 +685,13 @@ window.addEventListener('resize', () => {
   renderer.setSize(window.innerWidth, window.innerHeight);
 });
 
-// Handle panel open/close renderer update
-const observer = new MutationObserver(() => {
-  // Give CSS transition time, then renderer matches visible canvas area
-  setTimeout(() => {
-    const w = document.body.classList.contains('panel-open')
-      ? window.innerWidth * 0.4
-      : window.innerWidth;
-    camera.aspect = w / window.innerHeight;
-    camera.updateProjectionMatrix();
-  }, 420);
-});
-observer.observe(document.body, { attributes: true, attributeFilter: ['class'] });
-
 // ── Render loop ───────────────────────────────────────────────────────────
 function animate() {
   requestAnimationFrame(animate);
+  // Gentle float — small Y bob + subtle X drift
+  const t = Date.now() * 0.001;
+  cubeGroup.position.y = Math.sin(t * 0.55) * 0.038;
+  cubeGroup.position.x = Math.sin(t * 0.37) * 0.014;
   controls.update();
   if (!isRotating) updateTags();
   renderer.render(scene, camera);
@@ -754,8 +734,9 @@ if (isMobile) {
   }
 }
 
-// ── Start scramble ────────────────────────────────────────────────────────
-setTimeout(scramble, 900);
+// ── Start scrambled ───────────────────────────────────────────────────────
+scrambleFast();
+setTimeout(() => { document.getElementById('hint').style.opacity = '0'; }, 8000);
 </script>
 </body>
 </html>
