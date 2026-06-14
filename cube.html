@@ -29,6 +29,7 @@
       overflow-y: auto; z-index: 20; padding: 52px 40px 40px;
     }
     body.panel-open #panel { transform: translateX(0); }
+    body.panel-open #panel.expanded { width: 66.666%; }
 
     #panel-close {
       position: absolute; top: 14px; left: 16px;
@@ -37,6 +38,63 @@
       cursor: pointer; letter-spacing: 0.08em;
     }
     #panel-close:hover { color: var(--fg); border-color: var(--accent); }
+    #panel-expand {
+      position: absolute; top: 14px; left: 88px;
+      background: none; border: 1px solid var(--panel-border); color: var(--dim);
+      font-family: var(--font); font-size: 10px; padding: 4px 8px;
+      cursor: pointer; letter-spacing: 0.08em;
+    }
+    #panel-expand:hover { color: var(--fg); border-color: var(--accent); }
+
+    #panel-shell {
+      display: grid; grid-template-columns: 150px minmax(0, 1fr);
+      gap: 26px; align-items: start;
+    }
+    #panel-nav {
+      position: sticky; top: 0;
+      display: flex; flex-direction: column; gap: 12px;
+      max-height: calc(100vh - 110px); overflow-y: auto;
+      padding-right: 8px; border-right: 1px solid var(--panel-border);
+    }
+    .panel-nav-section { display: flex; flex-direction: column; gap: 3px; }
+    .panel-nav-heading {
+      font-size: 8px; color: var(--dim); letter-spacing: 0.18em;
+      margin-bottom: 3px; text-transform: uppercase;
+    }
+    .panel-nav-item {
+      background: none; border: 0; color: #777; cursor: pointer;
+      font-family: var(--font); font-size: 9px; line-height: 1.35;
+      padding: 3px 0; text-align: left;
+    }
+    .panel-nav-item:hover,
+    .panel-nav-item.active { color: var(--fg); }
+    .panel-nav-item.active::before { content: '→ '; }
+    .panel-axis-menu {
+      border: 1px solid var(--panel-border); padding: 6px 8px;
+      background: rgba(255,255,255,0.22);
+    }
+    .panel-axis-menu summary {
+      cursor: pointer; color: var(--fg); font-size: 9px;
+      letter-spacing: 0.12em; list-style: none;
+    }
+    .panel-axis-menu summary::-webkit-details-marker { display: none; }
+    .panel-axis-menu summary::after { content: ' ▾'; color: var(--dim); }
+    .panel-axis-menu[open] summary::after { content: ' ▴'; }
+    .panel-axis-options { display: flex; flex-direction: column; gap: 3px; margin-top: 8px; }
+    .panel-nav-note { color: #888; font-size: 9px; line-height: 1.45; }
+    .object-index {
+      display: grid; grid-template-columns: 48px minmax(0, 1fr);
+      gap: 8px; align-items: baseline; width: 100%;
+    }
+    .object-index-no { color: inherit; }
+    .undiscovered-item {
+      color: #aaa; font-size: 10px; letter-spacing: 0.18em;
+      padding: 3px 0;
+    }
+    .field-no {
+      color: #555; font-size: 9px; letter-spacing: 0.12em;
+      margin-left: 6px;
+    }
 
     #panel-id   { font-size: 9px; color: var(--dim); letter-spacing: 0.2em; margin-bottom: 6px; }
     #panel-title { font-size: 20px; font-weight: 700; letter-spacing: -0.01em;
@@ -52,6 +110,48 @@
       display: block;
     }
     .panel-link:hover { color: var(--fg); border-color: var(--accent); }
+    .registry-card { color: #222; }
+    .registry-head {
+      display: grid; grid-template-columns: 96px minmax(0, 1fr) auto;
+      gap: 10px; align-items: start; margin-bottom: 10px;
+      font-size: 10px; letter-spacing: 0.08em;
+    }
+    .registry-label { color: var(--dim); letter-spacing: 0.14em; }
+    .registry-object { color: var(--fg); }
+    .registry-dots { color: var(--dim); white-space: nowrap; }
+    .registry-classline {
+      grid-column: 2 / 4; color: #777; font-size: 9px;
+      font-style: italic; opacity: 0.85; letter-spacing: 0.08em;
+    }
+    .registry-rule { border: 0; border-top: 1px solid var(--panel-border); margin: 12px 0; }
+    .registry-content { color: #777; margin: 14px 0 16px; }
+    .registry-fields { display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 5px 12px; font-size: 10px; }
+    .registry-field-extra {
+      background: rgba(0,0,0,0.035); padding: 2px 4px; margin-left: -4px;
+      font-style: italic;
+    }
+    .registry-hook { margin-top: 14px; color: #444; font-size: 11px; }
+    .axis-radial {
+      width: min(100%, 280px); height: 200px; margin: 8px 0 12px;
+      display: block; overflow: visible;
+    }
+    .axis-radial-line {
+      stroke: #cfcfca; stroke-width: 1; transition: stroke 0.15s;
+    }
+    .axis-radial-center { fill: #222; }
+    .axis-radial-label {
+      font-family: var(--font); font-size: 9px; letter-spacing: 0.08em;
+      fill: #666; cursor: pointer; transition: fill 0.15s, text-decoration 0.15s;
+    }
+    .axis-radial-target:hover .axis-radial-line { stroke: #333; }
+    .axis-radial-target:hover .axis-radial-label { fill: #111; text-decoration: underline; }
+    .axis-mobile-list { display: none; margin: 12px 0 14px; }
+    .axis-mobile-item {
+      background: none; border: 0; color: #666; cursor: pointer;
+      display: block; font-family: var(--font); font-size: 9px;
+      letter-spacing: 0.08em; padding: 2px 0; text-align: left;
+    }
+    .axis-mobile-item:hover { color: #111; text-decoration: underline; }
 
     /* ── top UI bar ── */
     #ui {
@@ -69,6 +169,8 @@
       text-decoration: none;
     }
     .ui-btn:hover { color: var(--fg); }
+    .ui-btn.danger { color: #555; }
+    .ui-btn.danger:hover { color: #000; }
 
     /* ── tag labels ── */
     .tag-label {
@@ -135,6 +237,11 @@
       #c, #tags, #hint { display: none; }
       #mobile-grid     { display: flex; }
       body.panel-open #panel { width: 100%; }
+      body.panel-open #panel.expanded { width: 100%; }
+      #panel-shell { display: block; }
+      #panel-nav { position: static; max-height: none; margin-bottom: 24px; border-right: 0; border-bottom: 1px solid var(--panel-border); padding-bottom: 16px; }
+      .axis-radial { display: none; }
+      .axis-mobile-list { display: block; }
     }
   </style>
 </head>
@@ -145,15 +252,22 @@
 
 <div id="panel">
   <button id="panel-close">✕ close</button>
-  <div id="panel-id"></div>
-  <div id="panel-title"></div>
-  <div id="panel-body"></div>
-  <div id="panel-links"></div>
+  <button id="panel-expand">expand</button>
+  <div id="panel-shell">
+    <nav id="panel-nav" aria-label="Cube archive directory"></nav>
+    <section id="panel-main">
+      <div id="panel-id"></div>
+      <div id="panel-title"></div>
+      <div id="panel-body"></div>
+      <div id="panel-links"></div>
+    </section>
+  </div>
 </div>
 
 <div id="ui">
   <span id="ui-title">mirror cube</span>
   <div id="ui-right">
+    <button class="ui-btn danger" id="solve-btn">SOLVE</button>
     <button class="ui-btn" id="lang-btn">EN</button>
     <a class="ui-btn" href="index.html">← back</a>
   </div>
@@ -283,7 +397,7 @@ scene.environment = pmrem.fromScene(new RoomEnvironment(0.04)).texture;
 pmrem.dispose();
 
 const camera = new THREE.PerspectiveCamera(42, window.innerWidth / window.innerHeight, 0.1, 100);
-camera.position.set(3.8, 3.0, 4.8);
+camera.position.set(4.9, 3.85, 6.15);
 
 const controls = new OrbitControls(camera, canvas);
 controls.enableDamping = true;
@@ -311,10 +425,49 @@ rim.position.set(-2, 4, -5); scene.add(rim);
 // ── Build pieces ──────────────────────────────────────────────────────────
 const cubeGroup = new THREE.Group();
 scene.add(cubeGroup);
+cubeGroup.position.set(0, 0, 0);
+let cubeBaseX = 0;
 
 const pieceMeshes = [];
+const DEBUG_ROTATION = false;
 
 const edgeMat = new THREE.LineBasicMaterial({ color: 0x111111, depthTest: true });
+
+const AXIS_TAXONOMY = {
+  stance: ['OBSERVER', 'PRACTITIONER', 'SUBJECT'],
+  knowledge: ['THEORY', 'EXCAVATION', 'CONTEXT'],
+  domain: ['ARCHAEOLOGY', 'ANTHROPOLOGY', 'DESIGN+GAMES'],
+};
+
+const REGISTRY_META = {
+  'C-01': { recorded:'2023', located:'field notes / place memory', hook:'Who is allowed to stand here and call it context?' },
+  'C-02': { recorded:'2024', located:'archive shelf / timeline', hook:'When does a record stop being past tense?' },
+  'C-03': { recorded:'2024', located:'memory surface', hook:'Is memory evidence, or a method of arrangement?' },
+  'C-04': { recorded:'2023', located:'landscape transect', hook:'Is landscape background, or the first collaborator?' },
+  'C-05': { recorded:'2026', located:'portfolio cabinet', hook:'Who decided this counts as heritage?' },
+  'C-06': { recorded:'2025', located:'institutional archive', hook:'What disappears when the archive becomes legible?' },
+  'C-07': { recorded:'2025', located:'bureaucratic afterlife', hook:'Can an institution be excavated like a site?' },
+  'C-08': { recorded:'2026', located:'community relation', hook:'Where does authorship end and relation begin?' },
+  'C-09': { recorded:'2026', located:'policy edge', hook:'Who gets protected by the frame?' },
+  'E-01': { recorded:'2024', located:'method drawer', hook:'Is this a field note, or something else?' },
+  'E-02': { recorded:'2023', located:'survey line', hook:'What does walking know before analysis begins?' },
+  'E-03': { recorded:'2025', located:'remote sensing layer', hook:'What kind of intimacy is distance?' },
+  'E-04': { recorded:'2025', located:'GIS workspace', hook:'Is a layer evidence, or an argument?' },
+  'E-05': { recorded:'2026', located:'invisible centre', hook:'Who is at the centre when the centre is hidden?' },
+  'E-06': { recorded:'2024', located:'field season', hook:'Who is recording whom in the trench?' },
+  'E-07': { recorded:'2024', located:'material assemblage', hook:'What does the object make the researcher do?' },
+  'E-08': { recorded:'2025', located:'analysis table', hook:'When does data become interpretation?' },
+  'E-09': { recorded:'2025', located:'recording system', hook:'Is the record neutral, or another artefact?' },
+  'T-01': { recorded:'2024', located:'sensory method', hook:'Who decided this counts as theory?' },
+  'T-02': { recorded:'2024', located:'process model', hook:'What remains unfinished inside a finished site?' },
+  'T-03': { recorded:'2025', located:'assemblage map', hook:'Can relation be catalogued without being pinned down?' },
+  'T-04': { recorded:'2025', located:'taskscape sketch', hook:'Drawn in the lab, or drawn from the lab?' },
+  'T-05': { recorded:'2026', located:'visibility study', hook:'Who becomes visible when the method looks?' },
+  'T-06': { recorded:'2026', located:'relational field', hook:'Is relation context, evidence, or obligation?' },
+  'T-07': { recorded:'2025', located:'body record', hook:'What happens when the researcher is material too?' },
+  'T-08': { recorded:'2025', located:'afterlife file', hook:'What persists after function leaves?' },
+  'T-09': { recorded:'2026', located:'sign / soil / story', hook:'Is a trace a sign before someone reads it?' },
+};
 
 function makeMat() {
   return new THREE.MeshStandardMaterial({
@@ -331,7 +484,10 @@ for (const pd of PIECES_DATA) {
   const geo = new THREE.BoxGeometry(XS[gx]-GAP, YS[gy]-GAP, ZS[gz]-GAP);
   const mesh = new THREE.Mesh(geo, makeMat());
   mesh.position.set(XC[gx], YC[gy], ZC[gz]);
-  mesh.userData = { pd, gx, gy, gz, origGx:gx, origGy:gy, origGz:gz };
+  mesh.userData = {
+    pd, gx, gy, gz, origGx:gx, origGy:gy, origGz:gz,
+    origDims: { x: XS[gx]-GAP, y: YS[gy]-GAP, z: ZS[gz]-GAP },
+  };
   mesh.castShadow = true;
   mesh.receiveShadow = true;
 
@@ -356,11 +512,13 @@ const AXIS_VEC = { gx: new THREE.Vector3(1,0,0), gy: new THREE.Vector3(0,1,0), g
 function rotateLayer(axis, layerIdx, dir) {
   return new Promise(resolve => {
     if (isRotating) { resolve(); return; }
+    clearPlaneHighlight();
+    resetTransientPieceStyles();
     isRotating = true;
     const layer = getLayer(axis, layerIdx);
     const pivot = new THREE.Object3D();
     cubeGroup.add(pivot);
-    layer.forEach(m => { cubeGroup.remove(m); pivot.attach(m); });
+    layer.forEach(m => { pivot.attach(m); });
 
     const target = dir * Math.PI / 2;
     const duration = 220;
@@ -376,12 +534,12 @@ function rotateLayer(axis, layerIdx, dir) {
       if (p < 1) { requestAnimationFrame(step); return; }
 
       layer.forEach(m => {
-        pivot.remove(m);
         cubeGroup.attach(m);
         ['x','y','z'].forEach(k => { m.position[k] = Math.round(m.position[k]*1000)/1000; });
       });
       cubeGroup.remove(pivot);
       updateGrid(axis, layerIdx, dir);
+      validateCubeState(`rotate ${axis}${layerIdx} ${dir}`);
       isRotating = false;
       resolve();
     }
@@ -411,14 +569,47 @@ function updateGrid(axis, layerIdx, dir) {
   if (!isScrambling) { totalMoves++; checkSolved(); }
 }
 
+function isCurrentlySolved() {
+  return pieceMeshes
+    .filter(m => !m.userData.pd.hidden)
+    .every(m =>
+      m.userData.gx === m.userData.origGx &&
+      m.userData.gy === m.userData.origGy &&
+      m.userData.gz === m.userData.origGz
+    );
+}
+
+function removeHiddenCoreMeshes() {
+  for (const m of [...pieceMeshes]) {
+    if (!m.userData.pd.hidden) continue;
+    cubeGroup.remove(m);
+    pieceMeshes.splice(pieceMeshes.indexOf(m), 1);
+  }
+}
+
+function exitSolvedMode() {
+  if (!solved) return;
+  solved = false;
+  clearPlaneHighlight();
+  setHighlightedMesh(null);
+  removeHiddenCoreMeshes();
+  document.getElementById('solve-toast').classList.remove('show');
+
+  if (!activeMesh) return;
+  if (activeMesh.userData.pd.hidden) {
+    closePanel();
+    return;
+  }
+  renderRegistryCard(activeMesh.userData.pd);
+  buildPanelDirectory(activeMesh.userData.pd.id);
+  setHighlightedMesh(activeMesh);
+}
+
 function checkSolved() {
   if (totalMoves === 0) return;
-  const ok = pieceMeshes.every(m =>
-    m.userData.gx === m.userData.origGx &&
-    m.userData.gy === m.userData.origGy &&
-    m.userData.gz === m.userData.origGz
-  );
+  const ok = isCurrentlySolved();
   if (ok) onSolved();
+  else exitSolvedMode();
 }
 
 // ── Date-seeded scramble ──────────────────────────────────────────────────
@@ -442,15 +633,15 @@ function applyMoveInstant(axis, layerIdx, dir) {
   const layer = getLayer(axis, layerIdx);
   const pivot = new THREE.Object3D();
   cubeGroup.add(pivot);
-  layer.forEach(m => { cubeGroup.remove(m); pivot.attach(m); });
+  layer.forEach(m => { pivot.attach(m); });
   pivot.rotateOnAxis(AXIS_VEC[axis], dir * Math.PI / 2);
   layer.forEach(m => {
-    pivot.remove(m);
     cubeGroup.attach(m);
     ['x','y','z'].forEach(k => { m.position[k] = Math.round(m.position[k]*1000)/1000; });
   });
   cubeGroup.remove(pivot);
   updateGrid(axis, layerIdx, dir);
+  validateCubeState(`instant ${axis}${layerIdx} ${dir}`);
 }
 
 function scrambleFast() {
@@ -474,6 +665,10 @@ function scrambleFast() {
 
 // ── Auto-solve (admin key: backtick) ─────────────────────────────────────
 function autoSolve() {
+  clearPlaneHighlight();
+  resetCubeRotation();
+  setHighlightedMesh(null);
+  removeHiddenCoreMeshes();
   for (const m of pieceMeshes) {
     const { origGx, origGy, origGz } = m.userData;
     m.userData.gx = origGx; m.userData.gy = origGy; m.userData.gz = origGz;
@@ -481,10 +676,16 @@ function autoSolve() {
     m.rotation.set(0, 0, 0);
   }
   totalMoves = 0;
-  solved = false;
+  solved = true;
   document.getElementById('solve-toast').classList.remove('show');
+  if (!pieceMeshes.some(m => m.userData.pd.id === 'E-05')) onSolved();
+  if (activeMesh) {
+    activeMesh = getPieceMeshById(activeMesh.userData.pd.id);
+    if (activeMesh) openPanel(activeMesh);
+  }
 }
 document.addEventListener('keydown', e => { if (e.key === '`') autoSolve(); });
+document.getElementById('solve-btn').addEventListener('click', autoSolve);
 
 // ── Hover tag lines ───────────────────────────────────────────────────────
 const tagsSVG = document.getElementById('tags');
@@ -511,6 +712,7 @@ function updateTags() {
   if (behind) return;
 
   const pd = hoveredMesh.userData.pd;
+  if (!pd) return;
   // Decide label side: left half → label right, right half → label left
   const goRight = x < window.innerWidth * 0.5;
   const lx = goRight ? x + 36 : x - 36;
@@ -538,12 +740,52 @@ function updateTags() {
 }
 
 function getHit(cx, cy) {
+  return getPointerHit(cx, cy)?.object || null;
+}
+
+function getPointerHit(cx, cy) {
   const rect = canvas.getBoundingClientRect();
   mouse2.x = ((cx - rect.left) / rect.width)  * 2 - 1;
   mouse2.y = -((cy - rect.top)  / rect.height) * 2 + 1;
   raycaster.setFromCamera(mouse2, camera);
-  const hits = raycaster.intersectObjects(pieceMeshes);
-  return hits.length ? hits[0].object : null;
+  const hits = raycaster.intersectObjects(pieceMeshes, false);
+  return hits.find(hit => hit.face && hit.object?.userData?.pd) || null;
+}
+
+function getWorldFaceNormal(hit) {
+  if (!hit?.face) return null;
+  return hit.face.normal.clone()
+    .transformDirection(hit.object.matrixWorld)
+    .normalize();
+}
+
+function getWorldDragDirection(dx, dy) {
+  camera.updateMatrixWorld();
+  const right = new THREE.Vector3().setFromMatrixColumn(camera.matrixWorld, 0).multiplyScalar(dx);
+  const up = new THREE.Vector3().setFromMatrixColumn(camera.matrixWorld, 1).multiplyScalar(-dy);
+  return right.add(up).normalize();
+}
+
+function strongestAxis(v) {
+  const ax = Math.abs(v.x), ay = Math.abs(v.y), az = Math.abs(v.z);
+  if (ax >= ay && ax >= az) return { axis: 'gx', value: v.x };
+  if (ay >= ax && ay >= az) return { axis: 'gy', value: v.y };
+  return { axis: 'gz', value: v.z };
+}
+
+function inferLayerRotation(hit, dx, dy) {
+  const drag = getWorldDragDirection(dx, dy);
+  if (drag.lengthSq() === 0) return null;
+  const normal = getWorldFaceNormal(hit);
+  if (!normal) return null;
+  const rotation = normal.cross(drag);
+  if (rotation.lengthSq() < 0.01) return null;
+  const { axis, value } = strongestAxis(rotation);
+  return {
+    axis,
+    layerIdx: hit.object.userData[axis],
+    dir: value >= 0 ? 1 : -1,
+  };
 }
 
 // ── Panel ─────────────────────────────────────────────────────────────────
@@ -552,42 +794,498 @@ const panelId    = document.getElementById('panel-id');
 const panelTitle = document.getElementById('panel-title');
 const panelBody  = document.getElementById('panel-body');
 const panelLinks = document.getElementById('panel-links');
+const panelNav   = document.getElementById('panel-nav');
 let activeMesh = null;
+let highlightedMesh = null;
+let cameraTween = null;
+let cubeFocusTween = null;
+let highlightMode = null;
+const discoveryLog = [];
+
+function getPanelTargetX() {
+  return panel.classList.contains('expanded') ? -1.05 : -0.58;
+}
+
+function getPieceMeshById(id) {
+  return pieceMeshes.find(m => m.userData.pd.id === id) || null;
+}
+
+function resetPieceMaterial(mesh) {
+  mesh.scale.setScalar(1);
+  mesh.material.color.setHex(0xd4d4d2);
+  mesh.material.emissive.setHex(0x000000);
+  mesh.material.metalness = 0.80;
+  mesh.material.roughness = 0.15;
+  mesh.material.opacity = 1;
+  mesh.material.transparent = false;
+  mesh.children.forEach(child => {
+    if (!child.isLineSegments) return;
+    child.material.color.setHex(0x111111);
+    child.material.opacity = 1;
+    child.material.transparent = false;
+    child.material.linewidth = 1;
+  });
+}
+
+function resetTransientPieceStyles() {
+  for (const mesh of pieceMeshes) {
+    if (mesh.userData.highlightOffset) {
+      mesh.position.sub(mesh.userData.highlightOffset);
+      mesh.userData.highlightOffset = null;
+    }
+    resetPieceMaterial(mesh);
+  }
+  highlightedMesh = null;
+  highlightMode = null;
+}
+
+function geometryDimensions(mesh) {
+  if (!mesh.geometry.boundingBox) mesh.geometry.computeBoundingBox();
+  const size = new THREE.Vector3();
+  mesh.geometry.boundingBox.getSize(size);
+  return { x: size.x, y: size.y, z: size.z };
+}
+
+function validateCubeState(label) {
+  const issues = [];
+  const occupied = new Set();
+  for (const mesh of pieceMeshes) {
+    if (mesh.userData.pd.hidden) continue;
+    const { gx, gy, gz, origDims } = mesh.userData;
+    const key = `${gx}-${gy}-${gz}`;
+    if (occupied.has(key)) issues.push({ id: mesh.userData.pd.id, issue: 'duplicate grid cell', key });
+    occupied.add(key);
+    const dims = geometryDimensions(mesh);
+    const dimMismatch = ['x','y','z'].some(axis => Math.abs(dims[axis] - origDims[axis]) > 0.001);
+    const badScale = Math.abs(mesh.scale.x - 1) > 0.001 || Math.abs(mesh.scale.y - 1) > 0.001 || Math.abs(mesh.scale.z - 1) > 0.001;
+    if (dimMismatch || badScale) {
+      issues.push({
+        id: mesh.userData.pd.id,
+        gx, gy, gz,
+        expected: origDims,
+        actual: dims,
+        scale: { x: mesh.scale.x, y: mesh.scale.y, z: mesh.scale.z },
+      });
+    }
+  }
+  if (occupied.size !== 26) issues.push({ issue: 'visible occupancy count', count: occupied.size });
+  if (issues.length) console.warn(`[cube invariant] ${label}`, issues);
+  else if (DEBUG_ROTATION) {
+    console.table(pieceMeshes.filter(m => !m.userData.pd.hidden).map(m => ({
+      id: m.userData.pd.id,
+      gx: m.userData.gx,
+      gy: m.userData.gy,
+      gz: m.userData.gz,
+      dims: JSON.stringify(geometryDimensions(m)),
+    })));
+  }
+}
+
+function objectNo(pd) {
+  return `${pd.gx + 1}-${pd.gy + 1}-${pd.gz + 1}`;
+}
+
+function fieldNo(pd) {
+  const idx = discoveryLog.indexOf(pd.id);
+  return idx === -1 ? null : String(idx + 1).padStart(3, '0');
+}
+
+function recordDiscovery(pd) {
+  if (discoveryLog.includes(pd.id)) return;
+  discoveryLog.push(pd.id);
+}
+
+function semanticTriplet(pd) {
+  return [
+    AXIS_TAXONOMY.stance[pd.gx],
+    AXIS_TAXONOMY.knowledge[pd.gy],
+    AXIS_TAXONOMY.domain[pd.gz],
+  ];
+}
+
+function axisEntries(pd) {
+  return [
+    { axis: 'gx', idx: pd.gx, label: AXIS_TAXONOMY.stance[pd.gx], x2: 206, y2: 56, anchor: 'start', dy: -7 },
+    { axis: 'gy', idx: pd.gy, label: AXIS_TAXONOMY.knowledge[pd.gy], x2: 92, y2: 164, anchor: 'middle', dy: 15 },
+    { axis: 'gz', idx: pd.gz, label: AXIS_TAXONOMY.domain[pd.gz], x2: 30, y2: 74, anchor: 'end', dy: -5 },
+  ];
+}
+
+function renderAxisRadial(pd) {
+  if (!solved) return '';
+  const cx = 92, cy = 96;
+  const entries = axisEntries(pd);
+  const targets = entries.map(entry => `
+    <g class="axis-radial-target" data-plane-axis="${entry.axis}" data-plane-idx="${entry.idx}" tabindex="0" role="button" aria-label="View all ${escapeHTML(entry.label)} objects">
+      <line class="axis-radial-line" x1="${cx}" y1="${cy}" x2="${entry.x2}" y2="${entry.y2}"></line>
+      <text class="axis-radial-label" x="${entry.x2}" y="${entry.y2 + entry.dy}" text-anchor="${entry.anchor}">${escapeHTML(entry.label)}</text>
+    </g>
+  `).join('');
+  const mobile = entries.map((entry, idx) => `
+    <button class="axis-mobile-item" style="padding-left:${idx * 12}px" data-plane-axis="${entry.axis}" data-plane-idx="${entry.idx}">${idx === 0 ? '' : '· '}${escapeHTML(entry.label)}</button>
+  `).join('');
+  return `
+    <svg class="axis-radial" viewBox="0 0 280 200" aria-label="Solved coordinate axes">
+      ${targets}
+      <circle class="axis-radial-center" cx="${cx}" cy="${cy}" r="3"></circle>
+      <text class="axis-radial-label" x="${cx + 8}" y="${cy + 3}">${objectNo(pd)}</text>
+    </svg>
+    <div class="axis-mobile-list">${mobile}</div>
+  `;
+}
+
+function dotIndicator(idx) {
+  return [0, 1, 2].map(i => i === idx ? '●' : '○').join(' ');
+}
+
+function coordinateSort(a, b) {
+  return (a.gx - b.gx) || (a.gy - b.gy) || (a.gz - b.gz);
+}
+
+function escapeHTML(value) {
+  return String(value).replace(/[&<>"']/g, ch => ({
+    '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;'
+  })[ch]);
+}
+
+function setHighlightedMesh(mesh) {
+  highlightedMesh = mesh;
+}
+
+function clearPlaneHighlight() {
+  highlightMode = null;
+  for (const mesh of pieceMeshes) {
+    if (mesh.userData.highlightOffset) {
+      mesh.position.sub(mesh.userData.highlightOffset);
+      mesh.userData.highlightOffset = null;
+    }
+    resetPieceMaterial(mesh);
+  }
+}
+
+function setMeshHighlightState(mesh, state) {
+  mesh.material.transparent = true;
+  mesh.material.opacity = state.opacity;
+  if (state.offset) {
+    mesh.position.add(state.offset);
+    mesh.userData.highlightOffset = state.offset.clone();
+  }
+  mesh.children.forEach(child => {
+    if (!child.isLineSegments) return;
+    if (child.material === edgeMat) child.material = edgeMat.clone();
+    child.material.color.setHex(state.edgeColor);
+    child.material.transparent = true;
+    child.material.opacity = state.edgeOpacity;
+    child.material.linewidth = state.edgeWidth;
+  });
+}
+
+function highlightPlane(axis, idx) {
+  if (!solved) return;
+  clearPlaneHighlight();
+  highlightMode = { type: 'plane', axis, idx };
+  for (const mesh of pieceMeshes) {
+    const inPlane = mesh.userData[axis] === idx;
+    setMeshHighlightState(mesh, {
+      opacity: inPlane ? 1 : 0.30,
+      offset: null,
+      edgeColor: inPlane ? 0xffffff : 0x111111,
+      edgeOpacity: inPlane ? 1 : 0.18,
+      edgeWidth: inPlane ? 2 : 1,
+    });
+  }
+}
+
+function highlightRelatedPlanes(mesh) {
+  if (!solved || !mesh) return;
+  clearPlaneHighlight();
+  const { gx, gy, gz } = mesh.userData;
+  highlightMode = { type: 'related', gx, gy, gz };
+  for (const candidate of pieceMeshes) {
+    const related =
+      candidate.userData.gx === gx ||
+      candidate.userData.gy === gy ||
+      candidate.userData.gz === gz;
+    setMeshHighlightState(candidate, {
+      opacity: related ? 1 : 0.30,
+      offset: null,
+      edgeColor: related ? 0xffffff : 0x111111,
+      edgeOpacity: related ? 1 : 0.16,
+      edgeWidth: related ? 2 : 1,
+    });
+  }
+}
+
+function renderRegistryCard(pd) {
+  const meta = REGISTRY_META[pd.id] || {};
+  const coords = objectNo(pd);
+  const field = fieldNo(pd);
+  const [stance, knowledge, domain] = semanticTriplet(pd);
+  const preSolveId = solved ? '' : `
+    <div class="registry-label">FIELD NO.</div>
+    <div class="registry-object">${field || 'UNRECORDED'}</div>
+    <div></div>
+  `;
+  const objectLabel = solved ? 'OBJECT NO.' : 'OBJECT NO.';
+  const objectValue = solved ? coords : 'WITHHELD';
+  const headDots = solved ? dotIndicator(pd.gx) : '···';
+  const radial = renderAxisRadial(pd);
+  const classified = solved ? `
+    <div class="registry-label registry-field-extra">CLASSIFIED AS</div>
+    <div class="registry-field-extra">${escapeHTML(domain)}, ${escapeHTML(knowledge)}</div>
+    <div class="registry-label registry-field-extra">POSITION</div>
+    <div class="registry-field-extra">${escapeHTML(stance)}</div>
+  ` : '';
+
+  panelId.textContent = '';
+  panelTitle.textContent = '';
+  panelBody.innerHTML = `
+    <article class="registry-card">
+      <header class="registry-head">
+        ${preSolveId}
+        <div class="registry-label">${objectLabel}</div>
+        <div class="registry-object">${objectValue}</div>
+        <div class="registry-dots">${headDots}</div>
+      </header>
+      <hr class="registry-rule">
+      ${radial}
+      ${solved ? '<hr class="registry-rule">' : ''}
+      <section class="registry-content">${pd.content}</section>
+      <hr class="registry-rule">
+      <dl class="registry-fields">
+        <dt class="registry-label">RECORDED</dt>
+        <dd>${escapeHTML(meta.recorded || 'undated')}</dd>
+        <dt class="registry-label">LOCATED</dt>
+        <dd>${escapeHTML(solved ? (meta.located || 'unlocated drawer') : 'currently unresolved')}</dd>
+        ${solved && field ? `
+          <dt class="registry-label registry-field-extra">FIELD NO.</dt>
+          <dd class="registry-field-extra">${field}</dd>
+        ` : ''}
+        ${classified}
+      </dl>
+      <hr class="registry-rule">
+      <p class="registry-hook">→ ${escapeHTML(meta.hook || 'Is this a field note, or something else?')}</p>
+    </article>
+  `;
+  panelBody.querySelectorAll('[data-plane-axis]').forEach(button => {
+    button.addEventListener('click', () => {
+      highlightPlane(button.dataset.planeAxis, Number(button.dataset.planeIdx));
+    });
+    button.addEventListener('keydown', e => {
+      if (e.key !== 'Enter' && e.key !== ' ') return;
+      e.preventDefault();
+      highlightPlane(button.dataset.planeAxis, Number(button.dataset.planeIdx));
+    });
+  });
+}
 
 function tweenTarget(toX) {
   const fromX = controls.target.x;
+  const fromBaseX = cubeBaseX;
   const t0 = performance.now();
   const dur = 450;
   function step(now) {
     const p = Math.min((now-t0)/dur, 1);
     const e = 1 - Math.pow(1-p, 3);
     controls.target.x = fromX + (toX - fromX) * e;
+    cubeBaseX = fromBaseX + (toX - fromBaseX) * e;
     if (p < 1) requestAnimationFrame(step);
   }
   requestAnimationFrame(step);
 }
 
+function focusCameraOnMesh(mesh) {
+  if (!mesh) return;
+  if (cameraTween) cancelAnimationFrame(cameraTween);
+  if (cubeFocusTween) cancelAnimationFrame(cubeFocusTween);
+
+  const fromTarget = controls.target.clone();
+  const fromBaseX = cubeBaseX;
+  const toTarget = new THREE.Vector3(getPanelTargetX(), 0, 0);
+  const t0 = performance.now();
+  const dur = 820;
+
+  function targetStep(now) {
+    const p = Math.min((now - t0) / dur, 1);
+    const e = p < 0.5 ? 2*p*p : 1 - Math.pow(-2*p + 2, 2) / 2;
+    controls.target.lerpVectors(fromTarget, toTarget, e);
+    cubeBaseX = THREE.MathUtils.lerp(fromBaseX, toTarget.x, e);
+    if (p < 1) cameraTween = requestAnimationFrame(targetStep);
+    else cameraTween = null;
+  }
+  cameraTween = requestAnimationFrame(targetStep);
+
+  const { gx, gy, gz } = mesh.userData;
+  const fromRotation = {
+    x: cubeGroup.rotation.x,
+    y: cubeGroup.rotation.y,
+    z: cubeGroup.rotation.z,
+  };
+  const toRotation = {
+    x: THREE.MathUtils.degToRad((1 - gy) * 6),
+    y: THREE.MathUtils.degToRad((gx - 1) * -10 + (gz - 1) * 7),
+    z: 0,
+  };
+  const rt0 = performance.now();
+  const rdur = 980;
+
+  function rotationStep(now) {
+    const p = Math.min((now - rt0) / rdur, 1);
+    const e = 1 - Math.pow(1 - p, 3);
+    cubeGroup.rotation.x = THREE.MathUtils.lerp(fromRotation.x, toRotation.x, e);
+    cubeGroup.rotation.y = THREE.MathUtils.lerp(fromRotation.y, toRotation.y, e);
+    cubeGroup.rotation.z = THREE.MathUtils.lerp(fromRotation.z, toRotation.z, e);
+    if (p < 1) cubeFocusTween = requestAnimationFrame(rotationStep);
+    else cubeFocusTween = null;
+  }
+  cubeFocusTween = requestAnimationFrame(rotationStep);
+}
+
+function tweenCubeRotationToNeutral() {
+  if (cubeFocusTween) cancelAnimationFrame(cubeFocusTween);
+  const fromRotation = {
+    x: cubeGroup.rotation.x,
+    y: cubeGroup.rotation.y,
+    z: cubeGroup.rotation.z,
+  };
+  const t0 = performance.now();
+  const dur = 620;
+  function step(now) {
+    const p = Math.min((now - t0) / dur, 1);
+    const e = 1 - Math.pow(1 - p, 3);
+    cubeGroup.rotation.x = THREE.MathUtils.lerp(fromRotation.x, 0, e);
+    cubeGroup.rotation.y = THREE.MathUtils.lerp(fromRotation.y, 0, e);
+    cubeGroup.rotation.z = THREE.MathUtils.lerp(fromRotation.z, 0, e);
+    if (p < 1) cubeFocusTween = requestAnimationFrame(step);
+    else cubeFocusTween = null;
+  }
+  cubeFocusTween = requestAnimationFrame(step);
+}
+
+function resetCubeRotation() {
+  if (cubeFocusTween) {
+    cancelAnimationFrame(cubeFocusTween);
+    cubeFocusTween = null;
+  }
+  cubeGroup.rotation.set(0, 0, 0);
+}
+
+function buildPanelDirectory(activeId) {
+  panelNav.innerHTML = '';
+  if (!solved) {
+    const section = document.createElement('div');
+    section.className = 'panel-nav-section';
+    const heading = document.createElement('div');
+    heading.className = 'panel-nav-heading';
+    heading.textContent = 'Unclassified Objects';
+    section.appendChild(heading);
+
+    if (discoveryLog.length === 0) {
+      const empty = document.createElement('div');
+      empty.className = 'panel-nav-note';
+      empty.textContent = 'No field records yet. Click an object to begin.';
+      section.appendChild(empty);
+    }
+
+    discoveryLog.forEach((pieceId, idx) => {
+      const piece = PIECES_DATA.find(p => p.id === pieceId);
+      if (!piece || piece.hidden) return;
+      const item = document.createElement('button');
+      item.className = `panel-nav-item${piece.id === activeId ? ' active' : ''}`;
+      item.type = 'button';
+      item.dataset.pieceId = piece.id;
+      item.innerHTML = `<span class="object-index-no">${String(idx + 1).padStart(3, '0')}</span>`;
+      item.addEventListener('click', () => {
+        const mesh = getPieceMeshById(piece.id);
+        if (mesh) openPanel(mesh);
+      });
+      section.appendChild(item);
+    });
+
+    const placeholders = Math.max(3, Math.min(8, 27 - discoveryLog.length));
+    for (let i = 0; i < placeholders; i++) {
+      const placeholder = document.createElement('div');
+      placeholder.className = 'undiscovered-item';
+      placeholder.textContent = '···';
+      section.appendChild(placeholder);
+    }
+
+    panelNav.appendChild(section);
+    return;
+  }
+
+  const activePiece = PIECES_DATA.find(piece => piece.id === activeId);
+  const intro = document.createElement('div');
+  intro.className = 'panel-nav-note';
+  intro.textContent = activePiece
+    ? `${objectNo(activePiece)} resolves through three planes. Use the radial labels in the card, or open another object.`
+    : 'Solved map. Open an object to read its three planes.';
+  panelNav.appendChild(intro);
+
+  const objectMenu = document.createElement('details');
+  objectMenu.className = 'panel-axis-menu';
+  const objectSummary = document.createElement('summary');
+  objectSummary.textContent = 'OBJECT DRAWER';
+  objectMenu.appendChild(objectSummary);
+
+  const objectOptions = document.createElement('div');
+  objectOptions.className = 'panel-axis-options';
+  for (const piece of PIECES_DATA.filter(p => !p.hidden).sort(coordinateSort)) {
+    const item = document.createElement('button');
+    item.className = `panel-nav-item${piece.id === activeId ? ' active' : ''}`;
+    item.type = 'button';
+    item.dataset.pieceId = piece.id;
+    const field = fieldNo(piece);
+    item.innerHTML = `${field ? `<span class="field-no">${field}</span> · ` : ''}${objectNo(piece)} · ${semanticTriplet(piece).join(' · ')}`;
+    item.addEventListener('click', () => {
+      const mesh = getPieceMeshById(piece.id);
+      if (mesh) openPanel(mesh);
+    });
+    objectOptions.appendChild(item);
+  }
+  objectMenu.appendChild(objectOptions);
+  panelNav.appendChild(objectMenu);
+}
+
 function openPanel(mesh) {
   const { pd } = mesh.userData;
-  if (pd.hidden) return;
-  panelId.textContent    = pd.id;
-  panelTitle.textContent = pd.title;
-  panelBody.innerHTML    = pd.content;
+  if (pd.hidden && !(solved && pd.id === 'E-05')) return;
+  recordDiscovery(pd);
+  renderRegistryCard(pd);
   panelLinks.innerHTML   = pd.links ? pd.links.map(l =>
     `<a class="panel-link" href="${l.url}" target="_blank">${l.label}</a>`
   ).join('') : '';
   document.body.classList.add('panel-open');
   activeMesh = mesh;
-  tweenTarget(-0.7);
+  setHighlightedMesh(mesh);
+  buildPanelDirectory(pd.id);
+  if (solved) highlightRelatedPlanes(mesh);
+  focusCameraOnMesh(mesh);
 }
 
 function closePanel() {
+  if (cameraTween) {
+    cancelAnimationFrame(cameraTween);
+    cameraTween = null;
+  }
+  if (cubeFocusTween) {
+    cancelAnimationFrame(cubeFocusTween);
+    cubeFocusTween = null;
+  }
   document.body.classList.remove('panel-open');
   activeMesh = null;
+  setHighlightedMesh(null);
+  clearPlaneHighlight();
+  tweenCubeRotationToNeutral();
   tweenTarget(0);
 }
 
 document.getElementById('panel-close').addEventListener('click', closePanel);
+document.getElementById('panel-expand').addEventListener('click', () => {
+  panel.classList.toggle('expanded');
+  document.getElementById('panel-expand').textContent = panel.classList.contains('expanded') ? 'shrink' : 'expand';
+  if (activeMesh) focusCameraOnMesh(activeMesh);
+});
 
 // ── Pointer interaction ───────────────────────────────────────────────────
 // drag on empty → orbit (OrbitControls handles it)
@@ -606,14 +1304,11 @@ canvas.addEventListener('pointermove', e => {
   const dx = e.clientX - layerDrag.sx;
   const dy = e.clientY - layerDrag.sy;
   if (!layerDrag.axis && Math.hypot(dx, dy) > 7) {
-    layerDrag.axis     = Math.abs(dx) > Math.abs(dy) ? 'gy' : 'gz';
-    layerDrag.layerIdx = Math.abs(dx) > Math.abs(dy)
-      ? layerDrag.mesh.userData.gy
-      : layerDrag.mesh.userData.gz;
+    const inferred = inferLayerRotation(layerDrag.hit, dx, dy);
+    if (inferred) Object.assign(layerDrag, inferred);
   }
   if (layerDrag.axis && Math.hypot(dx, dy) > 20) {
-    const { axis, layerIdx, mesh } = layerDrag;
-    const dir = axis === 'gy' ? (dx > 0 ? 1 : -1) : (dy > 0 ? -1 : 1);
+    const { axis, layerIdx, dir } = inferLayerRotation(layerDrag.hit, dx, dy) || layerDrag;
     layerDrag = null;
     controls.enabled = true;
     rotateLayer(axis, layerIdx, dir);
@@ -622,12 +1317,13 @@ canvas.addEventListener('pointermove', e => {
 
 canvas.addEventListener('pointerdown', e => {
   if (e.button !== 0) return;
-  const hit = getHit(e.clientX, e.clientY);
+  const hitInfo = getPointerHit(e.clientX, e.clientY);
+  const hit = hitInfo?.object || null;
   pdPos = { x: e.clientX, y: e.clientY };
   pdMesh = hit;
   if (hit) {
     controls.enabled = false;
-    layerDrag = { mesh: hit, sx: e.clientX, sy: e.clientY, axis: null, layerIdx: null };
+    layerDrag = { hit: hitInfo, mesh: hit, sx: e.clientX, sy: e.clientY, axis: null, layerIdx: null, dir: null };
   }
 });
 
@@ -648,27 +1344,29 @@ canvas.addEventListener('pointerup', e => {
 // ── Solve ─────────────────────────────────────────────────────────────────
 let solved = false;
 function onSolved() {
-  if (solved) return; solved = true;
-  // Reveal E-05 (golden center)
+  if (solved && pieceMeshes.some(m => m.userData.pd.id === 'E-05')) return;
+  solved = true;
+  // Reveal E-05 (hidden center)
   const pd = PIECES_DATA.find(p => p.id === 'E-05');
   const mesh = new THREE.Mesh(
     new THREE.BoxGeometry(XS[1]-GAP, YS[1]-GAP, ZS[1]-GAP),
-    new THREE.MeshStandardMaterial({ color:0xd4af37, metalness:0.7, roughness:0.2, emissive:0x332200 })
+    makeMat()
   );
   mesh.position.set(XC[1], YC[1], ZC[1]);
-  mesh.userData = { pd, gx:1,gy:1,gz:1, origGx:1,origGy:1,origGz:1 };
+  mesh.userData = {
+    pd, gx:1,gy:1,gz:1, origGx:1,origGy:1,origGz:1,
+    origDims: { x: XS[1]-GAP, y: YS[1]-GAP, z: ZS[1]-GAP },
+  };
+  const edges = new THREE.LineSegments(new THREE.EdgesGeometry(mesh.geometry), edgeMat.clone());
+  mesh.add(edges);
   cubeGroup.add(mesh);
   pieceMeshes.push(mesh);
   document.getElementById('solve-toast').classList.add('show');
 }
 
 document.getElementById('solve-open').addEventListener('click', () => {
-  const pd = PIECES_DATA.find(p => p.id === 'E-05');
-  panelId.textContent    = 'E-05';
-  panelTitle.textContent = 'Core';
-  panelBody.innerHTML    = '<p>The invisible centre, now visible.</p><p>Leave a note. (Guestbook coming soon.)</p>';
-  panelLinks.innerHTML   = '';
-  document.body.classList.add('panel-open');
+  const mesh = getPieceMeshById('E-05');
+  if (mesh) openPanel(mesh);
 });
 
 // ── Language toggle ───────────────────────────────────────────────────────
@@ -691,7 +1389,7 @@ function animate() {
   // Gentle float — small Y bob + subtle X drift
   const t = Date.now() * 0.001;
   cubeGroup.position.y = Math.sin(t * 0.55) * 0.038;
-  cubeGroup.position.x = Math.sin(t * 0.37) * 0.014;
+  cubeGroup.position.x = cubeBaseX + Math.sin(t * 0.37) * 0.014;
   controls.update();
   if (!isRotating) updateTags();
   renderer.render(scene, camera);
