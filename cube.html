@@ -284,16 +284,41 @@
     .mobile-cell .ctitle { font-size: 9px; color: var(--dim); }
 
     @media (max-width: 640px) {
-      #c, #tags, #hint { display: none; }
-      #mobile-grid     { display: flex; }
+      #c, #tags {
+        width: 100vw; height: 100vh;
+        transition:
+          height 0.52s cubic-bezier(0.22,1,0.36,1),
+          opacity 0.32s ease;
+      }
+      #hint {
+        display: block; right: 14px; bottom: 14px;
+        font-size: 8px; opacity: 0.75;
+      }
+      #mobile-grid { display: none; }
       body.panel-open #c,
-      body.panel-open #tags,
+      body.panel-open #tags {
+        width: 100vw; height: 50vh;
+      }
       body.panel-open.panel-expanded #c,
-      body.panel-open.panel-expanded #tags { width: 100vw; }
-      body.panel-open #panel { width: 100%; }
-      body.panel-open #panel.expanded { width: 100%; }
+      body.panel-open.panel-expanded #tags {
+        width: 100vw; height: 0; opacity: 0;
+      }
+      #panel {
+        top: auto; bottom: 0; right: 0; width: 100%; height: 50vh;
+        transform: translateY(100%); border-left: 0; border-top: 1px solid var(--panel-border);
+        padding: 46px 22px 28px;
+      }
+      body.panel-open #panel {
+        width: 100%; height: 50vh; transform: translateY(0);
+      }
+      body.panel-open #panel.expanded {
+        width: 100%; height: 100vh;
+      }
       #panel-shell { display: block; }
       #panel-nav { position: static; max-height: none; margin-bottom: 24px; border-right: 0; border-bottom: 1px solid var(--panel-border); padding-bottom: 16px; }
+      #panel-main { max-width: none; }
+      #panel-close { top: 16px; left: 22px; }
+      #panel-expand { top: 16px; left: 96px; }
       .axis-radial { display: none; }
       .axis-mobile-list { display: block; }
     }
@@ -488,6 +513,7 @@ const cubeGroup = new THREE.Group();
 scene.add(cubeGroup);
 cubeGroup.position.set(0, 0, 0);
 let cubeBaseX = 0;
+let cubeBaseY = 0;
 
 const axisGuideGroup = new THREE.Group();
 scene.add(axisGuideGroup);
@@ -982,6 +1008,7 @@ let highlightedMesh = null;
 let cameraTween = null;
 let cubeFocusTween = null;
 let cubeBaseTween = null;
+let targetTween = null;
 let highlightMode = null;
 let activePlaneSelection = null;
 const discoveryLog = [];
@@ -997,9 +1024,10 @@ function updateViewportSize(resizeBuffer = false) {
   const height = Math.max(1, Math.round(rect.height || window.innerHeight));
   camera.aspect = width / height;
   const baseZoom = Math.min(1, Math.max(0.40, width / 900));
-  camera.zoom = isMobile ? 1 : baseZoom;
+  const mobileZoom = Math.min(0.72, Math.max(0.46, width / 620));
+  camera.zoom = isMobile ? mobileZoom : baseZoom;
   camera.updateProjectionMatrix();
-  if (resizeBuffer) renderer.setSize(width, height, false);
+  if (resizeBuffer || isMobile) renderer.setSize(width, height, false);
 }
 
 function scheduleViewportUpdate(resizeBufferAtEnd = false) {
@@ -1013,18 +1041,38 @@ function scheduleViewportUpdate(resizeBufferAtEnd = false) {
   requestAnimationFrame(step);
 }
 
-function tweenCubeBaseX(toX, duration = 520) {
+function tweenCubeBase(toX, toY = 0, duration = 520) {
   if (cubeBaseTween) cancelAnimationFrame(cubeBaseTween);
   const fromX = cubeBaseX;
+  const fromY = cubeBaseY;
   const start = performance.now();
   function step(now) {
     const p = Math.min((now - start) / duration, 1);
     const e = 1 - Math.pow(1 - p, 3);
     cubeBaseX = THREE.MathUtils.lerp(fromX, toX, e);
+    cubeBaseY = THREE.MathUtils.lerp(fromY, toY, e);
     if (p < 1) cubeBaseTween = requestAnimationFrame(step);
     else cubeBaseTween = null;
   }
   cubeBaseTween = requestAnimationFrame(step);
+}
+
+function tweenCubeBaseX(toX, duration = 520) {
+  tweenCubeBase(toX, 0, duration);
+}
+
+function tweenFocusTarget(toTarget, duration = 520) {
+  if (targetTween) cancelAnimationFrame(targetTween);
+  const fromTarget = controls.target.clone();
+  const start = performance.now();
+  function step(now) {
+    const p = Math.min((now - start) / duration, 1);
+    const e = 1 - Math.pow(1 - p, 3);
+    controls.target.lerpVectors(fromTarget, toTarget, e);
+    if (p < 1) targetTween = requestAnimationFrame(step);
+    else targetTween = null;
+  }
+  targetTween = requestAnimationFrame(step);
 }
 
 function getPieceMeshById(id) {
@@ -1219,7 +1267,8 @@ function extractSelectedLayer(axis, idx) {
 }
 
 function clearPlaneHighlight(duration = 520) {
-  tweenCubeBaseX(0, duration);
+  tweenCubeBase(0, 0, duration);
+  tweenFocusTarget(new THREE.Vector3(0, 0, 0), duration);
   if (_planeExtractFrame) {
     cancelAnimationFrame(_planeExtractFrame);
     _planeExtractFrame = null;
@@ -1467,8 +1516,8 @@ function focusCameraOnMesh(mesh) {
   if (!mesh) return;
   if (cameraTween) cancelAnimationFrame(cameraTween);
   if (cubeFocusTween) cancelAnimationFrame(cubeFocusTween);
-  controls.target.set(0, 0, 0);
-  tweenCubeBaseX(0, 520);
+  tweenFocusTarget(new THREE.Vector3(0, 0, 0), 520);
+  tweenCubeBase(0, 0, 520);
 
   const { gx, gy, gz } = mesh.userData;
   const fromRotation = {
@@ -1541,15 +1590,25 @@ function planeFocusRotation(axis, idx) {
 
 function planeFocusBaseX(axis, idx) {
   if (idx !== 1) return 0;
-  const narrowPane = viewportRect().width < 560;
-  if (axis === 'gx') return narrowPane ? -0.65 : -0.42;
-  if (axis === 'gy') return narrowPane ? 1.42 : 1.05;
-  return narrowPane ? 1.28 : 0.88;
+  const out = extractionOffset(axis, idx);
+  const panelFactor = document.body.classList.contains('panel-expanded') ? 0.52 : 0.62;
+  return -out.x * panelFactor;
+}
+
+function planeFocusBaseY(axis, idx) {
+  if (idx !== 1) return 0;
+  const out = extractionOffset(axis, idx);
+  return -out.y * 0.62;
+}
+
+function planeFocusTarget(axis, idx) {
+  return new THREE.Vector3(0, 0, 0);
 }
 
 function focusPlaneExtraction(axis, idx, duration = 720) {
   if (cubeFocusTween) cancelAnimationFrame(cubeFocusTween);
-  tweenCubeBaseX(planeFocusBaseX(axis, idx), duration);
+  tweenCubeBase(planeFocusBaseX(axis, idx), planeFocusBaseY(axis, idx), duration);
+  tweenFocusTarget(planeFocusTarget(axis, idx), duration);
   const fromRotation = {
     x: cubeGroup.rotation.x,
     y: cubeGroup.rotation.y,
@@ -1598,8 +1657,14 @@ function resetCubeRotation() {
     cancelAnimationFrame(cubeBaseTween);
     cubeBaseTween = null;
   }
+  if (targetTween) {
+    cancelAnimationFrame(targetTween);
+    targetTween = null;
+  }
   cubeGroup.rotation.set(0, 0, 0);
   cubeBaseX = 0;
+  cubeBaseY = 0;
+  controls.target.set(0, 0, 0);
   updateViewportSize(true);
 }
 
@@ -1731,6 +1796,10 @@ function closePanel() {
     cancelAnimationFrame(cubeBaseTween);
     cubeBaseTween = null;
   }
+  if (targetTween) {
+    cancelAnimationFrame(targetTween);
+    targetTween = null;
+  }
   document.body.classList.remove('panel-open');
   document.body.classList.remove('panel-expanded');
   panel.classList.remove('expanded');
@@ -1860,7 +1929,7 @@ function animate() {
   requestAnimationFrame(animate);
   // Gentle float — small Y bob + subtle X drift
   const t = Date.now() * 0.001;
-  cubeGroup.position.y = Math.sin(t * 0.55) * 0.038;
+  cubeGroup.position.y = cubeBaseY + Math.sin(t * 0.55) * 0.038;
   cubeGroup.position.x = cubeBaseX + Math.sin(t * 0.37) * 0.014;
   updateParticles();
   controls.update();

@@ -24,6 +24,15 @@
 - Replaced the native `window.prompt()` solve password with an in-page mini password gate so clicking `SOLVE` gives visible feedback and focus immediately.
 - Changed the installation warning copy from Chinese/English mixed text to the lighter English line: "This installation is still growing teeth. Friendly ghosts and admins only."
 - Bumped the homepage local asset query strings again so the browser stops serving the earlier installation warning bundle.
+- Centered the installation password window by adding an optional `center` flag to the System 6 window manager, and changed the warning text to a single non-wrapping line.
+- Improved extracted middle-plane focus by tweening the OrbitControls target toward the extracted slab and adding a Y-axis cube base offset, so sandwich layers are framed by their face rather than merely rotated in place.
+- Accounted for the fixed 28px menu bar when centering the installation window; browser verification now reports a 0px vertical centre delta and no warning-line break.
+- Relaxed the installation warning styling so the text remains a single sentence without a manual line break but can wrap naturally if the window is narrow.
+- Recentered extracted middle layers by moving the entire cube group opposite the extraction offset, so the pulled-out slab occupies the viewport centre; clearing the plane or selecting outside it returns the cube to the normal centred state.
+- Replaced the mobile fallback grid with the same interactive 3D cube. On mobile the registry panel now rises from the bottom as a half-screen sheet; expanding the panel makes it full-screen and hides the cube.
+- Centered the installation loading/progress window as well as the password gate.
+- Reduced mobile cube scale using a width-based camera zoom formula, so the full cube remains visible in portrait instead of being sized from the tall viewport.
+- On mobile only, the WebGL drawing buffer now resizes during panel open/close height transitions. This prevents the full-screen render buffer from being CSS-squashed into the half-height canvas, keeping cube scale consistent when the bottom sheet opens.
 
 ### Interaction debug pass — Codex
 

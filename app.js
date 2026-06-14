@@ -252,8 +252,8 @@ class WM {
       h = Math.min(h, Math.max(180, window.innerHeight - 44));
     }
 
-    let x = (opts.x || 110) + off;
-    let y = (opts.y || 60)  + off;
+    let x = opts.center ? Math.round((window.innerWidth - w) / 2) : (opts.x || 110) + off;
+    let y = opts.center ? Math.round((window.innerHeight - h) / 2 - 28) : (opts.y || 60) + off;
     if (isMobile) {
       const minX = 6;
       const minY = 36;
@@ -2866,7 +2866,7 @@ function openInstallationGate() {
   wm.show('installation-gate', {
     title: 'installation',
     html: `<div class="installation-gate">
-      <div class="installation-warning">This installation is still growing teeth.<br>Friendly ghosts and admins only.</div>
+      <div class="installation-warning">This installation is still growing teeth. Friendly ghosts and admins only.</div>
       <input class="installation-lock-input" type="password" placeholder="admin password" />
       <div class="installation-lock-error">Incorrect password.</div>
       <div class="installation-actions">
@@ -2874,7 +2874,7 @@ function openInstallationGate() {
         <button class="installation-ok">Enter</button>
       </div>
     </div>`,
-    w: 300, h: 190,
+    w: 390, h: 178, center: true,
   });
   setTimeout(() => document.querySelector('#win-installation-gate .installation-lock-input')?.focus(), 50);
 }
@@ -2893,7 +2893,7 @@ function openInstallationLoader() {
       <div class="installation-load-text">opening cabinet...</div>
       <div class="installation-progress"><span></span></div>
     </div>`,
-    w: 300, h: 182,
+    w: 300, h: 182, center: true,
   });
   const cube = win.querySelector('.mini-mirror-cube');
   const bar = win.querySelector('.installation-progress span');
