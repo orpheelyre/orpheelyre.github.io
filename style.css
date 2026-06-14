@@ -1316,6 +1316,105 @@ body {
 .now-lock-ok { font-weight: bold; border-width: 2px; }
 .now-lock-cancel:hover, .now-lock-ok:hover { background: var(--c-text); color: var(--c-bg); }
 
+/* installation launcher */
+.installation-gate,
+.installation-loader {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  font-family: var(--font-ui);
+  color: var(--c-text);
+}
+.installation-warning {
+  font-size: var(--sz-body);
+  line-height: 1.45;
+}
+.installation-lock-input {
+  font-family: var(--font-ui);
+  font-size: var(--sz-ui);
+  background: var(--c-bg);
+  border: 1px solid var(--c-border);
+  color: var(--c-text);
+  padding: 4px 6px;
+  width: 100%;
+  outline: none;
+}
+.installation-lock-input:focus { outline: 1px solid var(--c-border); }
+.installation-lock-error {
+  display: none;
+  font-family: var(--font-ui);
+  font-size: var(--sz-small);
+  color: var(--c-text);
+}
+.installation-lock-error.visible { display: block; }
+.installation-actions {
+  display: flex;
+  gap: 6px;
+  justify-content: flex-end;
+}
+.installation-cancel,
+.installation-ok {
+  font-family: var(--font-ui);
+  font-size: var(--sz-ui);
+  background: var(--c-bg);
+  border: 1px solid var(--c-border);
+  color: var(--c-text);
+  padding: 3px 12px;
+}
+.installation-ok { font-weight: bold; border-width: 2px; }
+.installation-cancel:hover,
+.installation-ok:hover { background: var(--c-text); color: var(--c-bg); }
+.installation-loader {
+  align-items: center;
+  padding-top: 6px;
+}
+.mini-mirror-cube {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  margin: 8px 0 4px;
+  transform-style: preserve-3d;
+  transform: rotateX(-35deg) rotateY(35deg);
+  transition: transform 0.22s steps(2, end);
+}
+.mini-face {
+  position: absolute;
+  width: 30px;
+  height: 30px;
+  background:
+    linear-gradient(var(--icon-stroke), var(--icon-stroke)) 33% 0 / 1px 100% no-repeat,
+    linear-gradient(var(--icon-stroke), var(--icon-stroke)) 66% 0 / 1px 100% no-repeat,
+    linear-gradient(var(--icon-stroke), var(--icon-stroke)) 0 33% / 100% 1px no-repeat,
+    linear-gradient(var(--icon-stroke), var(--icon-stroke)) 0 66% / 100% 1px no-repeat,
+    var(--icon-fill);
+  border: 1px solid var(--icon-stroke);
+}
+.mini-top { transform: rotateX(90deg) translateZ(15px); }
+.mini-left { transform: rotateY(-90deg) translateZ(15px); }
+.mini-right { transform: translateZ(15px); }
+.installation-load-text {
+  font-size: var(--sz-small);
+  color: var(--c-text-muted);
+}
+.installation-progress {
+  width: 190px;
+  height: 9px;
+  border: 1px solid var(--c-border);
+  background: var(--c-bg);
+  padding: 1px;
+}
+.installation-progress span {
+  display: block;
+  width: 0%;
+  height: 100%;
+  background: var(--c-text);
+}
+body.launching-cube #desktop,
+body.launching-cube #menubar {
+  opacity: 0;
+  transition: opacity 0.26s ease;
+}
+
 /* Mac-style error dialog */
 .mac-error {
   padding: 18px 16px 14px;
