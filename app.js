@@ -82,6 +82,13 @@ const SVG = {
     <line x1="13" y1="21"   x2="16" y2="27"  stroke="var(--icon-stroke)" stroke-width="1.5" stroke-linecap="round"/>
     <line x1="1"  y1="28"   x2="30" y2="28"  stroke="var(--icon-stroke)" stroke-width="1"/>
   </svg>`,
+
+  mirrorcube: `<svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M7 10 L17 5 L27 10 L17 15 Z" fill="var(--icon-fill)" stroke="var(--icon-stroke)" stroke-width="1.3" stroke-linejoin="round"/>
+    <path d="M7 10 L17 15 L17 27 L7 21 Z" fill="var(--icon-fill)" stroke="var(--icon-stroke)" stroke-width="1.3" stroke-linejoin="round"/>
+    <path d="M17 15 L27 10 L27 22 L17 27 Z" fill="var(--icon-fill)" stroke="var(--icon-stroke)" stroke-width="1.3" stroke-linejoin="round"/>
+    <path d="M10 8.5 L20 13.5 M14 6.5 L24 11.5 M10 12 L10 23 M14 14 L14 25 M20 13.5 L20 25 M24 11.5 L24 23" stroke="var(--icon-stroke)" stroke-width="0.8"/>
+  </svg>`,
 };
 
 /* ── Drag State ───────────────────────────────────────────────── */
@@ -173,7 +180,8 @@ function getMobilePos(id) {
     guestbook:    { x: colR, y: topY + rowH * 3 },
     fieldmap:     { x: colR, y: topY + rowH * 4 },
     game:         { x: colR, y: topY + rowH * 5 },
-    bin:          { x: colR, y: topY + rowH * 6 },
+    installation: { x: colR, y: topY + rowH * 6 },
+    bin:          { x: colR, y: topY + rowH * 7 },
   };
   return grid[id] || null;
 }
@@ -340,6 +348,10 @@ document.addEventListener('keydown', e => {
   }
   if (e.key === 'Enter' && e.target.classList.contains('cv-lock-input')) {
     e.target.closest('.cv-lock-pad')?.querySelector('.cv-lock-ok')?.click();
+  }
+  if (e.key === 'Enter' && e.target.classList.contains('installation-lock-input')) {
+    e.target.closest('.installation-gate')?.querySelector('.installation-ok')?.click();
+    return;
   }
   if (e.key === 'Enter' && e.target.classList.contains('gb-msg')) {
     submitGuestbook();
@@ -522,6 +534,22 @@ document.addEventListener('click', async e => {
     return;
   }
   if (e.target.closest('.cv-lock-cancel')) { wm.close('cv-lock'); return; }
+
+  if (e.target.closest('.installation-ok')) {
+    const gateWin = e.target.closest('.window');
+    const input = gateWin?.querySelector('.installation-lock-input');
+    const entered = String(input?.value || '').trim();
+    const expected = String(SITE.nowEditPassword || '').trim();
+    if ((expected && entered === expected) || (!expected && entered)) {
+      setNowAdminSessionPassword(entered);
+      openInstallationLoader();
+    } else {
+      gateWin?.querySelector('.installation-lock-error')?.classList.add('visible');
+      input?.select();
+    }
+    return;
+  }
+  if (e.target.closest('.installation-cancel')) { wm.close('installation-gate'); return; }
 
   // Empty Bin → always fails with a Mac-style error
   if (e.target.closest('.trash-empty-btn')) {
@@ -2832,6 +2860,71 @@ function openGameWindow() {
   });
 }
 
+/* ── Installation launcher ────────────────────────────────────── */
+function openInstallationGate() {
+  if (wm.open['installation-gate']) { wm.focus(wm.open['installation-gate']); return; }
+  wm.show('installation-gate', {
+    title: 'installation',
+    html: `<div class="installation-gate">
+      <div class="installation-warning">This installation is still growing teeth.<br>Friendly ghosts and admins only.</div>
+      <input class="installation-lock-input" type="password" placeholder="admin password" />
+      <div class="installation-lock-error">Incorrect password.</div>
+      <div class="installation-actions">
+        <button class="installation-cancel">Cancel</button>
+        <button class="installation-ok">Enter</button>
+      </div>
+    </div>`,
+    w: 300, h: 190,
+  });
+  setTimeout(() => document.querySelector('#win-installation-gate .installation-lock-input')?.focus(), 50);
+}
+
+function openInstallationLoader() {
+  wm.close('installation-gate');
+  if (wm.open['installation-loader']) { wm.focus(wm.open['installation-loader']); return; }
+  const win = wm.show('installation-loader', {
+    title: 'installation',
+    html: `<div class="installation-loader">
+      <div class="mini-mirror-cube" aria-hidden="true">
+        <span class="mini-face mini-top"></span>
+        <span class="mini-face mini-left"></span>
+        <span class="mini-face mini-right"></span>
+      </div>
+      <div class="installation-load-text">opening cabinet...</div>
+      <div class="installation-progress"><span></span></div>
+    </div>`,
+    w: 300, h: 182,
+  });
+  const cube = win.querySelector('.mini-mirror-cube');
+  const bar = win.querySelector('.installation-progress span');
+  const start = performance.now();
+  const duration = 1750;
+  const spinner = setInterval(() => {
+    if (!cube.isConnected) {
+      clearInterval(spinner);
+      return;
+    }
+    const rx = Math.round(Math.random() * 3) * 90 - 35;
+    const ry = Math.round(Math.random() * 3) * 90 + 25;
+    const rz = Math.round(Math.random() * 2) * 90;
+    cube.style.transform = `rotateX(${rx}deg) rotateY(${ry}deg) rotateZ(${rz}deg)`;
+  }, 220);
+
+  function step(now) {
+    const p = Math.min((now - start) / duration, 1);
+    const eased = 1 - Math.pow(1 - p, 3);
+    bar.style.width = `${Math.round(eased * 100)}%`;
+    if (p < 1) {
+      requestAnimationFrame(step);
+      return;
+    }
+    clearInterval(spinner);
+    document.body.classList.add('launching-cube');
+    setTimeout(() => { window.location.href = 'cube.html?v=installation'; }, 260);
+  }
+  requestAnimationFrame(step);
+}
+
 /* ── Desktop icon definitions ─────────────────────────────────── */
 function makeIconDefs() {
   const rX      = Math.max(window.innerWidth  - 108, 500);
@@ -2879,6 +2972,11 @@ function makeIconDefs() {
       id: 'game', label: 'game.app', icon: SVG.sisyphus, iconKey: 'sisyphus',
       x: leftColX, y: topY + rowStep * 2,
       action: () => openGameWindow(),
+    },
+    {
+      id: 'installation', label: 'installation', icon: SVG.mirrorcube, iconKey: 'mirrorcube',
+      x: leftColX, y: topY + rowStep * 3,
+      action: () => openInstallationGate(),
     },
     // ── Left bottom: bin ─────────────────────────────────────
     {

@@ -9,6 +9,22 @@
 
 ## 2026-06-14
 
+### Installation gate + solved plane polish — Codex
+
+- Changed solved middle-layer focus so extracted sandwich layers rotate to present their broad plane to the camera, rather than sliding toward the viewer face-on.
+- Tuned edge-plane solved focus to rotate toward the selected outside face more directly.
+- Synchronized split-pane open/close motion with cube focus timing and eased the canvas/panel width transitions with the same cubic curve used by the cube movement.
+- Hid the cube page's top-left `mirror cube` label and the temporary `EN/CN` toggle; replaced the solved toast CTA with `open centre object`.
+- Added a solve password gate. `SOLVE` and the backtick shortcut now require the hard-mode password before calling `autoSolve()`.
+- Added a new System 6 desktop icon labelled `installation`, drawn as a scrambled mirror-cube icon.
+- The installation icon opens a playful admin warning (`still under development / 生人勿近`) and uses the existing admin password before launch.
+- Added a minimal launch sequence: a small mirror cube flips through random orientations while a System 6-style progress bar fills, then the page fades into `cube.html`.
+- Checked storage semantics: the homepage stores icon positions/theme and `now.live` overrides in browser storage, but cube discovery/solve progress is not persisted across reloads or computers.
+- Added explicit cache-busting query strings to `index.html`'s local `style.css`, `data.js`, and `app.js` references after the browser kept serving the pre-installation desktop bundle.
+- Replaced the native `window.prompt()` solve password with an in-page mini password gate so clicking `SOLVE` gives visible feedback and focus immediately.
+- Changed the installation warning copy from Chinese/English mixed text to the lighter English line: "This installation is still growing teeth. Friendly ghosts and admins only."
+- Bumped the homepage local asset query strings again so the browser stops serving the earlier installation warning bundle.
+
 ### Interaction debug pass — Codex
 
 Fixed the missing X-layer rotation path in `cube.html`.
@@ -47,7 +63,18 @@ Follow-up after live preview:
 - Included the revealed hidden centre object (`E-05`) in solved plane lists, so every selected plane correctly shows nine objects.
 - Converted the panel from overlay to split-pane behaviour. When the panel opens, the WebGL canvas and hover SVG shrink to the remaining left viewport instead of being covered, so the cube stays visible and centred in its own pane.
 - Added responsive camera zoom tied to the canvas width. Normal and expanded panel states now both preserve the full cube silhouette instead of cropping the object when the panel takes two-thirds of the screen.
-- Strengthened solved plane selection on the cube itself: selecting a radial category now pulls that plane outward along its actual X/Y/Z axis, fades non-selected pieces further, and draws a black 3D axis rail with a tick at the selected layer.
+- Strengthened solved plane selection on the cube itself: selecting a radial category now makes only that plane transparent/highlighted; edge planes shift outward, while middle planes extract as a slab from between the two outer layers.
+- Corrected highlight semantics after live review: transparency now means "selected/highlighted". Solved single-piece selection makes only that piece transparent; solved radial plane selection makes only the selected nine pieces transparent, with all other pieces restored to opaque metal.
+- Reworked middle-layer plane display from an in-place face rotation to a slab extraction. Selecting an `idx=1` plane now slides that complete middle layer out from between the two outer layers, matching the "middle row/column pulled aside" archive-drawer sketch and making the transparent layer readable.
+- Added a lightweight focus rotation for extracted middle layers. The cube turns toward the extracted slab while the plane is active; clicking outside that active plane clears the plane state, restores piece positions, and returns to a single-piece highlight.
+- Extended the extraction motion to edge planes too. All radial plane selections now use the same eased slab movement rather than instant offsets; middle planes travel farther so the full transparent layer clears the cube.
+- Fixed split-pane resizing after the extraction-focus change. `updateViewportSize()` now initializes after all viewport state exists, and the window resize handler no longer forces the renderer back to full-screen dimensions during panel state changes.
+- Removed extraction-specific zoom. Extracted slabs keep the current cube scale; focus is handled by tweening cube position/rotation toward the selected slab, while non-selected parts may move partially offscreen.
+- Reduced panel resize flicker by not reallocating the WebGL drawing buffer during panel open/expand/shrink transitions. The camera follows the CSS-sized canvas every frame, while actual buffer resizing is reserved for initial load and real window resize.
+- Fixed repeated extraction when browsing within an active solved plane. Clicking another object in the nine-item plane directory now preserves the current slab transform and only refreshes the registry card, active row, and radial labels; clicking the already-active row is a no-op.
+- Added plane-facing camera choreography for solved radial selections. Edge planes now rotate the cube toward the selected face (`OBSERVER/SUBJECT`, `CONTEXT/THEORY`, front/back domain planes) instead of only sliding the layer outward.
+- Adjusted middle-layer extraction focus so the viewport follows the extracted slab rather than preserving the whole cube; non-selected pieces are allowed to move partly offscreen while the selected transparent layer becomes the main read target.
+- Synchronized reverse motion timing for panel close / plane clear. Cube translation and rotation now use the same 520 ms easing window as the split-pane viewport update, reducing the earlier "move first, zoom/resize second" feel.
 - Debugged the post-panel rotation corruption. The second half of the pivot reparenting had been fixed earlier, but the first half still removed pieces from `cubeGroup` before attaching them to the pivot. When `cubeGroup` had panel-focus rotation/offset, this lost world transforms and produced detached/misaligned pieces. The rotation path now calls `pivot.attach(piece)` directly from the existing parent, preserving world transform at both ends.
 - Added a lightweight cube invariant checker after rotations: visible occupancy must remain 26 unique grid cells, mesh scale must be reset to 1, and each cubie's BoxGeometry dimensions must match its original mirror-cube dimensions. Warnings go to console only on invariant failure.
 - Removed solved-state material tint/scale highlights. Selection now keeps associated pieces visually normal and pushes unrelated pieces to 30% opacity; the hidden core uses the same silver material as other pieces instead of gold/orange.
@@ -71,6 +98,38 @@ Follow-up after live preview:
 - Confirmed page title loads and two live drag gestures complete with no console errors or warnings.
 
 *— Codex, 14 June 2026*
+
+### Interactive polish pass — Claude Code
+
+**Hover tag system**
+
+- Added three-state hover label: unexplored pieces show `examine`; explored (discovered) pieces show their `FIELD NO.` (e.g. `001`); solved pieces show the semantic triplet (`stance · knowledge · domain`). Logic lives in `getHoverLabel(pd)`.
+- `updateTags()` now uses `hoveredMesh || activeMesh` as the display target. When the mouse is not over any piece, the line and label ghost to the currently open panel piece at reduced opacity (line alpha 0.18, label opacity 0.5). This keeps a visual link between the directory and the cube at all times.
+- Added `canvas.addEventListener('pointerleave', ...)` to clear `hoveredMesh` when the mouse moves into the panel area. Previously the last hovered piece kept its tag line permanently while the user interacted with the panel.
+
+**Transparency and depth correctness**
+
+- Changed `setMeshHighlightState` to set `mesh.material.depthWrite = state.opacity >= 1`. Previously the threshold was `> 0`, which left ghost depth writes from fully-transparent bodies that occluded their own `EdgesGeometry` children.
+- `resetPieceMaterial` explicitly restores `depthWrite = true` so pieces that were highlight-transparent come back fully opaque after clear.
+- Plane highlight in `highlightPlane` now keeps non-selected pieces opaque and sets only the selected/highlighted piece or plane to `opacity: 0.42` (glass, `depthWrite: false`).
+- Edge opacity stays high only on the selected/highlighted piece or plane, so transparency reads as selection rather than background fading.
+
+**Plane selection visual**
+
+- Removed the `showAxisGuide` (3D black axis rod) call from `highlightPlane`; the rod was a visual leftover from an earlier design pass and was also triggered unexpectedly when clicking panel directory items.
+- Plane separation: edge layers (`idx=0` or `idx=2`) shift only the selected layer outward. Middle layers (`idx=1`) do not spread all three layers; instead the selected nine-piece slab extracts from between the two outer slabs.
+- Middle-layer selection only: the selected slab slides out as one coherent layer (700 ms ease-out cubic), matching the "middle row/column pulled aside" sketch. `clearPlaneHighlight` restores saved local transforms when the visitor leaves that active plane.
+
+**Panel / directory**
+
+- `.axis-radial` SVG changed from `margin: 8px 0 12px` to `margin: 8px auto 12px` so the radial diagram stays centred at both normal and expanded panel widths.
+- Solved plane directory rows no longer prefix the `FIELD NO.` — only `OBJECT NO.` (`x-x-x`) is shown, since field numbers belong to the pre-solve discovery context.
+- `onSolved()` now calls `openPanel(activeMesh || e05mesh)` at the end so the sidebar slides in immediately on solve without requiring the user to click an axis button.
+- `openPanel` without `preservePlane` now calls `clearPlaneHighlight()` instead of just nulling `activePlaneSelection`. This ensures the visual highlight state is fully reset when navigating between pieces, preventing pieces from remaining transparent after the plane selection is abandoned.
+- Removed `highlightRelatedPlanes(mesh)` from the `openPanel` path. Plane transparency is now only triggered by explicit axis-label clicks in the radial diagram.
+- Added `canvas.addEventListener('pointerleave', ...)` to ensure the hover tag line clears when focus moves to the panel.
+
+*— Claude Code, 14 June 2026*
 
 ### Phase 1 scaffold — Claude Code
 
