@@ -16,11 +16,23 @@
     html, body { width: 100%; height: 100%; background: var(--bg); color: var(--fg);
       font-family: var(--font); overflow: hidden; }
 
-    /* ── canvas + SVG overlay — always full screen ── */
-    #c { position: fixed; inset: 0; }
-    #tags { position: fixed; inset: 0; pointer-events: none; z-index: 10; overflow: visible; }
+    /* ── canvas + SVG overlay — split view when panel opens ── */
+    #c {
+      position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+      transition: width 0.45s cubic-bezier(0.4,0,0.2,1);
+      display: block;
+    }
+    #tags {
+      position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+      pointer-events: none; z-index: 10; overflow: visible;
+      transition: width 0.45s cubic-bezier(0.4,0,0.2,1);
+    }
+    body.panel-open #c,
+    body.panel-open #tags { width: 56vw; }
+    body.panel-open.panel-expanded #c,
+    body.panel-open.panel-expanded #tags { width: 33.334vw; }
 
-    /* ── content panel — overlay, cube untouched ── */
+    /* ── content panel — split pane, cube remains visible ── */
     #panel {
       position: fixed; top: 0; right: 0; width: 44%; height: 100%;
       background: var(--panel-bg); border-left: 1px solid var(--panel-border);
@@ -145,6 +157,8 @@
     }
     .axis-radial-target:hover .axis-radial-line { stroke: #333; }
     .axis-radial-target:hover .axis-radial-label { fill: #111; text-decoration: underline; }
+    .axis-radial-target.active .axis-radial-line { stroke: #111; stroke-width: 1.4; }
+    .axis-radial-target.active .axis-radial-label { fill: #111; text-decoration: underline; }
     .axis-mobile-list { display: none; margin: 12px 0 14px; }
     .axis-mobile-item {
       background: none; border: 0; color: #666; cursor: pointer;
@@ -152,6 +166,9 @@
       letter-spacing: 0.08em; padding: 2px 0; text-align: left;
     }
     .axis-mobile-item:hover { color: #111; text-decoration: underline; }
+    .axis-mobile-item.active { color: #111; text-decoration: underline; }
+    .plane-item-main { color: #555; }
+    .plane-item-sub { display: block; color: #999; font-size: 8px; margin-top: 1px; }
 
     /* ── top UI bar ── */
     #ui {
@@ -236,6 +253,10 @@
     @media (max-width: 640px) {
       #c, #tags, #hint { display: none; }
       #mobile-grid     { display: flex; }
+      body.panel-open #c,
+      body.panel-open #tags,
+      body.panel-open.panel-expanded #c,
+      body.panel-open.panel-expanded #tags { width: 100vw; }
       body.panel-open #panel { width: 100%; }
       body.panel-open #panel.expanded { width: 100%; }
       #panel-shell { display: block; }
@@ -383,7 +404,6 @@ const isMobile = window.innerWidth <= 640;
 const canvas  = document.getElementById('c');
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
 renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
-renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 1.1;
 renderer.shadowMap.enabled = true;
@@ -405,6 +425,7 @@ controls.dampingFactor = 0.06;
 controls.enableZoom = false;
 controls.enablePan = false;
 controls.autoRotate = false;
+updateViewportSize();
 
 // Lights (brighter for white bg)
 scene.add(new THREE.AmbientLight(0xffffff, 0.5));
@@ -427,6 +448,9 @@ const cubeGroup = new THREE.Group();
 scene.add(cubeGroup);
 cubeGroup.position.set(0, 0, 0);
 let cubeBaseX = 0;
+
+const axisGuideGroup = new THREE.Group();
+scene.add(axisGuideGroup);
 
 const pieceMeshes = [];
 const DEBUG_ROTATION = false;
@@ -695,11 +719,12 @@ let hoveredMesh = null;
 
 function screenPos(mesh) {
   const v = new THREE.Vector3();
+  const rect = viewportRect();
   mesh.getWorldPosition(v);
   v.project(camera);
   return {
-    x: (v.x + 1) / 2 * window.innerWidth,
-    y: (1 - v.y) / 2 * window.innerHeight,
+    x: rect.left + (v.x + 1) / 2 * rect.width,
+    y: rect.top + (1 - v.y) / 2 * rect.height,
     behind: v.z > 1,
   };
 }
@@ -800,10 +825,29 @@ let highlightedMesh = null;
 let cameraTween = null;
 let cubeFocusTween = null;
 let highlightMode = null;
+let activePlaneSelection = null;
 const discoveryLog = [];
 
-function getPanelTargetX() {
-  return panel.classList.contains('expanded') ? -1.05 : -0.58;
+function viewportRect() {
+  return canvas.getBoundingClientRect();
+}
+
+function updateViewportSize() {
+  const rect = viewportRect();
+  const width = Math.max(1, Math.round(rect.width || window.innerWidth));
+  const height = Math.max(1, Math.round(rect.height || window.innerHeight));
+  camera.aspect = width / height;
+  camera.zoom = isMobile ? 1 : Math.min(1, Math.max(0.42, width / 760));
+  camera.updateProjectionMatrix();
+  renderer.setSize(width, height, false);
+}
+
+const viewportObserver = new ResizeObserver(updateViewportSize);
+viewportObserver.observe(canvas);
+
+function scheduleViewportUpdate() {
+  requestAnimationFrame(updateViewportSize);
+  setTimeout(updateViewportSize, 460);
 }
 
 function getPieceMeshById(id) {
@@ -916,13 +960,13 @@ function renderAxisRadial(pd) {
   const cx = 92, cy = 96;
   const entries = axisEntries(pd);
   const targets = entries.map(entry => `
-    <g class="axis-radial-target" data-plane-axis="${entry.axis}" data-plane-idx="${entry.idx}" tabindex="0" role="button" aria-label="View all ${escapeHTML(entry.label)} objects">
-      <line class="axis-radial-line" x1="${cx}" y1="${cy}" x2="${entry.x2}" y2="${entry.y2}"></line>
-      <text class="axis-radial-label" x="${entry.x2}" y="${entry.y2 + entry.dy}" text-anchor="${entry.anchor}">${escapeHTML(entry.label)}</text>
+    <g class="axis-radial-target${activePlaneSelection?.axis === entry.axis && activePlaneSelection?.idx === entry.idx ? ' active' : ''}" data-plane-axis="${entry.axis}" data-plane-idx="${entry.idx}" tabindex="0" role="button" aria-label="View all ${escapeHTML(entry.label)} objects">
+      <line class="axis-radial-line" data-plane-axis="${entry.axis}" data-plane-idx="${entry.idx}" x1="${cx}" y1="${cy}" x2="${entry.x2}" y2="${entry.y2}"></line>
+      <text class="axis-radial-label" data-plane-axis="${entry.axis}" data-plane-idx="${entry.idx}" x="${entry.x2}" y="${entry.y2 + entry.dy}" text-anchor="${entry.anchor}">${escapeHTML(entry.label)}</text>
     </g>
   `).join('');
   const mobile = entries.map((entry, idx) => `
-    <button class="axis-mobile-item" style="padding-left:${idx * 12}px" data-plane-axis="${entry.axis}" data-plane-idx="${entry.idx}">${idx === 0 ? '' : '· '}${escapeHTML(entry.label)}</button>
+    <button class="axis-mobile-item${activePlaneSelection?.axis === entry.axis && activePlaneSelection?.idx === entry.idx ? ' active' : ''}" style="padding-left:${idx * 12}px" data-plane-axis="${entry.axis}" data-plane-idx="${entry.idx}">${idx === 0 ? '' : '· '}${escapeHTML(entry.label)}</button>
   `).join('');
   return `
     <svg class="axis-radial" viewBox="0 0 280 200" aria-label="Solved coordinate axes">
@@ -954,6 +998,8 @@ function setHighlightedMesh(mesh) {
 
 function clearPlaneHighlight() {
   highlightMode = null;
+  activePlaneSelection = null;
+  clearAxisGuide();
   for (const mesh of pieceMeshes) {
     if (mesh.userData.highlightOffset) {
       mesh.position.sub(mesh.userData.highlightOffset);
@@ -980,25 +1026,94 @@ function setMeshHighlightState(mesh, state) {
   });
 }
 
+function clearAxisGuide() {
+  while (axisGuideGroup.children.length) {
+    const child = axisGuideGroup.children.pop();
+    child.geometry?.dispose();
+    child.material?.dispose();
+  }
+}
+
+function rodBetween(start, end, radius, material) {
+  const direction = end.clone().sub(start);
+  const length = direction.length();
+  const geometry = new THREE.CylinderGeometry(radius, radius, length, 12);
+  const mesh = new THREE.Mesh(geometry, material);
+  mesh.position.copy(start).addScaledVector(direction, 0.5);
+  mesh.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), direction.normalize());
+  mesh.renderOrder = 8;
+  return mesh;
+}
+
+function showAxisGuide(axis, idx) {
+  clearAxisGuide();
+  const material = new THREE.MeshBasicMaterial({
+    color: 0x111111,
+    transparent: true,
+    opacity: 0.82,
+    depthTest: false,
+  });
+  const start = new THREE.Vector3(-1.82, -1.82, -1.82);
+  const end = new THREE.Vector3(-1.82, -1.82, -1.82);
+  const tick = new THREE.Vector3(-1.82, -1.82, -1.82);
+  if (axis === 'gx') {
+    start.set(-1.85, -1.82, -1.82);
+    end.set(1.85, -1.82, -1.82);
+    tick.x = XC[idx];
+  } else if (axis === 'gy') {
+    start.set(-1.82, -1.85, -1.82);
+    end.set(-1.82, 1.85, -1.82);
+    tick.y = YC[idx];
+  } else {
+    start.set(-1.82, -1.82, -1.85);
+    end.set(-1.82, -1.82, 1.85);
+    tick.z = ZC[idx];
+  }
+  axisGuideGroup.add(rodBetween(start, end, 0.012, material));
+  const tickGeometry = new THREE.SphereGeometry(0.055, 16, 16);
+  const tickMesh = new THREE.Mesh(tickGeometry, material.clone());
+  tickMesh.position.copy(tick);
+  tickMesh.renderOrder = 9;
+  axisGuideGroup.add(tickMesh);
+}
+
+function planeOffset(axis, idx) {
+  const sign = idx === 0 ? -1 : 1;
+  const distance = idx === 1 ? 0.24 : 0.32;
+  const offset = new THREE.Vector3();
+  if (axis === 'gx') offset.x = sign * distance;
+  if (axis === 'gy') offset.y = sign * distance;
+  if (axis === 'gz') offset.z = sign * distance;
+  return offset;
+}
+
 function highlightPlane(axis, idx) {
   if (!solved) return;
   clearPlaneHighlight();
+  activePlaneSelection = { axis, idx };
   highlightMode = { type: 'plane', axis, idx };
+  const selectedOffset = planeOffset(axis, idx);
+  showAxisGuide(axis, idx);
   for (const mesh of pieceMeshes) {
     const inPlane = mesh.userData[axis] === idx;
     setMeshHighlightState(mesh, {
-      opacity: inPlane ? 1 : 0.30,
-      offset: null,
-      edgeColor: inPlane ? 0xffffff : 0x111111,
-      edgeOpacity: inPlane ? 1 : 0.18,
+      opacity: inPlane ? 1 : 0.18,
+      offset: inPlane ? selectedOffset.clone() : null,
+      edgeColor: 0x111111,
+      edgeOpacity: inPlane ? 1 : 0.12,
       edgeWidth: inPlane ? 2 : 1,
     });
+  }
+  if (activeMesh) {
+    buildPanelDirectory(activeMesh.userData.pd.id);
+    renderRegistryCard(activeMesh.userData.pd);
   }
 }
 
 function highlightRelatedPlanes(mesh) {
   if (!solved || !mesh) return;
   clearPlaneHighlight();
+  activePlaneSelection = null;
   const { gx, gy, gz } = mesh.userData;
   highlightMode = { type: 'related', gx, gy, gz };
   for (const candidate of pieceMeshes) {
@@ -1068,7 +1183,8 @@ function renderRegistryCard(pd) {
     </article>
   `;
   panelBody.querySelectorAll('[data-plane-axis]').forEach(button => {
-    button.addEventListener('click', () => {
+    button.addEventListener('click', e => {
+      e.stopPropagation();
       highlightPlane(button.dataset.planeAxis, Number(button.dataset.planeIdx));
     });
     button.addEventListener('keydown', e => {
@@ -1098,22 +1214,8 @@ function focusCameraOnMesh(mesh) {
   if (!mesh) return;
   if (cameraTween) cancelAnimationFrame(cameraTween);
   if (cubeFocusTween) cancelAnimationFrame(cubeFocusTween);
-
-  const fromTarget = controls.target.clone();
-  const fromBaseX = cubeBaseX;
-  const toTarget = new THREE.Vector3(getPanelTargetX(), 0, 0);
-  const t0 = performance.now();
-  const dur = 820;
-
-  function targetStep(now) {
-    const p = Math.min((now - t0) / dur, 1);
-    const e = p < 0.5 ? 2*p*p : 1 - Math.pow(-2*p + 2, 2) / 2;
-    controls.target.lerpVectors(fromTarget, toTarget, e);
-    cubeBaseX = THREE.MathUtils.lerp(fromBaseX, toTarget.x, e);
-    if (p < 1) cameraTween = requestAnimationFrame(targetStep);
-    else cameraTween = null;
-  }
-  cameraTween = requestAnimationFrame(targetStep);
+  controls.target.set(0, 0, 0);
+  cubeBaseX = 0;
 
   const { gx, gy, gz } = mesh.userData;
   const fromRotation = {
@@ -1217,49 +1319,68 @@ function buildPanelDirectory(activeId) {
   const activePiece = PIECES_DATA.find(piece => piece.id === activeId);
   const intro = document.createElement('div');
   intro.className = 'panel-nav-note';
-  intro.textContent = activePiece
-    ? `${objectNo(activePiece)} resolves through three planes. Use the radial labels in the card, or open another object.`
-    : 'Solved map. Open an object to read its three planes.';
+  intro.textContent = activePlaneSelection
+    ? `${AXIS_TAXONOMY[
+        activePlaneSelection.axis === 'gx' ? 'stance' :
+        activePlaneSelection.axis === 'gy' ? 'knowledge' : 'domain'
+      ][activePlaneSelection.idx]} — 9 objects`
+    : (activePiece
+      ? `${objectNo(activePiece)} resolves through three planes. Use the radial labels to show one plane.`
+      : 'Solved map. Open an object to read its three planes.');
   panelNav.appendChild(intro);
 
-  const objectMenu = document.createElement('details');
-  objectMenu.className = 'panel-axis-menu';
-  const objectSummary = document.createElement('summary');
-  objectSummary.textContent = 'OBJECT DRAWER';
-  objectMenu.appendChild(objectSummary);
-
-  const objectOptions = document.createElement('div');
-  objectOptions.className = 'panel-axis-options';
-  for (const piece of PIECES_DATA.filter(p => !p.hidden).sort(coordinateSort)) {
-    const item = document.createElement('button');
-    item.className = `panel-nav-item${piece.id === activeId ? ' active' : ''}`;
-    item.type = 'button';
-    item.dataset.pieceId = piece.id;
-    const field = fieldNo(piece);
-    item.innerHTML = `${field ? `<span class="field-no">${field}</span> · ` : ''}${objectNo(piece)} · ${semanticTriplet(piece).join(' · ')}`;
-    item.addEventListener('click', () => {
-      const mesh = getPieceMeshById(piece.id);
-      if (mesh) openPanel(mesh);
-    });
-    objectOptions.appendChild(item);
+  if (activePlaneSelection) {
+    const section = document.createElement('div');
+    section.className = 'panel-nav-section';
+    PIECES_DATA
+      .filter(piece =>
+        (!piece.hidden || (solved && piece.id === 'E-05')) &&
+        piece[activePlaneSelection.axis] === activePlaneSelection.idx
+      )
+      .sort(coordinateSort)
+      .forEach(piece => {
+        const item = document.createElement('button');
+        item.className = `panel-nav-item${piece.id === activeId ? ' active' : ''}`;
+        item.type = 'button';
+        item.dataset.pieceId = piece.id;
+        const meta = REGISTRY_META[piece.id] || {};
+        const field = fieldNo(piece);
+        item.innerHTML = `
+          <span class="plane-item-main">${field ? `${field} · ` : ''}${objectNo(piece)}</span>
+          <span class="plane-item-sub">${escapeHTML(meta.hook || piece.title)}</span>
+        `;
+        item.addEventListener('click', () => {
+          const mesh = getPieceMeshById(piece.id);
+          if (mesh) openPanel(mesh, { preservePlane: true });
+        });
+        section.appendChild(item);
+      });
+    panelNav.appendChild(section);
+    return;
   }
-  objectMenu.appendChild(objectOptions);
-  panelNav.appendChild(objectMenu);
 }
 
-function openPanel(mesh) {
+function openPanel(mesh, options = {}) {
   const { pd } = mesh.userData;
   if (pd.hidden && !(solved && pd.id === 'E-05')) return;
+  const preservedPlane = options.preservePlane && activePlaneSelection
+    ? { ...activePlaneSelection }
+    : null;
+  if (solved && !preservedPlane) activePlaneSelection = null;
   recordDiscovery(pd);
   renderRegistryCard(pd);
   panelLinks.innerHTML   = pd.links ? pd.links.map(l =>
     `<a class="panel-link" href="${l.url}" target="_blank">${l.label}</a>`
   ).join('') : '';
   document.body.classList.add('panel-open');
+  scheduleViewportUpdate();
   activeMesh = mesh;
   setHighlightedMesh(mesh);
   buildPanelDirectory(pd.id);
-  if (solved) highlightRelatedPlanes(mesh);
+  if (solved) {
+    if (preservedPlane) highlightPlane(preservedPlane.axis, preservedPlane.idx);
+    else highlightRelatedPlanes(mesh);
+  }
   focusCameraOnMesh(mesh);
 }
 
@@ -1273,17 +1394,22 @@ function closePanel() {
     cubeFocusTween = null;
   }
   document.body.classList.remove('panel-open');
+  document.body.classList.remove('panel-expanded');
+  panel.classList.remove('expanded');
+  document.getElementById('panel-expand').textContent = 'expand';
+  scheduleViewportUpdate();
   activeMesh = null;
   setHighlightedMesh(null);
   clearPlaneHighlight();
   tweenCubeRotationToNeutral();
-  tweenTarget(0);
 }
 
 document.getElementById('panel-close').addEventListener('click', closePanel);
 document.getElementById('panel-expand').addEventListener('click', () => {
   panel.classList.toggle('expanded');
+  document.body.classList.toggle('panel-expanded', panel.classList.contains('expanded'));
   document.getElementById('panel-expand').textContent = panel.classList.contains('expanded') ? 'shrink' : 'expand';
+  scheduleViewportUpdate();
   if (activeMesh) focusCameraOnMesh(activeMesh);
 });
 
