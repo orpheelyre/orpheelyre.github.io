@@ -409,10 +409,11 @@
       font-size: 9px; opacity: 0.22; pointer-events: none; white-space: nowrap;
     }
     .tn-dev-time {
+      position:absolute; right:6px; top:26px; z-index:300; width:max-content;
       display:none; align-items:center; gap:5px; flex-shrink:0;
       font-size:9px; opacity:.92;
-      background: color-mix(in srgb, var(--pop) 96%, transparent);
-      border: 1px solid var(--grid-fog); padding:5px 7px;
+      background: color-mix(in srgb, var(--pop) 98%, transparent);
+      border: 1px solid var(--bd); padding:5px 7px;
     }
     .tn-dev-time.open { display:flex; }
     .tn-dev-time input { width:80px; accent-color: var(--fg); }
@@ -764,6 +765,8 @@ const T = {
       ice_plant:'Dry stone supports a succulent coastal mat.',
       shrub:'Native shrub growth is beginning to anchor the surface.',
       tree:'A later successional tree is stabilising deeper time.',
+      willow:'A planted willow; will not change further from here.',
+      ornamental:'A garden remnant; this species holds its form and will not succeed further.',
       gorse:'Invasive gorse is blocking native succession.',
       rabbit_hole:'Rabbit disturbance has cut a new tunnel through the surface.',
       artifact:'An artifact has moved into visibility.',
@@ -927,6 +930,8 @@ const T = {
       ice_plant:'干石面上形成了海岸型肉质植物垫。',
       shrub:'原生灌木开始锚定表层。',
       tree:'后期乔木把更深的时间稳定下来。',
+      willow:'种植的垂柳；从这里开始不再演替。',
+      ornamental:'花园遗留植物；维持当前形态，不会进一步演替。',
       gorse:'入侵金雀花正在阻断原生演替。',
       rabbit_hole:'兔子扰动在表面下切出新的通道。',
       artifact:'一件物被扰动推到了可见层。',
@@ -1381,7 +1386,20 @@ function observedSurfaceLabel(ch,surf,gen,cell){
 }
 function observedSurfaceDesc(ch,surf,gen,cell){
   if(isArtificialSurfaceClue(ch,surf,gen)&&!hasSubsurfaceEvidence(cell))return clueDesc(ch);
-  return gen.isRuins&&surf==='ruins'?ruinSurfaceDesc(ch):(T[LANG.cur].surface_desc?.[surf]||T.en.surface_desc?.[surf]||observedSurfaceLabel(ch,surf,gen,cell));
+  const base=gen.isRuins&&surf==='ruins'?ruinSurfaceDesc(ch):(T[LANG.cur].surface_desc?.[surf]||T.en.surface_desc?.[surf]||observedSurfaceLabel(ch,surf,gen,cell));
+  if(cell.species||cell.origin){
+    const s=SUCC[surf];
+    if(s&&s.next&&s.ticks>0){
+      const done=cell.daysActive||0;const rem=Math.max(0,s.ticks-done);
+      const growNote=LANG.cur==='zh'
+        ?`已种植。还需约 ${rem} tick（${rem*TICK_H}h）长成${tl('surface_lbl',s.next)}。`
+        :`Planted. ~${rem} tick${rem===1?'':'s'} (${rem*TICK_H}h) until ${tl('surface_lbl',s.next)}.`;
+      return `${base} ${growNote}`;
+    }
+    const termNote=LANG.cur==='zh'?'已种植；此为终态，不再演替。':'Planted; this is the final form — no further succession.';
+    return `${base} ${termNote}`;
+  }
+  return base;
 }
 function observedContextLine(cell,gen){
   if(!hasSubsurfaceEvidence(cell))return t('interpretation_pending');
@@ -1645,7 +1663,11 @@ function advanceCell(x,y,ticks){
   }
   const newStab=Math.min(1,(cell.stability||genCell(x,y).baseStab)+(s?.stab||0)*ticks);
   coverSurface(x,y,newSurf,{daysActive:days,stability:newStab});
-  if(newSurf!==cell.surface)addRecentLayer(x,y,SURF_CHAR[newSurf]||'.',newSurf);
+  if(newSurf!==cell.surface){
+    addRecentLayer(x,y,SURF_CHAR[newSurf]||'.',newSurf);
+    const canopyR=(newSurf==='tree'||newSurf==='willow')?3:newSurf==='shrub'?2:0;
+    if(canopyR>0)for(let dy=-canopyR;dy<=canopyR;dy++)for(let dx=-canopyR;dx<=canopyR;dx++){if(dx*dx+dy*dy<=canopyR*canopyR)reveal(x+dx,y+dy);}
+  }
 }
 function applyTime(){
   resetDailyResources();
@@ -2299,6 +2321,21 @@ function doObserve(x,y){
   obsEl.innerHTML=`<div class="tn-obs-head"><span><span class="tn-obs-sym">${ch}</span>${label}</span><span style="opacity:.45;font-weight:400">${x},${y}</span></div><div class="tn-obs-body">${desc}<br>${observedContextLine(cell,gen)} · ${stabLbl} ${stabPct}%</div>`;
   obsEl.classList.remove('hidden');
   document.getElementById('tn-observe').classList.add('hidden');
+  if(surf==='water'){
+    const q=[[x,y,0]],vis=new Set([ck(x,y)]);
+    while(q.length){
+      const[cx,cy,d]=q.shift();
+      reveal(cx,cy);
+      if(d>=5)continue;
+      for(const[nx,ny]of[[cx-1,cy],[cx+1,cy],[cx,cy-1],[cx,cy+1]]){
+        const nk=ck(nx,ny);
+        if(vis.has(nk)||nx<0||nx>=GRID_W||ny<0||ny>=GRID_H)continue;
+        const ng=genCell(nx,ny);
+        if(getCell(nx,ny).surface==='water'||ng.hasWetClay||ng.hasCavity){vis.add(nk);q.push([nx,ny,d+1]);}
+      }
+    }
+    renderGrid();saveLocal();
+  }
   renderSymbolGuide();
 }
 
@@ -2347,7 +2384,7 @@ function doTrowel(x,y){
     coverSurface(x,y,'dry',{daysActive:0,stability:Math.min(1,(cell.stability||gen.baseStab)+.08)});
     markPlayerCell(x,y,'trowel');
     logEvent('trowel',`rabbit hole filled @ ${x},${y}`);
-    showToast('Rabbit hole filled.');
+    showToast(LANG.cur==='zh'?'兔子洞已填平。':'Rabbit hole filled.');
     renderGrid();renderStatus();saveLocal();return;
   }
   if(cell.surface==='gorse'){
@@ -2355,7 +2392,7 @@ function doTrowel(x,y){
     coverSurface(x,y,'dry',{daysActive:0});
     markPlayerCell(x,y,'clear');
     logEvent('clear',`gorse cleared @ ${x},${y}`);
-    showToast('Gorse cleared.');
+    showToast(LANG.cur==='zh'?'金雀花已清除。':'Gorse cleared.');
     renderGrid();renderStatus();saveLocal();return;
   }
   if(cell.surface==='artifact'){
@@ -2397,10 +2434,18 @@ function doTrowel(x,y){
   }else if(layer?.type==='drain_blocked'){
     coverSurface(x,y,'dry',{excavatedDepth:-depth,drainCleared:true,stability:Math.min(1,(cell.stability||gen.baseStab)+.05)});
     logEvent('trowel',`blocked drain cleared @ ${x},${y}`);
-    showToast('Blocked drain cleared.');
+    showToast(LANG.cur==='zh'?'堵塞暗渠已疏通。':'Blocked drain cleared.');
   }else if(layer?.type==='dissolution_cavity'){spreadWaterB(x,y);setCell(x,y,{excavatedDepth:-depth});showToast(t('water_b'));}
   else if(layer?.type==='heavy_clay_wet'){spreadWaterA(x,y);setCell(x,y,{excavatedDepth:-depth});showToast(t('water_a'));}
-  else{setCell(x,y,{excavatedDepth:-depth});showToast(t('trowel_dug',depth));}
+  else{
+    const patch={excavatedDepth:-depth};
+    const falseAlarm=gen.hasAnomaly&&!gen.hasArt&&!gen.hasSeed&&-depth>=3&&cell.gprAnomaly==='confirmed';
+    if(falseAlarm)patch.gprAnomaly=null;
+    setCell(x,y,patch);
+    showToast(falseAlarm
+      ?(LANG.cur==='zh'?'探地雷达误报：致密回填层，无可挖出物。':'GPR false alarm: dense fill. No collectible find.')
+      :t('trowel_dug',depth));
+  }
   showProfile(x,y);renderGrid();renderInv();saveLocal();
 }
 
@@ -2456,7 +2501,7 @@ function doPlant(x,y){
   coverSurface(x,y,plantedSurface,{daysActive:0,species:seed.species||'native',origin:seed.origin||'unknown'});
   markPlayerCell(x,y,'plant');
   addRecentLayer(x,y,SURF_CHAR[plantedSurface]||'n',plantedSurface);
-  showToast(`Planted ${seed.name||seed.species||'native shrub'}.`);
+  showToast(LANG.cur==='zh'?`已种植：${seed.name||seed.species||'原生灌木'}。`:`Planted ${seed.name||seed.species||'native shrub'}.`);
   renderGrid();renderInv();renderStatus();saveLocal();
 }
 function doPlantFood(x,y){
@@ -2682,10 +2727,10 @@ function showProfile(x,y){
     const ldrCls=(cell.lidarScanned&&!rev)?' ldr':'';
     return`<div class="tn-sr${!rev?' tn-dim':''}"><span class="tn-sd">[${s.depth}]</span><span class="tn-sc">${rev?s.char:''}</span><span class="tn-sl${artCls}${ldrCls}">${label}${cell.lidarScanned&&!rev?' <i>LiDAR</i>':''}</span></div>`;
   }).join('');
-  const gprN=cell.gprAnomaly==='confirmed'?`<div class="tn-pnote anom">GPR: ANOMALY CONFIRMED</div>`:cell.gprAnomaly==='clear'?`<div class="tn-pnote">GPR: clear</div>`:'';
+  const gprN=cell.gprAnomaly==='confirmed'?`<div class="tn-pnote anom">${LANG.cur==='zh'?'探地雷达：异常确认':'GPR: ANOMALY CONFIRMED'}</div>`:cell.gprAnomaly==='clear'?`<div class="tn-pnote">${LANG.cur==='zh'?'探地雷达：无异常':'GPR: clear'}</div>`:'';
   const buriedN=cell.buriedRuin?.known?`<div class="tn-pnote">${LANG.cur==='zh'?'覆盖下硬痕':'buried hard trace'}: ${clueLabel(cell.buriedRuin.char||gen.initialChar)}</div>`:'';
   const signN=S.signs[ck(x,y)]?`<div class="tn-pnote">|T| "${S.signs[ck(x,y)].text}"</div>`:'';
-  const vcN=cell.visitCount?`<div class="tn-pnote">${cell.visitCount} visitor contact${cell.visitCount>1?'s':''}</div>`:'';
+  const vcN=cell.visitCount?`<div class="tn-pnote">${LANG.cur==='zh'?`访客接触 ${cell.visitCount} 次`:`${cell.visitCount} visitor contact${cell.visitCount>1?'s':''}`}</div>`:'';
   document.getElementById('tn-profile-title').textContent=t('profile');
   document.getElementById('tn-profile-xy').textContent=`${x}, ${y}`;
   document.getElementById('tn-profile-body').innerHTML=`
@@ -2889,7 +2934,7 @@ function bindUI(){
     showToast(t('relieve_prompt'));
   });
   document.getElementById('tn-access-btn').addEventListener('click',()=>{
-    if(isAuth()&&!DEV_MODE){sessionStorage.removeItem('tn_auth_hash');renderStatus();showToast('Access cleared.');return;}
+    if(isAuth()&&!DEV_MODE){sessionStorage.removeItem('tn_auth_hash');renderStatus();showToast(LANG.cur==='zh'?'已退出授权。':'Access cleared.');return;}
     document.getElementById('tn-legend').classList.add('hidden');
     document.getElementById('tn-notebook').classList.add('hidden');
     document.getElementById('tn-pw').classList.remove('hidden');
