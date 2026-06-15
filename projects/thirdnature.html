@@ -662,10 +662,10 @@ const T = {
     tool_desc_gpr:     `Scan for subsurface anomalies in radius ${GPR_RAD}. Cost: ${GPR_COST} energy. Tap scan centre.`,
     tool_desc_lidar:   `Reveal fog of war in radius ${LIDAR_RAD}. No energy cost. Once per 7 days.`,
     tool_desc_harvest: 'Tap a plant or water cell to harvest it.',
-    tool_desc_plant:   'Tap a dry or cracked cell to plant a seed.',
+    tool_desc_plant:   'Tap a dry or open cell to plant a seed.',
     tool_desc_graft:   'Extract a plant and apply it to compatible ground. Two steps. Cost: 2 energy.',
     tool_desc_relieve: 'Choose a cell to deposit a toilet trace. Adds nitrogen — something may grow.',
-    plant_prompt:'PLANT: tap a dry/cracked cell.',
+    plant_prompt:'PLANT: tap a dry/open cell.',
     relieve_prompt:'RELIEVE: tap a cell to pee.',
     probe_prompt: m => `Probe set to ${m} m.\nTap a revealed cell.`,
     probe_empty: 'No probe uses left today.',
@@ -825,10 +825,10 @@ const T = {
     tool_desc_gpr:     `在半径 ${GPR_RAD} 范围内扫描地下异常。消耗 ${GPR_COST} 行动力。点击扫描中心。`,
     tool_desc_lidar:   `在半径 ${LIDAR_RAD} 范围内揭露迷雾。无行动力消耗。每 7 天一次。`,
     tool_desc_harvest: '点击植物或积水格进行收获。',
-    tool_desc_plant:   '点击干土或裂缝格种植种子。',
+    tool_desc_plant:   '点击干土或裸地格种植种子。',
     tool_desc_graft:   '提取植物，移植到相容地表。两步操作。消耗 2 行动力。',
     tool_desc_relieve: '选择格子如厕，留下氮沉积——也许会有什么生长。',
-    plant_prompt:'种植：点击干土/裂缝格。',
+    plant_prompt:'种植：点击干土/裸地格。',
     relieve_prompt:'如厕：点击一个格子。',
     probe_prompt: m => `探杆下放 ${m} 米。\n点击已探索格。`,
     probe_empty: '今日探杆次数已用尽。',
@@ -2448,7 +2448,7 @@ function doHarvest(x,y){
 
 function doPlant(x,y){
   const cell=getCell(x,y);
-  if(!['dry','cracked','open'].includes(cell.surface)){showToast('Plant needs dry/cracked soil.');return;}
+  if(!['dry','open'].includes(cell.surface)){showToast(LANG.cur==='zh'?'种植需要干燥裸土。':'Plant needs dry/open soil.');return;}
   if(!S.inventory.seeds.length){showToast(t('plant_none'));return;}
   if(!useEnergy())return;
   const seed=S.inventory.seeds.pop();
