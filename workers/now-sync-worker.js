@@ -2,8 +2,9 @@
  * now-sync-worker.js
  * Cloudflare Worker endpoint for now.live/devlog writes.
  *
- * Frontend sends: { password, data, source }
- * Worker validates password and commits `data` to GitHub file.
+ * Frontend sends: { password, data, source } for now.live or
+ * { hash, data, source: "nature"|"nature.auth" } for third nature.
+ * Worker validates credentials and commits `data` to the configured GitHub file.
  */
 
 function encodePathSegments(path) {
@@ -42,11 +43,16 @@ function toBase64Utf8(text) {
   return btoa(binary);
 }
 
-async function commitToGithub(env, data) {
+function githubPathForSource(env, source) {
+  if (source === 'nature') return String(env.NATURE_FILE_PATH || 'assets/nature/state.json').trim();
+  return String(env.NOW_FILE_PATH || 'assets/now/now.live.json').trim();
+}
+
+async function commitToGithub(env, data, source = 'now.live') {
   const owner = String(env.GITHUB_OWNER || '').trim();
   const repo = String(env.GITHUB_REPO || '').trim();
   const branch = String(env.GITHUB_BRANCH || 'main').trim() || 'main';
-  const path = String(env.NOW_FILE_PATH || 'assets/now/now.live.json').trim();
+  const path = githubPathForSource(env, source);
   const token = String(env.GITHUB_TOKEN || '').trim();
 
   if (!owner || !repo || !path || !token) {
@@ -72,7 +78,7 @@ async function commitToGithub(env, data) {
 
   const content = JSON.stringify(data, null, 2) + '\n';
   const payload = {
-    message: `Update now.live ${new Date().toISOString()}`,
+    message: `Update ${source === 'nature' ? 'third nature' : 'now.live'} ${new Date().toISOString()}`,
     content: toBase64Utf8(content),
     branch,
   };
@@ -114,10 +120,23 @@ export default {
       return json({ ok: false, error: 'Invalid JSON body.' }, 400, corsOrigin);
     }
 
-    const password = String(body?.password || '').trim();
-    const expected = String(env.ADMIN_PASSWORD || '').trim();
-    if (!expected || password !== expected) {
-      return json({ ok: false, error: 'Admin password is incorrect.' }, 401, corsOrigin);
+    const source = String(body?.source || 'now.live').trim();
+
+    if (source === 'nature' || source === 'nature.auth') {
+      const hash = String(body?.hash || '').trim().toLowerCase();
+      const expectedHash = String(env.NATURE_EDIT_HASH || '').trim().toLowerCase();
+      if (!expectedHash || hash !== expectedHash) {
+        return json({ ok: false, error: 'Field access hash is incorrect.' }, 401, corsOrigin);
+      }
+      if (source === 'nature.auth') {
+        return json({ ok: true }, 200, corsOrigin);
+      }
+    } else {
+      const password = String(body?.password || '').trim();
+      const expected = String(env.ADMIN_PASSWORD || '').trim();
+      if (!expected || password !== expected) {
+        return json({ ok: false, error: 'Admin password is incorrect.' }, 401, corsOrigin);
+      }
     }
 
     const data = body?.data;
@@ -126,7 +145,7 @@ export default {
     }
 
     try {
-      await commitToGithub(env, data);
+      await commitToGithub(env, data, source);
       return json({ ok: true, data }, 200, corsOrigin);
     } catch (err) {
       return json({ ok: false, error: String(err?.message || err) }, 500, corsOrigin);

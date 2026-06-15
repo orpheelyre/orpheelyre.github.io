@@ -88,6 +88,15 @@ const SITE = {
     pollMs: 15000,
   },
 
+  // ── The Third Nature (ecological succession game) ────────────
+  thirdNature: {
+    title:   "the third nature.sys",
+    file:    "projects/thirdnature.html?v=thirdnature-17",
+    // Shared game state (visitors read; authorized edits write via Worker)
+    stateUrl: "https://raw.githubusercontent.com/orpheelyre/orpheelyre.github.io/main/assets/nature/state.json",
+    writeUrl: "https://dark-credit-f2c8.erljuzz.workers.dev",
+  },
+
   // ── Social / external links (rendered as desktop icons) ─────────
   social: [
     { id: "instagram", label: "Instagram", url: "https://www.instagram.com/42inchestomars/",   icon: "camera"    },
@@ -286,3 +295,5 @@ const SITE = {
     // { date: "Apr 2026", text: "example note" },
   ],
 };
+
+window.SITE = SITE;

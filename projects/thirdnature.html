@@ -1,0 +1,2497 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>the third nature.sys</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg:       #ffffff;
+      --fg:       #1a1a1a;
+      --bd:       #1a1a1a;
+      --void:     transparent;
+      --voidfg:   rgba(0,0,0,0.18);
+      --bar:      #ffffff;
+      --pop:      #ffffff;
+      --grid-line: rgba(0,0,0,0.055);
+      --grid-fog:  rgba(0,0,0,0.12);
+      --zone-ruin: rgba(0,0,0,0.025);
+      --zone-slope: rgba(90,70,35,0.035);
+      --zone-garden: rgba(20,90,20,0.025);
+      --zone-field: rgba(90,70,20,0.020);
+      --c-water:  #1a44bb;
+      --c-grass:  #86ad49;
+      --c-lichen: #a9b84a;
+      --c-moss:   #7fa33d;
+      --c-succ:   #4b9653;
+      --c-fungi:  #8a4a8a;
+      --c-shrub:  #2f6e32;
+      --c-gorse:  #8a6a00;
+      --c-tree:   #0a3a0a;
+      --c-willow: #1a5a3a;
+      --c-ruin:   #1a1a1a;
+      --c-soil:   #8a6a43;
+      --c-soil2:  #6f5842;
+      --c-anom:   #aa1a1a;
+      --c-lidar:  #1a5a88;
+      --cell-w:   32px;
+      --cell-h:   32px;
+    }
+    [data-theme="dark"] {
+      --bg:       #111008;
+      --fg:       #dedad2;
+      --bd:       #5a5852;
+      --void:     #1c1a13;
+      --voidfg:   #3a3830;
+      --bar:      #1c1a13;
+      --pop:      #161410;
+      --grid-line: rgba(222,218,210,0.08);
+      --grid-fog:  rgba(222,218,210,0.16);
+      --zone-ruin: rgba(222,218,210,0.035);
+      --zone-slope: rgba(220,170,70,0.05);
+      --zone-garden: rgba(60,190,90,0.035);
+      --zone-field: rgba(210,180,90,0.035);
+      --c-water:  #5588ee;
+      --c-grass:  #99cc66;
+      --c-lichen: #c4d46a;
+      --c-moss:   #99bb55;
+      --c-succ:   #66bb77;
+      --c-fungi:  #d67ad6;
+      --c-shrub:  #66bb44;
+      --c-gorse:  #ddaa00;
+      --c-tree:   #22aa22;
+      --c-willow: #44bb88;
+      --c-ruin:   #dedad2;
+      --c-soil:   #b08a5e;
+      --c-soil2:  #9a7a5a;
+      --c-anom:   #ee4444;
+      --c-lidar:  #44aadd;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body {
+      background: var(--bg); color: var(--fg);
+      font-family: 'Space Mono', monospace; font-size: 13px;
+      height: 100%; overflow: hidden;
+      -webkit-tap-highlight-color: transparent;
+    }
+    #tn-window {
+      display: flex; flex-direction: column;
+      height: 100svh; max-width: 480px; margin: 0 auto;
+      border-inline: 1px solid var(--grid-line);
+      position: relative; overflow: hidden;
+    }
+    #tn-titlebar {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 5px 10px; border-bottom: 2px solid var(--bd);
+      font-weight: 700; font-size: 11px; letter-spacing: 0.08em; flex-shrink: 0;
+    }
+    #tn-title-right { display: flex; gap: 5px; align-items: center; }
+    .tn-hbtn {
+      background: none; border: 1px solid var(--bd); color: var(--fg);
+      font-family: inherit; font-size: 10px; padding: 2px 5px; cursor: pointer; line-height: 1.4;
+    }
+    .tn-hbtn.bare { border-color: transparent; font-size: 13px; padding: 2px 3px; }
+    .tn-hbtn.top { height: 20px; padding: 1px 5px; font-size: 9px; letter-spacing: .06em; }
+    .tn-hbtn:hover { background: var(--fg); color: var(--bg); border-color: var(--fg); }
+    #tn-status {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 3px 10px; border-bottom: 1px solid var(--bd);
+      font-size: 10px; letter-spacing: 0.05em; flex-shrink: 0;
+      gap: 8px;
+    }
+    #tn-energy { font-weight: 700; letter-spacing: 0.1em; }
+    #tn-auth-badge { font-size: 9px; opacity: 0.55; }
+    #tn-grid-wrap {
+      flex: 1; display: flex; align-items: center; justify-content: center;
+      overflow: hidden; touch-action: none; min-height: 0; position: relative;
+      cursor: grab;
+      background:
+        radial-gradient(circle at 52% 45%, rgba(0,0,0,0.025), transparent 42%),
+        linear-gradient(135deg, transparent 0 48%, rgba(0,0,0,0.018) 49% 51%, transparent 52%);
+    }
+    #tn-grid-wrap.dragging { cursor: grabbing; }
+    #tn-grid {
+      display: grid; gap: 0; background: transparent;
+      border: 0; outline: none;
+    }
+    .tn-cell {
+      display: flex; align-items: center; justify-content: center;
+      width: var(--cell-w); height: var(--cell-h);
+      background: var(--bg); font-family: 'Space Mono', monospace;
+      font-size: 13px; cursor: pointer; user-select: none; position: relative;
+      color: var(--c-ruin); transition: background 0.06s;
+      appearance: none; -webkit-appearance: none; padding: 0;
+      border-top: 0; border-left: 0;
+      border-right: 1px solid var(--grid-line);
+      border-bottom: 1px solid var(--grid-line);
+      box-shadow: inset 1px 1px 0 var(--grid-line);
+    }
+    .tn-cell:hover, .tn-cell:active { background: var(--fg); color: var(--bg) !important; }
+    .tn-void {
+      background: transparent; color: transparent; cursor: default; font-size: 9px;
+      border-color: transparent;
+      box-shadow: none;
+    }
+    .tn-fog {
+      border-right: 1px dashed var(--grid-fog);
+      border-bottom: 1px dashed var(--grid-fog);
+      box-shadow: inset 1px 1px 0 rgba(0,0,0,0.018);
+    }
+    .tn-open-right { border-right-color: transparent; }
+    .tn-open-bottom { border-bottom-color: transparent; }
+    .tn-void:hover, .tn-void:active { background: transparent; color: transparent; }
+    .tn-sm { font-size: 9px; letter-spacing: -0.5px; }
+    .tn-z-institutional_core, .tn-z-ward_wing, .tn-z-ancillary {
+      background: linear-gradient(135deg, var(--zone-ruin), transparent 58%), var(--bg);
+    }
+    .tn-z-slope_face { background: linear-gradient(135deg, transparent, var(--zone-slope)), var(--bg); }
+    .tn-z-formal_garden { background: radial-gradient(circle at 62% 38%, var(--zone-garden), transparent 52%), var(--bg); }
+    .tn-z-farm_field, .tn-z-native_remnant { background: linear-gradient(90deg, var(--zone-field), transparent), var(--bg); }
+    #tn-grid.targeting .tn-cell:not(.tn-void) { cursor: crosshair; }
+    #tn-grid.targeting .tn-cell:not(.tn-void):hover { background: var(--c-lidar); color: var(--bg) !important; }
+    .tn-c-water  { color: var(--c-water); }
+    .tn-c-grass  { color: var(--c-grass); }
+    .tn-c-lichen { color: var(--c-lichen); }
+    .tn-c-moss   { color: var(--c-moss); }
+    .tn-c-succ   { color: var(--c-succ); }
+    .tn-c-fungi  { color: var(--c-fungi); }
+    .tn-c-shrub  { color: var(--c-shrub); }
+    .tn-c-gorse  { color: var(--c-gorse); }
+    .tn-c-tree   { color: var(--c-tree); }
+    .tn-c-willow { color: var(--c-willow); }
+    .tn-c-soil   { color: var(--c-soil); }
+    .tn-c-soil2  { color: var(--c-soil2); }
+    .tn-c-anom   { color: var(--c-anom); }
+    .tn-c-lidar  { color: var(--c-lidar); }
+    .tn-gpr-mark { color: var(--c-anom) !important; }
+    .tn-lidar-mark { color: var(--c-lidar) !important; opacity: 0.65; }
+
+    @keyframes tn-on  { 0%,49%{opacity:1}50%,100%{opacity:0} }
+    @keyframes tn-off { 0%,49%{opacity:0}50%,100%{opacity:1} }
+    .tn-alt-a { animation: tn-on  3.1s step-end infinite; }
+    .tn-alt-b { position: absolute; animation: tn-off 3.1s step-end infinite; }
+    @keyframes tn-flash { 0%{opacity:0} 40%{opacity:1} 100%{opacity:1} }
+    .tn-grew { animation: tn-flash 1.2s ease-out forwards; }
+    @keyframes tn-ripple { 0%{opacity:0;transform:scale(0.6)} 60%{opacity:1;transform:scale(1.1)} 100%{transform:scale(1)} }
+    .tn-wet-in { animation: tn-ripple 1.5s ease-out forwards; }
+    @keyframes tn-press { 0%{transform:scale(1)} 30%{transform:scale(0.8)} 100%{transform:scale(1)} }
+    .tn-pressed { animation: tn-press 0.25s ease-out; }
+    @keyframes tn-art { 0%,100%{opacity:1}50%{opacity:0.3} }
+    .tn-art { animation: tn-art 2s ease-in-out infinite; }
+    @keyframes tn-scan { 0%{box-shadow:0 0 0 0 rgba(26,90,136,.6)}70%{box-shadow:0 0 0 8px rgba(26,90,136,0)}100%{box-shadow:0 0 0 0 rgba(26,90,136,0)} }
+    @keyframes tn-need { 0%,100%{background:var(--fg);color:var(--bg)} 50%{background:var(--bg);color:var(--fg)} }
+    .tn-btn.needs { animation: tn-need .75s step-end infinite; }
+    /* GPR anomaly — '?' alternates with original char at slower pace */
+    @keyframes tn-gpr-on  { 0%,39%{opacity:1}40%,100%{opacity:0} }
+    @keyframes tn-gpr-off { 0%,39%{opacity:0}40%,100%{opacity:1} }
+    .tn-gpr-a { animation: tn-gpr-on  2.4s step-end infinite; color: var(--c-anom); }
+    .tn-gpr-b { position: absolute; animation: tn-gpr-off 2.4s step-end infinite; }
+    /* LiDAR scan flash — blue ripple over newly revealed cells */
+    @keyframes tn-lidar-reveal { 0%{background:rgba(26,90,136,0.28)} 100%{background:transparent} }
+    .tn-lidar-reveal { animation: tn-lidar-reveal 1.6s ease-out forwards; }
+    /* Top icon buttons */
+    .tn-hbtn.top { height: 22px; padding: 1px 6px; font-size: 9px; letter-spacing: .05em; display:inline-flex; align-items:center; gap:4px; }
+    .tn-hbtn.top svg { flex-shrink:0; }
+
+    /* Three bars */
+    .tn-bar {
+      display: flex; gap: 5px; padding: 5px 9px; flex-shrink: 0;
+      background: var(--bar); overflow-x: auto; scrollbar-width: none; align-items: center;
+    }
+    .tn-bar::-webkit-scrollbar { display: none; }
+    #tn-bar-tools   { border-top: 2px solid var(--bd); }
+    #tn-bar-actions { border-top: 1px solid var(--bd); }
+    #tn-bar-inv     { border-top: 1px solid var(--bd); min-height: 32px; }
+    .tn-bar-lbl {
+      font-size: 8px; letter-spacing: 0.07em; opacity: 0.3;
+      flex-shrink: 0; white-space: nowrap; margin-right: 1px;
+    }
+    .tn-btn {
+      background: none; border: 1px solid var(--bd); color: var(--fg);
+      font-family: inherit; font-size: 10px; letter-spacing: 0.06em;
+      padding: 4px 8px; cursor: pointer; white-space: nowrap; flex-shrink: 0;
+    }
+    .tn-btn:hover { background: var(--fg); color: var(--bg); }
+    .tn-btn.active { background: var(--fg); color: var(--bg); font-weight: 700; }
+    .tn-btn:disabled { opacity: 0.28; cursor: not-allowed; }
+    .tn-btn:disabled:hover { background: none; color: var(--fg); }
+    .tn-btn.targ { border-color: var(--c-lidar); color: var(--c-lidar); animation: tn-scan 1.4s ease-out infinite; }
+    .tn-btn.dev { border-style: dashed; opacity: 0.55; }
+    .tn-btn.dev:hover { opacity: 1; }
+    .tn-select {
+      background: var(--bg); color: var(--fg); border: 1px solid var(--bd);
+      font-family: inherit; font-size: 10px; padding: 4px 5px; flex-shrink: 0;
+    }
+    .tn-inv-item {
+      display: inline-flex; align-items: center; gap: 3px; font-size: 10px;
+      padding: 3px 7px; border: 1px solid var(--bd); cursor: pointer; flex-shrink: 0;
+    }
+    .tn-inv-item:hover { background: var(--fg); color: var(--bg); }
+    .tn-inv-item.empty { opacity: 0.22; pointer-events: none; }
+    .tn-inv-char { font-weight: 700; }
+    .tn-inv-none { font-size: 9px; opacity: 0.25; }
+    #tn-item-menu {
+      position:absolute; left:10px; right:10px; bottom:96px;
+      background:var(--pop); border:2px solid var(--bd);
+      z-index:180; padding:10px 12px; font-size:10px; line-height:1.55;
+      box-shadow: 2px 2px 0 rgba(0,0,0,.08);
+    }
+    #tn-item-menu.hidden { display:none; }
+    .item-menu-head { display:flex; justify-content:space-between; gap:8px; font-weight:700; margin-bottom:5px; }
+    .item-menu-desc { opacity:.62; margin-bottom:8px; }
+    .item-menu-actions { display:flex; flex-wrap:wrap; gap:5px; }
+    #tn-item-menu-close { background:none; border:none; color:var(--fg); font-family:inherit; cursor:pointer; }
+
+    #tn-observe {
+      position: absolute; left: 0; right: 0; bottom: 98px;
+      background: var(--bg);
+      border-top: 1px solid var(--bd);
+      padding: 7px 9px; z-index: 60; font-size: 10px; line-height: 1.55;
+      pointer-events:none;
+      transition: opacity 0.25s ease;
+    }
+    #tn-observe.hidden { opacity: 0; }
+    #tn-profile-obs { border-bottom: 1px solid var(--bd); padding-bottom: 8px; margin-bottom: 8px; }
+    #tn-profile-obs.hidden { display: none; }
+    .tn-obs-head { display:flex; justify-content:space-between; gap:8px; font-weight:700; letter-spacing:.04em; }
+    .tn-obs-body { opacity:.62; margin-top:2px; }
+    .tn-obs-sym { font-size:13px; margin-right:4px; }
+
+    /* Profile popup — absolute inside #tn-window */
+    #tn-profile {
+      position: absolute; bottom: 98px; left: 0; right: 0;
+      background: var(--pop); border-top: 2px solid var(--bd);
+      padding: 11px 14px 20px; font-size: 11px; line-height: 1.75;
+      z-index: 100; max-height: 42vh; overflow-y: auto;
+      transition: transform 0.2s cubic-bezier(0.4,0,0.2,1);
+    }
+    #tn-profile.hidden { transform: translateY(calc(100% + 98px)); }
+    #tn-profile-hdr { display: flex; justify-content: space-between; margin-bottom: 8px; }
+    #tn-profile-title { font-weight: 700; font-size: 10px; letter-spacing: 0.08em; }
+    #tn-profile-xy { font-size: 10px; opacity: 0.38; }
+    #tn-profile-close { background: none; border: none; color: var(--fg); font-size: 14px; cursor: pointer; }
+    .tn-strata-list { display: flex; flex-direction: column; gap: 3px; }
+    .tn-sr { display: grid; grid-template-columns: 36px 26px 1fr; gap: 5px; align-items: baseline; }
+    .tn-sr.s0 { border-bottom: 1px solid var(--bd); padding-bottom: 5px; margin-bottom: 3px; }
+    .tn-sd { opacity: 0.36; font-size: 9px; }
+    .tn-sc { font-weight: 700; }
+    .tn-sl { opacity: 0.66; font-size: 11px; }
+    .tn-sl.art { opacity: 1; font-style: italic; color: var(--c-anom); }
+    .tn-sl.ldr { color: var(--c-lidar); opacity: 0.82; font-style: italic; }
+    .tn-dim { opacity: 0.28; }
+    .tn-stab { display: inline-block; width: 50px; height: 3px; background: var(--void); vertical-align: middle; margin-left: 5px; }
+    .tn-stab-f { height: 100%; background: var(--fg); }
+    .tn-pnote { margin-top: 7px; font-size: 10px; opacity: 0.5; border-top: 1px dotted var(--bd); padding-top: 5px; }
+    .tn-pnote.anom { color: var(--c-anom); opacity: 1; }
+
+    /* Graft source highlight */
+    .tn-graft-source { outline: 2px solid var(--c-anom) !important; }
+
+    /* Accident modal */
+    #tn-acc-modal { position:absolute;inset:0;z-index:300;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center; }
+    #tn-acc-modal.hidden { display:none; }
+    #tn-acc-modal-body { background:var(--bg);border:1px solid var(--bd);padding:18px 22px 14px;max-width:260px;width:80%;text-align:center;font-size:11px;line-height:1.7; }
+    #tn-acc-modal-close { display:block;margin:12px auto 0;background:none;border:1px solid var(--bd);color:var(--fg);padding:3px 18px;cursor:pointer;font-size:11px;letter-spacing:.05em; }
+
+    /* Top panels — absolute inside #tn-window */
+    #tn-legend, #tn-notebook {
+      position: absolute; top: 31px; right: 8px; width: min(300px, calc(100% - 16px));
+      max-height: min(62vh, 430px);
+      background: var(--pop); border: 2px solid var(--bd);
+      padding: 11px 11px 22px; font-size: 10px; line-height: 1.85;
+      z-index: 210; overflow-y: auto;
+      transition: transform 0.2s cubic-bezier(0.4,0,0.2,1);
+    }
+    #tn-legend.hidden, #tn-notebook.hidden { transform: translateY(calc(-100% - 44px)); }
+    #tn-legend h3, #tn-notebook h3 { font-size: 10px; font-weight: 700; letter-spacing: 0.08em; margin-bottom: 7px; }
+    #tn-legend > .lg-sec, #tn-legend > .lg-row { display:none; }
+    .lg-sec { margin-top: 8px; opacity: 0.38; font-size: 9px; letter-spacing: 0.05em; }
+    .lg-row { display: flex; gap: 6px; }
+    .lg-c { font-weight: 700; width: 22px; flex-shrink: 0; }
+    .sym-group { border-top: 1px dotted var(--grid-fog); padding-top: 5px; margin-top: 6px; }
+    .sym-group summary { cursor: pointer; font-size: 9px; letter-spacing: .06em; opacity: .58; }
+    .sym-list { margin-top: 5px; display:flex; flex-direction:column; gap:4px; }
+    .sym-row { display:grid; grid-template-columns: 28px 1fr; gap:6px; align-items:baseline; }
+    .sym-row.locked { opacity:.34; }
+    .sym-char { font-weight:700; }
+    .sym-text { opacity:.72; }
+    .sym-empty { opacity:.38; font-style:italic; }
+    #tn-legend-close, #tn-notebook-close { position: absolute; top: 9px; right: 9px; background: none; border: none; color: var(--fg); font-size: 14px; cursor: pointer; }
+    .note-entry { border-top: 1px dotted var(--grid-fog); padding-top: 7px; margin-top: 7px; }
+    .note-title { font-weight: 700; letter-spacing: .04em; }
+    .note-body { opacity: .68; margin-top: 3px; }
+
+    /* Password panel — absolute inside #tn-window */
+    #tn-pw {
+      position: absolute; top: 31px; right: 8px;
+      background: var(--pop); border: 2px solid var(--bd);
+      padding: 18px 22px 20px; font-size: 11px; z-index: 220;
+      width: min(300px, calc(100% - 16px));
+    }
+    #tn-pw.hidden { display: none; }
+    #tn-pw p { margin-bottom: 10px; font-size: 10px; opacity: 0.62; letter-spacing: 0.06em; }
+    #tn-pw-inp {
+      width: 100%; background: none; border: 1px solid var(--bd); color: var(--fg);
+      font-family: inherit; font-size: 12px; padding: 5px 7px; letter-spacing: 0.1em;
+    }
+    #tn-pw-inp:focus { outline: none; border-color: var(--fg); }
+    #tn-pw-sub {
+      width: 100%; margin-top: 7px; background: var(--fg); color: var(--bg);
+      border: none; font-family: inherit; font-size: 10px; letter-spacing: 0.08em;
+      padding: 6px; cursor: pointer;
+    }
+    #tn-pw-cancel {
+      display: block; margin-top: 6px; text-align: center; font-size: 9px;
+      opacity: 0.42; cursor: pointer; background: none; border: none; color: var(--fg); font-family: inherit; width: 100%;
+    }
+    #tn-pw-err { color: var(--c-anom); font-size: 9px; margin-top: 5px; min-height: 13px; }
+
+    /* Toast */
+    #tn-toast {
+      position: fixed; top: 48px; left: max(10px, calc(50vw - 230px)); transform: none;
+      background: var(--fg); color: var(--bg); font-family: 'Space Mono', monospace;
+      font-size: 10px; letter-spacing: 0.04em; padding: 8px 14px;
+      white-space: pre-wrap; max-width: min(360px, calc(100% - 20px)); pointer-events: none;
+      opacity: 0; transition: opacity 0.13s; z-index: 300; text-align: left;
+    }
+    #tn-toast.show { opacity: 1; }
+    #tn-pan-hint {
+      position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%);
+      font-size: 9px; opacity: 0.22; pointer-events: none; white-space: nowrap;
+    }
+    .tn-dev-time {
+      position:absolute; left:10px; right:10px; bottom:132px; z-index:70;
+      display:flex; align-items:center; gap:5px; flex-shrink:0;
+      font-size:9px; opacity:.72;
+      background: color-mix(in srgb, var(--pop) 94%, transparent);
+      border: 1px solid var(--grid-fog); padding:5px 7px;
+    }
+    .tn-dev-time input { flex:1; min-width:80px; accent-color: var(--fg); }
+    .hidden-hard { display: none !important; }
+  </style>
+</head>
+<body>
+<div id="tn-window">
+  <div id="tn-titlebar">
+    <span id="tn-title">the third nature.sys</span>
+    <div id="tn-title-right">
+      <button class="tn-hbtn top" id="tn-access-btn" title="Authority"><svg viewBox="0 0 9 10" width="9" height="10" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linecap="square"><path d="M2.5 4.5V3a2 2 0 0 1 4 0v1.5"/><rect x="1" y="4.5" width="7" height="5"/><rect x="3.5" y="6.5" width="2" height="2" fill="currentColor"/></svg></button>
+      <button class="tn-hbtn top" id="tn-guide-btn" title="Legend"><svg viewBox="0 0 11 9" width="11" height="9" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linecap="square"><path d="M1 1v7c1.5-.8 3-.8 4.5 0V1c-1.5-.8-3-.8-4.5 0Z"/><path d="M10 1v7c-1.5-.8-3-.8-4.5 0V1c1.5-.8 3-.8 4.5 0Z"/></svg></button>
+      <button class="tn-hbtn top" id="tn-notebook-btn" title="Notebook"><svg viewBox="0 0 9 10" width="9" height="10" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linecap="square"><rect x="1" y="0.5" width="7" height="9"/><line x1="3" y1="0.5" x2="3" y2="9.5"/><line x1="4" y1="3.5" x2="8" y2="3.5"/><line x1="4" y1="5.5" x2="8" y2="5.5"/><line x1="4" y1="7.5" x2="8" y2="7.5"/></svg></button>
+      <button class="tn-hbtn" id="tn-lang-btn">EN</button>
+      <button class="tn-hbtn bare" id="tn-close-btn">✕</button>
+    </div>
+  </div>
+  <div id="tn-status">
+    <span id="tn-day">Day 1</span>
+    <span id="tn-weather">weather: —</span>
+    <span id="tn-energy">Energy: |||||</span>
+    <span id="tn-auth-badge"></span>
+  </div>
+
+  <div id="tn-grid-wrap">
+    <div id="tn-grid" tabindex="0"></div>
+    <div id="tn-pan-hint">swipe to explore</div>
+  </div>
+  <div id="tn-observe" class="hidden"></div>
+
+  <!-- 工具栏 -->
+  <div class="tn-bar" id="tn-bar-tools">
+    <span class="tn-bar-lbl" id="lbl-tools">TOOLS</span>
+    <button class="tn-btn"        data-tool="trowel"  id="t-trowel">[ TROWEL ]</button>
+    <button class="tn-btn"        data-tool="probe"   id="t-probe"  >[ PROBE ]</button>
+    <select class="tn-select" id="t-probe-depth" aria-label="Probe length">
+      <option value="0.5">0.5m</option>
+      <option value="1.0">1.0m</option>
+      <option value="1.5">1.5m</option>
+      <option value="2.0">2.0m</option>
+      <option value="2.5">2.5m</option>
+      <option value="3.0">3.0m</option>
+    </select>
+    <button class="tn-btn"        data-tool="gpr"     id="t-gpr"   >[ GPR ]</button>
+    <button class="tn-btn"        data-tool="lidar"   id="t-lidar" >[ LIDAR ]</button>
+  </div>
+
+  <!-- 行动栏 -->
+  <div class="tn-bar" id="tn-bar-actions">
+    <span class="tn-bar-lbl" id="lbl-actions">ACT</span>
+    <button class="tn-btn active" data-tool="observe" id="t-observe">[ OBSERVE ]</button>
+    <button class="tn-btn"        data-tool="expose"  id="t-expose">[ SCRAPE ]</button>
+    <button class="tn-btn" id="t-harvest">[ HARVEST ]</button>
+    <button class="tn-btn" id="t-plant" disabled>[ PLANT ]</button>
+    <button class="tn-btn" id="t-graft">[ GRAFT ]</button>
+    <button class="tn-btn hidden-hard" id="t-relieve">[ RELIEVE ]</button>
+  </div>
+
+  <!-- 物品栏 -->
+  <div class="tn-bar" id="tn-bar-inv">
+    <span class="tn-bar-lbl" id="lbl-inv">INV</span>
+    <span id="tn-inv-body"><span class="tn-inv-none">—</span></span>
+  </div>
+  <div id="tn-item-menu" class="hidden"></div>
+
+  <!-- Profile popup -->
+  <div id="tn-profile" class="hidden">
+    <div id="tn-profile-hdr">
+      <div>
+        <div id="tn-profile-title">CORE SAMPLE</div>
+        <div id="tn-profile-xy"></div>
+      </div>
+      <button id="tn-profile-close">✕</button>
+    </div>
+    <div id="tn-profile-obs" class="hidden"></div>
+    <div id="tn-profile-body"></div>
+  </div>
+
+  <!-- Accident modal -->
+  <div id="tn-acc-modal" class="hidden">
+    <div id="tn-acc-modal-body">
+      <div id="tn-acc-modal-text"></div>
+      <button id="tn-acc-modal-close">[ × ]</button>
+    </div>
+  </div>
+
+  <!-- Legend panel -->
+  <div id="tn-legend" class="hidden">
+    <button id="tn-legend-close">✕</button>
+    <h3>LEGEND</h3>
+    <div id="tn-symbol-guide"></div>
+    <div class="lg-sec">── ruins / masonry ──</div>
+    <div class="lg-row"><span class="lg-c">▓</span><span>dense masonry wall</span></div>
+    <div class="lg-row"><span class="lg-c">▬</span><span>ashlar / foundation</span></div>
+    <div class="lg-row"><span class="lg-c">─</span><span>wall base line</span></div>
+    <div class="lg-row"><span class="lg-c">::</span><span>stone paving / tile</span></div>
+    <div class="lg-row"><span class="lg-c">|</span><span>pillar stub</span></div>
+    <div class="lg-row"><span class="lg-c">≡</span><span>drain cover</span></div>
+    <div class="lg-sec">── instability ──</div>
+    <div class="lg-row"><span class="lg-c">^</span><span>slump hummock</span></div>
+    <div class="lg-row"><span class="lg-c">∪</span><span>undrained hollow</span></div>
+    <div class="lg-row"><span class="lg-c">/</span><span>slip scar</span></div>
+    <div class="lg-row"><span class="lg-c">≈</span><span>mud seep</span></div>
+    <div class="lg-row"><span class="lg-c">~</span><span>standing water</span></div>
+    <div class="lg-sec">── bare ground ──</div>
+    <div class="lg-row"><span class="lg-c">_</span><span>disturbed soil</span></div>
+    <div class="lg-row"><span class="lg-c">;</span><span>cracked surface</span></div>
+    <div class="lg-row"><span class="lg-c">░</span><span>rubble scatter</span></div>
+    <div class="lg-row"><span class="lg-c">'</span><span>visitor footprint</span></div>
+    <div class="lg-sec">── succession ──</div>
+    <div class="lg-row"><span class="lg-c">,</span><span>pioneer grass (browntop)</span></div>
+    <div class="lg-row"><span class="lg-c">"</span><span>rush / sedge / harakeke</span></div>
+    <div class="lg-row"><span class="lg-c">:</span><span>lichen crust</span></div>
+    <div class="lg-row"><span class="lg-c">m</span><span>moss (Bryum)</span></div>
+    <div class="lg-row"><span class="lg-c">i</span><span>fungi mat</span></div>
+    <div class="lg-row"><span class="lg-c">*</span><span>Disphyma ice plant</span></div>
+    <div class="lg-row"><span class="lg-c">n</span><span>pioneer shrub (mānuka)</span></div>
+    <div class="lg-row"><span class="lg-c">Y</span><span>tree (mānuka / kānuka / kōtukutuku)</span></div>
+    <div class="lg-row"><span class="lg-c">W</span><span>weeping willow</span></div>
+    <div class="lg-row"><span class="lg-c">#</span><span>gorse (invasive)</span></div>
+    <div class="lg-row"><span class="lg-c">@</span><span>ornamental (garden remnant)</span></div>
+    <div class="lg-sec">── disturbance ──</div>
+    <div class="lg-row"><span class="lg-c">o</span><span>rabbit hole</span></div>
+    <div class="lg-row"><span class="lg-c">?</span><span>GPR anomaly</span></div>
+    <div class="lg-row"><span class="lg-c">!</span><span>artifact emerging</span></div>
+    <div class="lg-sec">── scan tools ──</div>
+    <div class="lg-row"><span class="lg-c">GPR</span><span>anomaly scan · 3 energy · r=5</span></div>
+    <div class="lg-row"><span class="lg-c">LIDAR</span><span>topology reveal · 0 energy · 1× per 7 days</span></div>
+    <div class="lg-sec">── food / energy ──</div>
+    <div class="lg-row"><span class="lg-c">◆</span><span>crop (harvest) → +1 energy</span></div>
+    <div class="lg-row"><span class="lg-c">o</span><span>rabbit (rare trowel) → +2 energy</span></div>
+    <div class="lg-row"><span class="lg-c">≈</span><span>fish (future: cast) → +3 energy</span></div>
+  </div>
+
+  <!-- Notebook panel -->
+  <div id="tn-notebook" class="hidden">
+    <button id="tn-notebook-close">✕</button>
+    <h3 id="tn-notebook-title">NOTEBOOK</h3>
+    <div id="tn-notebook-body"></div>
+  </div>
+
+  <!-- Password panel -->
+  <div id="tn-pw" class="hidden">
+    <p id="tn-pw-lbl">FIELD ACCESS</p>
+    <input id="tn-pw-inp" type="password" autocomplete="current-password" maxlength="64">
+    <button id="tn-pw-sub">ENTER</button>
+    <button id="tn-pw-cancel">cancel</button>
+    <div id="tn-pw-err"></div>
+  </div>
+
+  <div id="tn-toast"></div>
+</div>
+
+<script>
+'use strict';
+// ═══════════════════════════════════════════════════════════════
+//  the third nature.sys — Phase 1
+//  ?dev = dev mode (RESET + +1T buttons)
+// ═══════════════════════════════════════════════════════════════
+
+const DEV_MODE   = location.search.includes('dev');
+const GRID_W = 128, GRID_H = 128, CX = 64, CY = 64;
+const VP         = 10;
+const CHUNK_SZ   = 8;
+const TICK_H     = 8;
+const MAX_NRG    = 8;
+const NRG_RST_H  = 24;
+const MAX_PROBE  = 3;
+const LIDAR_CD_H = 168;   // 7 days
+const GPR_COST   = 3;
+const GPR_RAD    = 5;
+const LIDAR_RAD  = 8;
+const CANON_SEED = 20260615;
+const STATE_VER  = 8;
+const LS_KEY     = 'tn_state_v17';
+const SITE_WEATHER = {
+  lat: -45.68,
+  lon: 170.62,
+  url: 'https://api.open-meteo.com/v1/forecast'
+};
+
+// ── i18n ────────────────────────────────────────────────────────
+const LANG = { cur: 'en' };
+const T = {
+  en: {
+    title:       'the third nature.sys',
+    day:         n => `Day ${n}`,
+    energy:      n => `${'|'.repeat(n)}${'·'.repeat(MAX_NRG-n)}`,
+    profile:     'CORE SAMPLE',
+    pan_hint:    'drag / swipe to explore',
+    lbl_tools:   'TOOLS', lbl_actions: 'ACT', lbl_inv: 'INV',
+    auth_on:     '⊙ granted', auth_visitor: 'visitor', auth_fail: 'incorrect', access_lbl: 'FIELD ACCESS',
+    tool_observe:'[ OBSERVE ]', tool_expose:'[ SCRAPE ]', tool_trowel:'[ TROWEL ]',
+    tool_probe:  n => `[ PROBE ${n}/${MAX_PROBE} ]`, tool_gpr:'[ GPR ]', tool_lidar:'[ LIDAR ]', tool_symbols:'[ SYMBOLS ]',
+    act_harvest:'[ HARVEST ]', act_eat:'[ EAT/DRINK ]', act_plant:'[ PLANT ]', act_access:'[ ACCESS ]', act_relieve:'[ RELIEVE ]',
+    item_use:'use item',
+    item_close:'close',
+    item_eat:'eat',
+    item_drink:'drink',
+    item_irrigate:'irrigate',
+    item_compost:'compost',
+    item_plant:'plant',
+    item_inspect:'inspect',
+    waste_name:'warm night soil',
+    waste_desc:'Extremely questionable material. Archaeology is not always dignified.',
+    waste_eat:'You ate it.\n-5 energy.\nSome knowledge should remain theoretical.',
+    irrigate_prompt:'IRRIGATE: tap a dry or living cell.',
+    irrigate_done:'Water poured into the surface.',
+    compost_prompt:'COMPOST: tap a soil or plant cell.',
+    compost_done:'Compost folded into the surface.',
+    observe_prompt:'OBSERVE: tap a cell.',
+    harvest_prompt:'HARVEST: tap a plant or water cell.',
+    tool_desc_observe: 'Tap any cell to read its surface and context. No energy cost.',
+    tool_desc_expose:  'Clear masonry or vegetation from a cell surface. Cost: 1 energy. Ruins → cracked · Plants → soil.',
+    tool_desc_trowel:  'Dig one layer deeper into exposed soil. Cost: 2 energy. May release water or uncover finds.',
+    tool_desc_probe:   m => `Lower rod to ${m} m. Samples that layer without excavating. ${MAX_PROBE} uses per day.`,
+    tool_desc_gpr:     `Scan for subsurface anomalies in radius ${GPR_RAD}. Cost: ${GPR_COST} energy. Tap scan centre.`,
+    tool_desc_lidar:   `Reveal fog of war in radius ${LIDAR_RAD}. No energy cost. Once per 7 days.`,
+    tool_desc_harvest: 'Tap a plant or water cell to harvest it.',
+    tool_desc_plant:   'Tap a dry or cracked cell to plant a seed.',
+    plant_prompt:'PLANT: tap a dry/cracked cell.',
+    relieve_prompt:'RELIEVE: tap a cell to pee.',
+    probe_prompt: m => `Probe set to ${m} m.\nTap a revealed cell.`,
+    probe_empty: 'No probe uses left today.',
+    probe_done: (m, label) => `Probe ${m} m:\n${label}`,
+    probe_bedrock: 'The rod rings against basal resistance.',
+    probe_resist: 'hard resistance in the fill',
+    seed_native: 'native buried seed',
+    seed_exotic: 'institutional garden seed',
+    symbols_empty:'No symbols encountered yet.',
+    layer_locked:'unprobed layer',
+    recent_layer:'recent surface deposit',
+    interpretation_pending:'surface clue only · interpretation pending',
+    interpreted_context:'subsurface evidence available',
+    surface_traces:'surface traces',
+    notebook_lbl:'NOTEBOOK',
+    notebook_empty:'No notebook pages yet.\nFuture stories will appear here.',
+    dev_time:'time test',
+    no_nrg:      'No energy.\nRest until tomorrow.',
+    nrg_need:    n => `${n} energy required.`,
+    gpr_no_nrg:  `GPR requires ${GPR_COST} energy.`,
+    gpr_prompt:  'GPR ready. Tap scan centre.',
+    gpr_done:    n => `GPR complete.\n${n} anomal${n===1?'y':'ies'} in range.`,
+    lidar_cd:    h => `LiDAR cooling down.\n${Math.ceil(h)}h remaining.`,
+    lidar_prompt:'LiDAR ready. Tap scan centre.',
+    lidar_done:  n => `LiDAR complete.\n${n} cells revealed.`,
+    crack:       'Surface scraped.\nScrape again to dig deeper.',
+    water_a:     'Saturated clay breached.\nWater rising through -3 layer.',
+    water_b:     'Dissolution cavity ruptured.\nGroundwater flooding.',
+    drain_block: 'Blocked drain found.\nWater accumulating.',
+    dry_found:   'Dense fill. No water corridor here.',
+    trowel_dug:  d => `Excavated to layer ${d}.`,
+    rabbit_found:'a rabbit bolted from the soil.\nyou somehow caught it.\n+2 energy on next eat.',
+    harvest_ok:  s => `Harvested: ${s}\n+1 crop added.`,
+    harvest_water: n => `Collected water.\nWater in inventory: ${n}`,
+    harvest_water_dry:'The pool is exhausted for today.\nThe surface dries into mud.',
+    harvest_bad: 'Nothing harvestable here.',
+    eat_ok:      (tp, e) => `Ate ${tp}.\n+${e} energy restored.`,
+    drink_ok:    e => `Drank water.\n+${e} energy restored.`,
+    toilet_need: 'Too much water.\nYou need to find somewhere to pee.',
+    toilet_done: 'Toilet trace added.\nRelief, scientifically speaking.',
+    acc_modal: (x,y) => `You couldn't hold it.\nRelief deposited at (${x}, ${y}).\nNitrogen logged. Something may grow.`,
+    eat_empty:   'No food in inventory.',
+    nrg_full:    'Energy already full.',
+    need_access: 'Field access required.',
+    plant_none:  'No seeds in inventory.',
+    graft_step1: 'GRAFT: select a source plant to extract.',
+    graft_step2: s => `Extracted ${s}. Now select a target cell.`,
+    graft_ok:    'Graft successful. Source damaged.',
+    graft_fail:  'Graft withered — incompatible ground.',
+    graft_toxic: 'Fungal stress response. Something mutated.',
+    graft_no_src:'Cannot extract from this surface.',
+    tool_graft:  '[ GRAFT ]',
+    visitor_hit: 'your presence disturbs the soil',
+    inv_none: '—',
+    surface_lbl: {
+      ruins:'ancient ruins', floor:'stone floor', open:'open ground',
+      cracked:'scraped surface', dry:'disturbed soil', water:'standing water',
+      hummock:'slump hummock', hollow:'undrained hollow', slip_scar:'slip scar',
+      mud_seep:'mud seep', rubble:'rubble scatter', footprint:'visitor footprint',
+      grass:'pioneer grass (browntop)', sedge:'rush / sedge / harakeke',
+      lichen:'lichen crust', moss:'moss (Bryum)', fungi:'fungi mat',
+      ice_plant:'Disphyma ice plant', shrub:'pioneer shrub (mānuka)',
+      gorse:'gorse (invasive)', ornamental:'ornamental (garden remnant)',
+      tree:'tree (mānuka / kānuka / kōtukutuku)', willow:'weeping willow',
+      rabbit_hole:'rabbit hole', artifact:'artifact emerging', anomaly:'GPR anomaly',
+      toilet_trace:'toilet trace', compost_trace:'compost trace',
+      toxic_fungi:'toxic fungi (mutated)',
+    },
+    surface_desc: {
+      ruins:'Institutional masonry still holds the surface in a hard grid.',
+      open:'Unworked ground. Nothing has been disturbed here yet.',
+      cracked:'A broken crust: one more disturbance may reveal water, fill, or soil.',
+      dry:'Fresh disturbed soil, open to pioneer grasses and crusts.',
+      water:'Standing water has reached the surface and will pull succession toward sedges.',
+      hollow:'A blocked drain or sagging pocket is collecting water below.',
+      grass:'Pioneer grass has taken the first thin hold on disturbed ground.',
+      lichen:'A crust is binding stone and dust into the first living skin.',
+      moss:'Moss is storing water and softening the ruin edge.',
+      fungi:'Fungal mats are feeding on damp organic fill.',
+      ice_plant:'Dry stone supports a succulent coastal mat.',
+      shrub:'Native shrub growth is beginning to anchor the surface.',
+      tree:'A later successional tree is stabilising deeper time.',
+      gorse:'Invasive gorse is blocking native succession.',
+      rabbit_hole:'Rabbit disturbance has cut a new tunnel through the surface.',
+      artifact:'An artifact has moved into visibility.',
+      rubble:'Recent slump debris has made a new shallow layer.'
+    },
+    zone_lbl: {
+      institutional_core:'institutional core', ward_wing:'ward wing', ancillary:'ancillary buildings',
+      formal_garden:'formal garden', slope_face:'active slope face', farm_field:'farm field', native_remnant:'native remnant'
+    },
+    sym_cat: { ruins:'ruins / masonry', instability:'instability / water', ground:'bare ground', life:'succession', disturbance:'disturbance', strata:'strata' },
+    strata_lbl: {
+      foundation_stone:'stone foundation (old institution)', brick_course:'brick course',
+      inst_fill:'institutional fill', void_space:'subsurface void',
+      organic_fill:'organic fill (pre-asylum)',
+      drain_intact:'drain — intact', drain_blocked:'drain — BLOCKED',
+      gravel_fill:'gravel fill',
+      heavy_clay_dry:'heavy clay (dry)', heavy_clay_wet:'saturated clay ← WATER',
+      volcanic_boulder:'volcanic boulder', clay_slip_face:'clay slip face',
+      sandstone:'Caversham sandstone', dissolution_cavity:'dissolution cavity ← WATER',
+      collapse_breccia:'collapse breccia', mudstone:'Burnside mudstone (impermeable)',
+      volcanic_bedrock:'volcanic bedrock', deep_mudstone:'deep mudstone',
+      artifact:'ARTIFACT',
+    },
+  },
+  zh: {
+    title:       '第三自然.sys',
+    day:         n => `第${n}天`,
+    energy:      n => `${'|'.repeat(n)}${'·'.repeat(MAX_NRG-n)}`,
+    profile:     '地层剖面',
+    pan_hint:    '拖动 / 滑动探索',
+    lbl_tools:   '工具', lbl_actions: '行动', lbl_inv: '物品',
+    auth_on:     '⊙ 已授权', auth_visitor: 'visitor｜访客', auth_fail: '密码错误', access_lbl: '现场授权',
+    tool_observe:'[ 观察 ]', tool_expose:'[ 清表 ]', tool_trowel:'[ 手铲 ]',
+    tool_probe:  n => `[ 探杆 ${n}/${MAX_PROBE} ]`, tool_gpr:'[ GPR ]', tool_lidar:'[ LiDAR ]', tool_symbols:'[ 符号 ]',
+    act_harvest:'[ 收获 ]', act_eat:'[ 进食/饮水 ]', act_plant:'[ 种植 ]', act_access:'[ 授权 ]', act_relieve:'[ 如厕 ]',
+    item_use:'使用物品',
+    item_close:'关闭',
+    item_eat:'吃掉',
+    item_drink:'喝掉',
+    item_irrigate:'灌溉',
+    item_compost:'堆肥',
+    item_plant:'种植',
+    item_inspect:'查看',
+    waste_name:'热乎夜土',
+    waste_desc:'极其可疑的材料。考古并不总是体面。',
+    waste_eat:'你吃了。\n-5 行动力。\n有些知识还是停留在理论上比较好。',
+    irrigate_prompt:'灌溉：点击干土或植物格。',
+    irrigate_done:'水渗入了地表。',
+    compost_prompt:'堆肥：点击土壤或植物格。',
+    compost_done:'堆肥混入了地表。',
+    observe_prompt:'观察：点击一个格子。',
+    harvest_prompt:'收获：点击植物或积水格。',
+    tool_desc_observe: '点击任意格子读取地表和背景信息。不消耗行动力。',
+    tool_desc_expose:  '清理地表砌体或植被。消耗 1 行动力。遗迹→裂缝 · 植被→干土。',
+    tool_desc_trowel:  '往下挖一层暴露土。消耗 2 行动力。可能触发水脉或发现埋藏物。',
+    tool_desc_probe:   m => `探杆下放至 ${m} 米，采样该层但不开挖。每天 ${MAX_PROBE} 次。`,
+    tool_desc_gpr:     `在半径 ${GPR_RAD} 范围内扫描地下异常。消耗 ${GPR_COST} 行动力。点击扫描中心。`,
+    tool_desc_lidar:   `在半径 ${LIDAR_RAD} 范围内揭露迷雾。无行动力消耗。每 7 天一次。`,
+    tool_desc_harvest: '点击植物或积水格进行收获。',
+    tool_desc_plant:   '点击干土或裂缝格种植种子。',
+    plant_prompt:'种植：点击干土/裂缝格。',
+    relieve_prompt:'如厕：点击一个格子。',
+    probe_prompt: m => `探杆下放 ${m} 米。\n点击已探索格。`,
+    probe_empty: '今日探杆次数已用尽。',
+    probe_done: (m, label) => `探杆 ${m} 米：\n${label}`,
+    probe_bedrock: '探杆敲到基岩阻力。',
+    probe_resist: '填土中有硬质阻力',
+    seed_native: '原生埋藏种子',
+    seed_exotic: '制度园林种子',
+    symbols_empty:'还没有遇到任何符号。',
+    layer_locked:'未探明地层',
+    recent_layer:'近期表层沉积',
+    interpretation_pending:'仅有表层线索 · 解释待定',
+    interpreted_context:'已有地下证据',
+    surface_traces:'表层痕迹',
+    notebook_lbl:'笔记本',
+    notebook_empty:'笔记本还没有页面。\n以后的小故事会放在这里。',
+    dev_time:'时间测试',
+    no_nrg:      '今日行动已用尽。\n明天再来。',
+    nrg_need:    n => `需要 ${n} 点行动力。`,
+    gpr_no_nrg:  `GPR 需要 ${GPR_COST} 点行动力。`,
+    gpr_prompt:  'GPR 就绪。点击扫描中心。',
+    gpr_done:    n => `GPR 扫描完成。\n范围内 ${n} 处异常。`,
+    lidar_cd:    h => `LiDAR 冷却中。\n还需 ${Math.ceil(h)} 小时。`,
+    lidar_prompt:'LiDAR 就绪。点击扫描中心。',
+    lidar_done:  n => `LiDAR 完成。\n揭露 ${n} 个格子。`,
+    crack:       '表层开裂。\n再次动土可深挖。',
+    water_a:     '饱和黏土破裂。\n-3层水脉涌出。',
+    water_b:     '砂岩溶洞破裂。\n地下水大量涌出。',
+    drain_block: '发现堵塞暗渠，积水中。',
+    dry_found:   '密实填土，此处无水廊道。',
+    trowel_dug:  d => `挖至第 ${d} 层。`,
+    rabbit_found:'一只兔子从土里蹿出来。\n你竟然抓住了它。\n下次进食时 +2 行动力',
+    harvest_ok:  s => `收获：${s}\n+1 食物`,
+    harvest_water: n => `采集了水。\n物品栏水量：${n}`,
+    harvest_water_dry:'这处水今天已经取尽。\n表面变成泥痕。',
+    harvest_bad: '这里没有可收获的植物。',
+    eat_ok:      (tp, e) => `吃了${tp}。\n恢复 +${e} 行动力。`,
+    drink_ok:    e => `喝了水。\n恢复 +${e} 行动力。`,
+    toilet_need: '水喝太多了。\n需要找个格子上厕所。',
+    toilet_done: '生成了一层如厕痕迹。\n科学意义上的解放。',
+    acc_modal: (x,y) => `憋不住了。\n排放于格子 (${x}, ${y})。\n氮沉积——也许会有什么生长。`,
+    eat_empty:   '物品栏没有食物。',
+    nrg_full:    '行动力已满。',
+    need_access: '需要授权才能行动。',
+    plant_none:  '物品栏没有种子。',
+    graft_step1: '嫁接：选择来源植物。',
+    graft_step2: s => `已提取${s}。选择目标格子。`,
+    graft_ok:    '嫁接成功。来源受到损耗。',
+    graft_fail:  '嫁接枯死——地表不相容。',
+    graft_toxic: '真菌应激反应。产生了变异体。',
+    graft_no_src:'无法从此地表提取。',
+    tool_graft:  '[ 嫁接 ]',
+    visitor_hit: '你的到来扰动了土层',
+    inv_none:    '空',
+    surface_lbl: {
+      ruins:'古遗迹', floor:'石板地面', open:'裸露地表',
+      cracked:'裂缝', dry:'扰动土层', water:'积水',
+      hummock:'滑坡丘', hollow:'积水洼地', slip_scar:'滑移疤',
+      mud_seep:'泥浆渗出', rubble:'碎石散落', footprint:'访客脚印',
+      grass:'先锋草（褐顶草）', sedge:'莎草/灯芯草/哈拉客',
+      lichen:'地衣壳', moss:'苔藓（Bryum）', fungi:'真菌垫',
+      ice_plant:'冰草（Disphyma）', shrub:'先锋灌木（麦卢卡）',
+      gorse:'金雀花（入侵）', ornamental:'装饰植物（花园遗存）',
+      tree:'乔木（麦卢卡/卡努卡/倒挂金钟）', willow:'垂柳',
+      rabbit_hole:'兔子洞', artifact:'文物露出', anomaly:'探地雷达异常',
+      toilet_trace:'如厕痕迹', compost_trace:'堆肥痕迹',
+      toxic_fungi:'毒蕈（变异体）',
+    },
+    surface_desc: {
+      ruins:'旧院砌体仍把地表固定成一种坚硬的机构网格。',
+      open:'未扰动地表。这里还没有被行动打开。',
+      cracked:'表层已经开裂；再一次扰动可能露出水、填土或干土。',
+      dry:'新鲜扰动土，适合先锋草本与地衣壳进入。',
+      water:'积水抵达地表，演替会转向莎草、灯芯草等湿地路径。',
+      hollow:'堵塞暗渠或下陷口袋正在蓄水。',
+      grass:'先锋草已在扰动地表上建立第一层薄薄的抓握。',
+      lichen:'地衣壳把石面与尘土缝成第一层活的皮肤。',
+      moss:'苔藓储水，并把遗迹边缘慢慢变软。',
+      fungi:'真菌垫正在利用潮湿有机填土。',
+      ice_plant:'干石面上形成了海岸型肉质植物垫。',
+      shrub:'原生灌木开始锚定表层。',
+      tree:'后期乔木把更深的时间稳定下来。',
+      gorse:'入侵金雀花正在阻断原生演替。',
+      rabbit_hole:'兔子扰动在表面下切出新的通道。',
+      artifact:'一件物被扰动推到了可见层。',
+      rubble:'滑塌碎屑形成了一层新的浅表沉积。'
+    },
+    zone_lbl: {
+      institutional_core:'机构核心', ward_wing:'病区翼廊', ancillary:'附属建筑',
+      formal_garden:'正式花园', slope_face:'活动坡面', farm_field:'农场地', native_remnant:'原生遗存'
+    },
+    sym_cat: { ruins:'遗迹 / 砌体', instability:'失稳 / 水', ground:'裸地', life:'演替生命', disturbance:'扰动', strata:'地层' },
+    strata_lbl: {
+      foundation_stone:'地基残骸', brick_course:'砖砌层残段',
+      inst_fill:'填充土层', void_space:'板下空洞',
+      organic_fill:'有机填土（院前层）',
+      drain_intact:'暗渠（完好）', drain_blocked:'暗渠（堵塞）',
+      gravel_fill:'碎石填层',
+      heavy_clay_dry:'重黏土（干）', heavy_clay_wet:'饱和黏土（含水层）',
+      volcanic_boulder:'火山巨砾', clay_slip_face:'黏土滑移面',
+      sandstone:'Caversham 砂岩', dissolution_cavity:'溶洞（含水）',
+      collapse_breccia:'溶洞坍塌角砾', mudstone:'Burnside 泥岩（隔水）',
+      volcanic_bedrock:'深层火山基岩', deep_mudstone:'深层泥岩',
+      artifact:'出土物件',
+    },
+  },
+};
+const t  = (k,...args) => { const s=T[LANG.cur][k]; return typeof s==='function'?s(...args):(s??T.en[k]??k); };
+const tl = (ns,k) => T[LANG.cur][ns]?.[k] ?? T.en[ns]?.[k] ?? k;
+function ruinSurfaceLabel(ch){return RUIN_SURFACE_LABELS[ch]?.[LANG.cur]||RUIN_SURFACE_LABELS[ch]?.en||tl('surface_lbl','ruins');}
+function ruinSurfaceDesc(ch){return RUIN_SURFACE_DESC[ch]?.[LANG.cur]||RUIN_SURFACE_DESC[ch]?.en||T[LANG.cur].surface_desc?.ruins||T.en.surface_desc.ruins;}
+
+// ── Runtime config ───────────────────────────────────────────────
+function readParentThirdNatureConfig(){
+  try{return window.parent?.SITE?.thirdNature||null;}catch(_){return null;}
+}
+const TN_CFG = {
+  stateUrl: '/assets/nature/state.json',
+  writeUrl: 'https://dark-credit-f2c8.erljuzz.workers.dev',
+  ...(readParentThirdNatureConfig()||{}),
+};
+const TN_PARAMS = new URLSearchParams(location.search);
+if(TN_PARAMS.get('stateUrl'))TN_CFG.stateUrl=TN_PARAMS.get('stateUrl');
+if(TN_PARAMS.get('writeUrl'))TN_CFG.writeUrl=TN_PARAMS.get('writeUrl');
+
+const NOTEBOOK_ENTRIES = [];
+
+// ── RNG ─────────────────────────────────────────────────────────
+function mulberry32(seed) {
+  let s=seed>>>0;
+  return ()=>{ s+=0x6D2B79F5; let z=s; z=Math.imul(z^(z>>>15),z|1); z^=z+Math.imul(z^(z>>>7),z|61); return ((z^(z>>>14))>>>0)/4294967296; };
+}
+function cellRng(seed,x,y){ return mulberry32(((seed^(x*73856093)^(y*19349663))>>>0)); }
+
+// ── Zones ────────────────────────────────────────────────────────
+const ZONE_INIT = {
+  institutional_core:['▓','▓','▓','▬','▬','─','::'],
+  ward_wing:['▓','▬','▬','─','─','::','░'],
+  ancillary:['▬','─','─','::','_','░','░'],
+  formal_garden:['::','::','::','_','_',',','─'],
+  slope_face:['_','_',',',','],
+  farm_field:['_','_','_',',',','],
+  native_remnant:['_','_',',',','],
+};
+const ZONE_STAB = {institutional_core:.82,ward_wing:.73,ancillary:.68,formal_garden:.62,slope_face:.42,farm_field:.75,native_remnant:.70};
+const ZONE_RUINS = {institutional_core:true,ward_wing:true,ancillary:true,formal_garden:false,slope_face:false,farm_field:false,native_remnant:false};
+
+const RUIN_SURFACE_LABELS={
+  '▓':{en:'standing masonry wall',zh:'残存砌体墙'},
+  '▬':{en:'stone footing / foundation',zh:'石砌基脚 / 基础'},
+  '▤':{en:'brick course fragment',zh:'砖砌层残段'},
+  '─':{en:'wall trace / corridor line',zh:'墙线 / 走廊痕迹'},
+  '::':{en:'paving / institutional path',zh:'铺地 / 机构路径'},
+  '|':{en:'pillar stump / post base',zh:'柱基 / 桩脚'},
+  '≡':{en:'drain cover / service trench',zh:'暗渠盖 / 管沟'},
+};
+const RUIN_SURFACE_DESC={
+  '▓':{en:'A dense wall remnant fixes the ruin as architecture rather than just rubble.',zh:'密集墙体残留让这里仍像建筑，而不只是碎石。'},
+  '▬':{en:'A footing line sits close to the surface: the building is remembered by its base.',zh:'基脚贴近地表；建筑以底部的线条被记住。'},
+  '▤':{en:'A small run of brickwork interrupts the soil matrix.',zh:'一段砖砌层打断了土壤基质。'},
+  '─':{en:'A thin corridor or wall trace cuts through the ground plan.',zh:'细长的墙线或走廊痕迹切过总平面。'},
+  '::':{en:'Paving or a made path: a hard surface made for movement.',zh:'铺地或人工道路：为移动制造的硬表面。'},
+  '|':{en:'A vertical stump hints at a verandah, post, or service structure.',zh:'竖向残桩暗示廊柱、桩脚或附属结构。'},
+  '≡':{en:'A drainage/service line: water infrastructure is close to the surface.',zh:'排水或管沟线：水的基础设施贴近地表。'},
+};
+const FIELD_CLUE_LABELS={
+  '▓':{en:'dark blocky hard trace',zh:'深色块状硬痕'},
+  '▬':{en:'flat hard edge',zh:'扁平硬边'},
+  '▤':{en:'regular small hard marks',zh:'规则小块硬痕'},
+  '─':{en:'thin linear trace',zh:'细长线性痕迹'},
+  '::':{en:'stippled hard surface',zh:'点状硬质表面'},
+  '|':{en:'upright hard nub',zh:'竖向硬质凸点'},
+  '≡':{en:'parallel hard lines',zh:'平行硬线'},
+  '░':{en:'coarse scatter',zh:'粗粒散布'},
+};
+const FIELD_CLUE_DESC={
+  '▓':{en:'Something hard interrupts the surface, but its role is not known yet.',zh:'某种硬质东西打断了表面，但它的作用还不能确定。'},
+  '▬':{en:'A flat resistant edge sits near the surface; interpretation needs deeper evidence.',zh:'扁平的阻力边缘贴近地表；需要更深证据才能解释。'},
+  '▤':{en:'The marks are regular, but regularity is only a clue for now.',zh:'这些痕迹很规则，但规则性目前只是线索。'},
+  '─':{en:'A line crosses the ground. It may be natural, made, recent, or older.',zh:'一条线穿过地表；可能是自然的、人工的、近期的，也可能更早。'},
+  '::':{en:'The surface feels compact and stippled. It is not yet clear why.',zh:'表面紧实并带点状纹理；原因尚不明确。'},
+  '|':{en:'A small hard nub catches the eye without explaining itself.',zh:'一个小硬点很显眼，但还没有解释自己。'},
+  '≡':{en:'Parallel lines appear at the surface; their function is still uncertain.',zh:'平行线出现在表面；功能仍不确定。'},
+  '░':{en:'A coarse scatter lies on the surface; it has not been assigned to a context.',zh:'粗粒散布在地表；还没有归入任何语境。'},
+};
+
+function inRect(x,y,r){return x>=r.x&&x<r.x+r.w&&y>=r.y&&y<r.y+r.h;}
+function distToSeg(px,py,ax,ay,bx,by){
+  const vx=bx-ax,vy=by-ay,wx=px-ax,wy=py-ay;
+  const c=Math.max(0,Math.min(1,(wx*vx+wy*vy)/(vx*vx+vy*vy||1)));
+  const dx=px-(ax+c*vx),dy=py-(ay+c*vy);
+  return Math.hypot(dx,dy);
+}
+function nearPolyline(x,y,pts,w=.75){
+  for(let i=0;i<pts.length-1;i++)if(distToSeg(x+.5,y+.5,pts[i][0],pts[i][1],pts[i+1][0],pts[i+1][1])<=w)return true;
+  return false;
+}
+function seededPick(list,r){return list[Math.min(list.length-1,Math.floor(r*list.length))];}
+const SURFACE_TRACE_CHARS=['░','─','▬','▤','|','▓','::'];
+function surfaceTraceChar(r){return seededPick(SURFACE_TRACE_CHARS,r);}
+function initialGroundChar(r){return seededPick(['_','_',',',',',','],r);}
+function initialGroundOrTrace(r,chance=.045){
+  if(r<chance)return{char:surfaceTraceChar(r/chance),isRuins:true,kind:'surface_trace'};
+  return{char:initialGroundChar((r-chance)/(1-chance)),isRuins:false,kind:'managed_ground'};
+}
+function siteFeatureAt(x,y,rv=0){
+  const mainBuilding=[
+    {x:43,y:30,w:6,h:38,zone:'institutional_core'},
+    {x:49,y:37,w:7,h:25,zone:'institutional_core'},
+    {x:36,y:51,w:13,h:8,zone:'ward_wing'},
+    {x:39,y:64,w:13,h:8,zone:'ward_wing'},
+    {x:49,y:43,w:13,h:6,zone:'ward_wing'},
+    {x:47,y:26,w:7,h:9,zone:'ward_wing'},
+    {x:34,y:57,w:6,h:14,zone:'ward_wing'},
+  ];
+  const workerNorth=[
+    {x:54,y:20,w:4,h:3,zone:'ancillary'},
+    {x:61,y:21,w:5,h:3,zone:'ancillary'},
+    {x:69,y:23,w:4,h:3,zone:'ancillary'},
+    {x:76,y:25,w:5,h:4,zone:'ancillary'},
+  ];
+  const functionalNW=[
+    {x:24,y:35,w:5,h:7,zone:'ancillary'},
+    {x:30,y:30,w:6,h:5,zone:'ancillary'},
+    {x:22,y:52,w:7,h:4,zone:'ancillary'},
+    {x:31,y:43,w:5,h:6,zone:'ancillary'},
+    {x:34,y:23,w:4,h:5,zone:'ancillary'},
+  ];
+  const residentsSE=[
+    {x:85,y:67,w:6,h:5,zone:'ancillary'},
+    {x:93,y:75,w:5,h:4,zone:'ancillary'},
+    {x:101,y:84,w:5,h:4,zone:'ancillary'},
+    {x:77,y:87,w:5,h:5,zone:'ancillary'},
+    {x:91,y:96,w:4,h:4,zone:'ancillary'},
+    {x:107,y:71,w:4,h:5,zone:'ancillary'},
+  ];
+  const buildings=[...mainBuilding,...workerNorth,...functionalNW,...residentsSE];
+  for(const b of buildings){
+    if(inRect(x,y,b)){
+      const edge=x===b.x||x===b.x+b.w-1||y===b.y||y===b.y+b.h-1;
+      const ch=edge?(rv<.45?'▓':rv<.70?'▬':rv<.86?'─':'▤'):(rv<.35?'░':rv<.58?'::':rv<.74?'|':'_');
+      return{zone:b.zone,char:ch,isRuins:true,kind:mainBuilding.includes(b)?'main_building':workerNorth.includes(b)?'worker_quarters':residentsSE.includes(b)?'residential':'functional_building'};
+    }
+  }
+  const fields=[
+    {x:53,y:56,w:17,h:17,zone:'formal_garden'},
+    {x:62,y:83,w:24,h:13,zone:'farm_field'},
+    {x:72,y:98,w:22,h:13,zone:'farm_field'},
+    {x:49,y:84,w:8,h:14,zone:'farm_field'},
+    {x:95,y:54,w:10,h:8,zone:'formal_garden'},
+  ];
+  for(const f of fields)if(inRect(x,y,f)){
+    const g=initialGroundOrTrace(rv,.08);
+    return{zone:f.zone,char:g.char,isRuins:g.isRuins,kind:g.isRuins?'surface_trace':'managed_ground'};
+  }
+  const paths=[
+    [[25,42],[39,43],[53,49],[72,55],[95,53],[112,61]],
+    [[39,25],[45,41],[51,59],[67,77],[86,95]],
+    [[29,70],[45,61],[64,63],[82,74],[103,86]],
+    [[48,31],[66,32],[82,38],[96,50]],
+    [[60,43],[63,57],[63,74],[69,93]],
+    [[76,65],[91,78],[110,94]],
+  ];
+  if(paths.some(p=>nearPolyline(x,y,p,.7)))return{zone:'formal_garden',char:'::',isRuins:false,kind:'path'};
+  const drains=[
+    [[43,35],[50,44],[59,50]],
+    [[83,46],[92,55],[102,60]],
+    [[63,58],[74,64],[86,70]],
+  ];
+  if(drains.some(p=>nearPolyline(x,y,p,.55)))return{zone:'ward_wing',char:'≡',isRuins:true,kind:'drain'};
+  const gully=nearPolyline(x,y,[[76,28],[84,42],[88,57],[96,72],[108,88]],2.0);
+  if(gully)return{zone:'slope_face',char:rv<.6?'_':',',isRuins:false,kind:'gully'};
+  const inSite=x>=18&&x<=115&&y>=18&&y<=113;
+  if(inSite){
+    const g=initialGroundOrTrace(rv,.04);
+    return{zone:rv<.15?'formal_garden':rv<.32?'farm_field':'native_remnant',char:g.char,isRuins:g.isRuins,kind:g.kind};
+  }
+  return null;
+}
+
+const chunkCache = new Map();
+function getChunk(cx,cy){
+  const k=`${cx},${cy}`;
+  if(chunkCache.has(k))return chunkCache.get(k);
+  const rng=mulberry32(((CANON_SEED^(cx*997+cy*1009))>>>0));
+  const r={zone:pickZone(cx,cy,rng())};
+  chunkCache.set(k,r);return r;
+}
+function pickZone(cx,cy,r){
+  const nx=cx/15,ny=cy/15;
+  if(nx>.55&&ny<.45)return r<.75?'institutional_core':'ward_wing';
+  if(nx>.45&&ny<.55)return r<.55?'ward_wing':'institutional_core';
+  if(nx>.72&&ny>.65)return r<.65?'slope_face':'formal_garden';
+  if(nx>.5&&ny>.55&&ny<.75)return r<.5?'formal_garden':'slope_face';
+  if(nx<.3&&ny<.4)return r<.65?'farm_field':'native_remnant';
+  if(nx<.4)return r<.55?'ancillary':'farm_field';
+  if(ny>.7)return r<.5?'slope_face':'farm_field';
+  return r<.5?'ward_wing':'ancillary';
+}
+function slopeFactor(x,y){return Math.max(.55,Math.min(1.1,1-.35*((x-CX)/64+(y-CY)/64)/2));}
+
+// ── Cell generation ──────────────────────────────────────────────
+const ART_NOTES=[
+  'a field note, undated: the soil here remembers more than I do',
+  'drain survey, 1887: north corridor water pressure uncontained',
+  'from the admission register, circa 1890s: condition on arrival — disturbed',
+  'context unknown — probable intrusion',
+  'the stratigraphy does not account for this',
+  'site abandoned following drainage failure, 1912',
+  'residue of an absence',
+  'matrix: disturbed. contents: suggestive.',
+  'marked with an institutional stamp. otherwise unidentified.',
+  'here the bedrock remembers something the surface chose to forget',
+  'glass fragment, green-tinged — possible medicine bottle',
+  'a key, corroded, no corresponding lock located',
+];
+const EXOTIC_SEEDS=[
+  {species:'Cupressus macrocarpa',name:'macrocarpa',path:'dry',origin:'institutional'},
+  {species:'Pinus radiata',name:'radiata pine',path:'dry',origin:'institutional'},
+  {species:'Salix babylonica',name:'weeping willow',path:'wet',origin:'institutional'},
+  {species:'Prunus domestica',name:'orchard plum',path:'garden',origin:'institutional'},
+  {species:'Rosa rubiginosa',name:'sweet briar',path:'garden',origin:'institutional'},
+];
+const NATIVE_SEEDS=[
+  {species:'Dacrycarpus dacrydioides',name:'kahikatea',path:'wet',origin:'pre-institutional'},
+  {species:'Leptospermum scoparium',name:'mānuka',path:'dry',origin:'pre-institutional'},
+  {species:'Kunzea ericoides',name:'kānuka',path:'dry',origin:'pre-institutional'},
+  {species:'Fuchsia excorticata',name:'kōtukutuku',path:'wet',origin:'pre-institutional'},
+  {species:'Cordyline australis',name:'tī kōuka',path:'wet',origin:'pre-institutional'},
+];
+function seedForLayer(depth,r){
+  const pool=depth>=-2?EXOTIC_SEEDS:NATIVE_SEEDS;
+  return{...seededPick(pool,r)};
+}
+const genCache = new Map();
+function genCell(x,y){
+  const k=`${x},${y}`;
+  if(genCache.has(k))return genCache.get(k);
+  const rng=cellRng(CANON_SEED,x,y);
+  const rv=Array.from({length:16},()=>rng());
+  const feature=siteFeatureAt(x,y,rv[0]);
+  const {zone}=feature||getChunk(Math.floor(x/CHUNK_SZ),Math.floor(y/CHUNK_SZ));
+  const pool=ZONE_INIT[zone];
+  const initialChar=feature?.char||pool[Math.floor(rv[0]*pool.length)];
+  const isRuins=feature?.isRuins??ZONE_RUINS[zone];
+  const baseStab=(ZONE_STAB[zone]??0.7)*slopeFactor(x,y);
+  let l1,l2;
+  if(isRuins){
+    const t1=rv[1]<.35?'foundation_stone':rv[1]<.6?'brick_course':rv[1]<.85?'inst_fill':'void_space';
+    l1={depth:-1,char:{foundation_stone:'▬',brick_course:'▤',inst_fill:'░',void_space:'□'}[t1],type:t1};
+    const t2=rv[2]<.45?'drain_intact':rv[2]<.75?'drain_blocked':'gravel_fill';
+    l2={depth:-2,char:{drain_intact:'═',drain_blocked:'╪',gravel_fill:'░'}[t2],type:t2};
+  }else{
+    l1={depth:-1,char:'.',type:'organic_fill'};
+    l2={depth:-2,char:'.',type:'organic_fill'};
+  }
+  const distC=Math.sqrt(((x-CX)/40)**2+((y-CY)/40)**2);
+  const hasWetClay=rv[3]<(.2+.12*Math.max(0,1-distC));
+  const hasBoulder=!hasWetClay&&rv[4]<.12;
+  const hasSlip=zone==='slope_face'&&rv[5]<.35;
+  let l3;
+  if(hasSlip)l3={depth:-3,char:'/',type:'clay_slip_face'};
+  else if(hasBoulder)l3={depth:-3,char:'●',type:'volcanic_boulder'};
+  else if(hasWetClay)l3={depth:-3,char:'≈',type:'heavy_clay_wet'};
+  else l3={depth:-3,char:'■',type:'heavy_clay_dry'};
+  const hasCavity=rv[6]<.11;
+  const hasMudstone=!hasCavity&&rv[7]<.55;
+  let l4;
+  if(hasCavity)l4={depth:-4,char:'○',type:'dissolution_cavity'};
+  else if(hasMudstone)l4={depth:-4,char:'≡',type:'mudstone'};
+  else l4={depth:-4,char:'[ ]',type:'sandstone'};
+  const l5={depth:-5,char:'▓',type:rv[8]<.3?'deep_mudstone':'volcanic_bedrock'};
+  const hasArt=rv[9]<.025;
+  if(hasArt)l3={...l3,char:'!',type:'artifact',text:ART_NOTES[Math.floor(rv[10]*ART_NOTES.length)]};
+  const seedChance=(zone==='formal_garden'||zone==='farm_field'||isRuins) ? .025 : .014;
+  const hasSeed=!hasArt&&rv[11]<seedChance;
+  const institutionalSeed=(isRuins||zone==='formal_garden'||zone==='farm_field')&&rv[12]<.52;
+  const seedLayer=hasSeed?(institutionalSeed?(rv[13]<.55?-1:-2):(rv[13]<.55?-3:-4)):null;
+  const ancientSeed=hasSeed?seedForLayer(seedLayer,rv[15]):null;
+  const data={initialChar,isRuins,baseStab,zone,siteKind:feature?.kind||null,strata:[l1,l2,l3,l4,l5],hasWetClay,hasCavity,hasArt,hasSeed,seedLayer,ancientSeed,hasAnomaly:rv[12]<.065,hasDrainBlocked:l2.type==='drain_blocked'};
+  genCache.set(k,data);return data;
+}
+
+// ── Surface helpers ──────────────────────────────────────────────
+const SURF_CHAR={cracked:';',dry:'_',water:'~',hummock:'^',hollow:'∪',slip_scar:'/',mud_seep:'≈',footprint:"'",rubble:'░',grass:',',sedge:'"',lichen:':',moss:'m',fungi:'i',ice_plant:'*',shrub:'n',gorse:'#',ornamental:'@',tree:'Y',willow:'W',rabbit_hole:'o',artifact:'!',anomaly:'?',toxic_fungi:'×'};
+const SURF_CSS={
+  water:'tn-c-water',sedge:'tn-c-water',willow:'tn-c-willow',
+  grass:'tn-c-grass',lichen:'tn-c-lichen',moss:'tn-c-moss',
+  ice_plant:'tn-c-succ',shrub:'tn-c-shrub',tree:'tn-c-tree',
+  fungi:'tn-c-fungi',gorse:'tn-c-gorse',ornamental:'tn-c-shrub',
+  dry:'tn-c-soil',cracked:'tn-c-soil2',rubble:'tn-c-soil2',
+  mud_seep:'tn-c-soil2',hummock:'tn-c-soil',hollow:'tn-c-soil',
+  slip_scar:'tn-c-soil2',footprint:'tn-c-soil2',
+  artifact:'tn-c-anom',anomaly:'tn-c-anom',
+  toxic_fungi:'tn-c-anom'
+};
+const MULTI_CH=new Set(['::','[ ]']);
+const HARVESTABLE=new Set(['grass','sedge','moss','fungi','ice_plant','shrub']);
+const HARVEST_PREV={grass:'dry',sedge:'water',moss:'lichen',fungi:'moss',ice_plant:'moss',shrub:'lichen'};
+
+const SYMBOL_DEFS=[
+  {char:'▓',cat:'ruins',label:{en:'standing masonry wall',zh:'残存砌体墙'}},
+  {char:'▬',cat:'ruins',label:{en:'ashlar foundation',zh:'石砌基础'}},
+  {char:'▤',cat:'ruins',label:{en:'brick course',zh:'砖砌层'}},
+  {char:'─',cat:'ruins',label:{en:'wall base line',zh:'墙基线'}},
+  {char:'::',cat:'ruins',label:{en:'stone paving / tile',zh:'石板铺地 / 地砖'}},
+  {char:'≡',cat:'ruins',label:{en:'drain cover / mudstone',zh:'暗渠盖 / 泥岩'}},
+  {char:'□',cat:'ruins',label:{en:'subfloor void',zh:'地板下空洞'}},
+  {char:'~',cat:'instability',key:'water'},
+  {char:'∪',cat:'instability',key:'hollow'},
+  {char:'^',cat:'instability',key:'hummock'},
+  {char:'/',cat:'instability',key:'slip_scar'},
+  {char:'≈',cat:'instability',key:'mud_seep'},
+  {char:'_',cat:'ground',key:'dry'},
+  {char:';',cat:'ground',key:'cracked'},
+  {char:'░',cat:'ground',key:'rubble'},
+  {char:"'",cat:'ground',key:'footprint'},
+  {char:',',cat:'life',key:'grass'},
+  {char:'"',cat:'life',key:'sedge'},
+  {char:':',cat:'life',key:'lichen'},
+  {char:'m',cat:'life',key:'moss'},
+  {char:'i',cat:'life',key:'fungi'},
+  {char:'*',cat:'life',key:'ice_plant'},
+  {char:'n',cat:'life',key:'shrub'},
+  {char:'#',cat:'life',key:'gorse'},
+  {char:'@',cat:'life',key:'ornamental'},
+  {char:'Y',cat:'life',key:'tree'},
+  {char:'W',cat:'life',key:'willow'},
+  {char:'o',cat:'disturbance',key:'rabbit_hole'},
+  {char:'·',cat:'disturbance',key:'toilet_trace'},
+  {char:'?',cat:'disturbance',key:'anomaly'},
+  {char:'!',cat:'disturbance',key:'artifact'},
+  {char:'.',cat:'strata',label:{en:'organic fill',zh:'有机填土'}},
+  {char:'═',cat:'strata',label:{en:'intact drain',zh:'完好暗渠'}},
+  {char:'╪',cat:'strata',label:{en:'blocked drain',zh:'堵塞暗渠'}},
+  {char:'■',cat:'strata',label:{en:'heavy clay',zh:'重黏土'}},
+  {char:'●',cat:'strata',label:{en:'volcanic boulder',zh:'火山巨砾'}},
+  {char:'○',cat:'strata',label:{en:'dissolution cavity',zh:'溶洞'}},
+  {char:'[ ]',cat:'strata',label:{en:'Caversham sandstone',zh:'Caversham 砂岩'}},
+  {char:'▓',cat:'strata',label:{en:'volcanic bedrock',zh:'火山基岩'}},
+];
+const SYMBOL_DEF_BY_KEY=new Map(SYMBOL_DEFS.map(d=>[`${d.cat}:${d.char}`,d]));
+function symLabel(def){return def?.key?tl('surface_lbl',def.key):(def?.label?.[LANG.cur]||def?.label?.en||def?.char||'?');}
+function symCatLabel(cat){return T[LANG.cur].sym_cat?.[cat]||T.en.sym_cat?.[cat]||cat;}
+function clueLabel(char){return FIELD_CLUE_LABELS[char]?.[LANG.cur]||FIELD_CLUE_LABELS[char]?.en||char;}
+function clueDesc(char){return FIELD_CLUE_DESC[char]?.[LANG.cur]||FIELD_CLUE_DESC[char]?.en||T[LANG.cur].interpretation_pending;}
+function rememberSymbol(char,cat,known=false){
+  if(!S||!char)return;
+  S.seenSymbols=S.seenSymbols||{};
+  S.knownSymbols=S.knownSymbols||{};
+  S.seenSymbols[`${cat}:${char}`]=true;
+  if(known)S.knownSymbols[`${cat}:${char}`]=true;
+}
+function hasSubsurfaceEvidence(cell){
+  return Boolean(
+    (cell.unlockedLayers||[]).length||
+    cell.excavatedDepth||
+    cell.gprAnomaly||
+    cell.lidarScanned||
+    cell.drainCleared||
+    cell.artifactFound||
+    cell.seedFound
+  );
+}
+function isArtificialSurfaceClue(ch,surf,gen){
+  return ['ruins','floor'].includes(surf)||gen?.isRuins||Boolean(RUIN_SURFACE_LABELS[ch]);
+}
+function observedSurfaceLabel(ch,surf,gen,cell){
+  if(isArtificialSurfaceClue(ch,surf,gen)&&!hasSubsurfaceEvidence(cell))return clueLabel(ch);
+  return gen.isRuins&&surf==='ruins'?ruinSurfaceLabel(ch):tl('surface_lbl',surf);
+}
+function observedSurfaceDesc(ch,surf,gen,cell){
+  if(isArtificialSurfaceClue(ch,surf,gen)&&!hasSubsurfaceEvidence(cell))return clueDesc(ch);
+  return gen.isRuins&&surf==='ruins'?ruinSurfaceDesc(ch):(T[LANG.cur].surface_desc?.[surf]||T.en.surface_desc?.[surf]||observedSurfaceLabel(ch,surf,gen,cell));
+}
+function observedContextLine(cell,gen){
+  if(!hasSubsurfaceEvidence(cell))return t('interpretation_pending');
+  return `${t('interpreted_context')} · ${tl('zone_lbl',gen.zone)}`;
+}
+function symbolGuideLabel(def){
+  const key=`${def.cat}:${def.char}`;
+  const known=S?.knownSymbols?.[key];
+  if(def.cat==='ruins'&&!known)return clueLabel(def.char);
+  return symLabel(def);
+}
+function symbolGuideCatLabel(cat,rows){
+  if(cat==='ruins'&&rows.some(d=>!S?.knownSymbols?.[`${d.cat}:${d.char}`]))return t('surface_traces');
+  return symCatLabel(cat);
+}
+function surfaceCategory(surf,gen){
+  if(['ruins','floor'].includes(surf)||gen?.isRuins)return'ruins';
+  if(['water','hollow','hummock','slip_scar','mud_seep'].includes(surf))return'instability';
+  if(['grass','sedge','lichen','moss','fungi','ice_plant','shrub','gorse','ornamental','tree','willow'].includes(surf))return'life';
+  if(['rabbit_hole','artifact','anomaly'].includes(surf))return'disturbance';
+  return'ground';
+}
+
+// ── Growth chain ─────────────────────────────────────────────────
+const SUCC={
+  dry:{ticks:2,next:'grass',stab:0},water:{ticks:1,next:'sedge',stab:0},
+  grass:{ticks:3,next:'lichen',stab:.01},sedge:{ticks:3,next:'moss',stab:.03},
+  lichen:{ticks:4,next:'moss',stab:.02},moss:{ticks:5,next:null,stab:.02},
+  fungi:{ticks:0,next:null,stab:.02},ice_plant:{ticks:0,next:null,stab:.01},
+  shrub:{ticks:15,next:'tree',stab:.05},gorse:{ticks:0,next:null,stab:.03},
+  ornamental:{ticks:0,next:null,stab:0},tree:{ticks:0,next:null,stab:.06},willow:{ticks:0,next:null,stab:.05},
+};
+const GROWABLE=new Set(Object.keys(SUCC));
+
+// ── State ────────────────────────────────────────────────────────
+let S;
+function mkState(){
+  const n=new Date().toISOString();
+  return{version:STATE_VER,seed:CANON_SEED,meta:{day:1,lastTickAt:n,energy:MAX_NRG,energyLastReset:n,lastLidarAt:null,probeUses:0,waterStreak:0,needsToilet:false,weather:null,rainDays:0,droughtDays:0},cells:{},revealed:[],seenSymbols:{},knownSymbols:{},signs:{},notebookPages:[],inventory:{seeds:[],water:0,waste:0,food:{crop:0,rabbit:0,fish:0},artifacts:[]}};
+}
+function normalizeS(s){
+  if(!s)return;
+  s.revealed=Array.isArray(s.revealed)?s.revealed:[];
+  s.notebookPages=Array.isArray(s.notebookPages)?s.notebookPages:[];
+  s.seenSymbols=s.seenSymbols||{};
+  s.knownSymbols=s.knownSymbols||{};
+  s.cells=s.cells||{};s.signs=s.signs||{};
+  s.meta=s.meta||{};
+  s.meta.energy=Math.min(MAX_NRG,s.meta.energy??MAX_NRG);
+  s.meta.day=s.meta.day||1;
+  s.meta.lastLidarAt=s.meta.lastLidarAt||null;
+  s.meta.probeUses=s.meta.probeUses||0;
+  s.meta.waterStreak=s.meta.waterStreak||0;
+  s.meta.needsToilet=!!s.meta.needsToilet;
+  s.inventory=s.inventory||{};
+  s.inventory.seeds=Array.isArray(s.inventory.seeds)?s.inventory.seeds:[];
+  s.inventory.water=s.inventory.water||0;
+  s.inventory.waste=s.inventory.waste||0;
+  s.inventory.food=s.inventory.food||{};
+  ['crop','rabbit','fish'].forEach(k=>{ s.inventory.food[k]=s.inventory.food[k]||0; });
+  s.inventory.artifacts=Array.isArray(s.inventory.artifacts)?s.inventory.artifacts:[];
+  Object.values(s.cells).forEach(c=>{
+    c.unlockedLayers=Array.isArray(c.unlockedLayers)?c.unlockedLayers:[];
+    c.recentLayers=Array.isArray(c.recentLayers)?c.recentLayers:[];
+  });
+  if(s.revealed.length===0)bootstrapReveal(s);
+}
+function bootstrapReveal(s){
+  for(let dy=-2;dy<=3;dy++)for(let dx=-2;dx<=3;dx++){
+    const k=`${CX+dx}_${CY+dy}`;
+    if(!s.revealed.includes(k))s.revealed.push(k);
+  }
+}
+
+const ck=(x,y)=>`${x}_${y}`;
+const isRev=(x,y)=>S.revealed.includes(ck(x,y));
+function isFogCell(x,y){
+  for(let dy=-2;dy<=2;dy++)for(let dx=-2;dx<=2;dx++){
+    if(isRev(x+dx,y+dy))return true;
+  }
+  return false;
+}
+function reveal(x,y){if(x<0||x>=GRID_W||y<0||y>=GRID_H)return;const k=ck(x,y);if(!S.revealed.includes(k))S.revealed.push(k);}
+function revRing(x,y){for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++)reveal(x+dx,y+dy);}
+function initialSurfaceForGen(g){
+  if(g.isRuins)return'ruins';
+  return {_:'dry',',':'grass','░':'rubble',m:'moss',':':'lichen','"':'sedge',n:'shrub','@':'ornamental','^':'hummock','∪':'hollow','/':'slip_scar','≈':'mud_seep','::':'floor'}[g.initialChar]||'open';
+}
+function getCell(x,y){const k=ck(x,y);if(S.cells[k])return S.cells[k];const g=genCell(x,y);return{surface:initialSurfaceForGen(g),daysActive:0,stability:g.baseStab,unlockedLayers:[],recentLayers:[]};}
+function setCell(x,y,p){const k=ck(x,y);S.cells[k]={...(S.cells[k]||getCell(x,y)),...p};}
+function unlockLayer(x,y,depth){
+  const cell=getCell(x,y);
+  const unlocked=new Set(cell.unlockedLayers||[]);
+  unlocked.add(Number(depth));
+  setCell(x,y,{unlockedLayers:[...unlocked].sort((a,b)=>b-a)});
+}
+function isLayerUnlocked(cell,depth){
+  return (cell.unlockedLayers||[]).includes(depth)||depth>=-(cell.excavatedDepth||0);
+}
+function addRecentLayer(x,y,char,labelKey){
+  const cell=getCell(x,y);
+  const recent=[...(cell.recentLayers||[])];
+  const label=labelKey||cell.surface||'recent_layer';
+  if(recent[recent.length-1]?.char!==char||recent[recent.length-1]?.labelKey!==label){
+    recent.push({char,labelKey:label,ts:new Date().toISOString()});
+  }
+  setCell(x,y,{recentLayers:recent.slice(-4)});
+  rememberSymbol(char,'strata',true);
+}
+
+// ── Time ─────────────────────────────────────────────────────────
+function ticksElapsed(iso){if(!iso)return 0;return Math.max(0,Math.floor((Date.now()-new Date(iso).getTime())/(TICK_H*3600000)));}
+function hoursElapsed(iso){if(!iso)return 9999;return(Date.now()-new Date(iso).getTime())/3600000;}
+function probeLeft(){return Math.max(0,MAX_PROBE-(S.meta.probeUses||0));}
+function resetDailyResources(){
+  if(hoursElapsed(S.meta.energyLastReset)>=NRG_RST_H){
+    S.meta.energy=MAX_NRG;
+    S.meta.probeUses=0;
+    S.meta.energyLastReset=new Date().toISOString();
+  }
+}
+
+function advanceCell(x,y,ticks){
+  if(ticks<=0)return;
+  const cell=getCell(x,y);const s=SUCC[cell.surface];if(!s)return;
+  const w=S.meta.weather;
+  const WET_PATH=new Set(['water','sedge','moss','fungi','mud_seep']);
+  // Weather: rain speeds up wet-path succession
+  let effectiveTicks=ticks;
+  if(w?.rain>0 && WET_PATH.has(cell.surface)) effectiveTicks=ticks+1;
+  // Weather: drought retreats moss on dry ground
+  if(w?.temp>22 && !w?.rain && cell.surface==='moss' && !genCell(x,y).hasWetClay){
+    if(Math.random()<0.2*ticks){setCell(x,y,{surface:'lichen',daysActive:0});return;}
+  }
+  // Weather: drought evaporates water
+  if(w?.temp>22 && !w?.rain && cell.surface==='water' && cell.waterType!=='B'){
+    if(Math.random()<0.15*ticks){setCell(x,y,{surface:'mud_seep',daysActive:0});addRecentLayer(x,y,'≈','mud_seep');return;}
+  }
+  let days=(cell.daysActive||0)+effectiveTicks,newSurf=cell.surface;
+  if(s.next!==null&&days>=s.ticks){
+    days-=s.ticks;
+    newSurf=cell.surface==='moss'?(genCell(x,y).hasWetClay?'fungi':'ice_plant'):s.next;
+  }
+  const newStab=Math.min(1,(cell.stability||genCell(x,y).baseStab)+(s.stab||0)*ticks);
+  setCell(x,y,{surface:newSurf,daysActive:days,stability:newStab});
+  if(newSurf!==cell.surface)addRecentLayer(x,y,SURF_CHAR[newSurf]||'.',newSurf);
+}
+function applyTime(){
+  resetDailyResources();
+  const ticks=ticksElapsed(S.meta.lastTickAt);
+  if(ticks<=0)return false;
+  for(const k of S.revealed){const[x,y]=k.split('_').map(Number);advanceCell(x,y,ticks);}
+  for(let i=0;i<ticks;i++){spreadSpores();gorseInvade();}
+  checkSlumps();
+  // Weather accumulation effects
+  const w=S.meta.weather;
+  if(w?.rain>0){
+    S.meta.rainDays=(S.meta.rainDays||0)+ticks;
+    S.meta.droughtDays=0;
+    if(S.meta.rainDays>=3){
+      for(const k of S.revealed){
+        const[x,y]=k.split('_').map(Number);const c=getCell(x,y);
+        if(c.surface==='cracked'&&genCell(x,y).hasWetClay&&Math.random()<0.3){
+          spreadWaterA(x,y);S.meta.rainDays=0;break;
+        }
+      }
+    }
+  }else{
+    S.meta.rainDays=Math.max(0,(S.meta.rainDays||0)-1);
+    if(w?.temp>22) S.meta.droughtDays=(S.meta.droughtDays||0)+ticks;
+    else S.meta.droughtDays=0;
+  }
+  const hrs=(Date.now()-new Date(S.meta.lastTickAt).getTime())/3600000;
+  S.meta.day=Math.max(1,S.meta.day+Math.floor(hrs/24));
+  S.meta.lastTickAt=new Date().toISOString();
+  resetDailyResources();
+  return true;
+}
+function liveTick(){if(ticksElapsed(S.meta.lastTickAt)>0){applyTime();renderStatus();renderGrid();renderInv();saveLocal();}}
+
+// ── Ecology ──────────────────────────────────────────────────────
+function spreadSpores(){
+  const wind=S.meta.weather?.wind||0;
+  const rad=wind>15?2:1; // high wind extends spread radius
+  const src=S.revealed.filter(k=>{const[x,y]=k.split('_').map(Number);const c=getCell(x,y);return(c.surface==='lichen'||c.surface==='moss')&&(c.daysActive||0)>=3;});
+  for(const k of src){
+    const[x,y]=k.split('_').map(Number);const nbrs=[];
+    for(let dy=-rad;dy<=rad;dy++)for(let dx=-rad;dx<=rad;dx++){
+      if(!dx&&!dy)continue;
+      if(dx*dx+dy*dy>rad*rad+0.5)continue;
+      const nx=x+dx,ny=y+dy;
+      if(!isRev(nx,ny))continue;const nc=getCell(nx,ny);
+      if(!['dry','ruins','open','cracked'].includes(nc.surface))continue;
+      nbrs.push([nx,ny,(dx>=0&&dy>=0)?1.4:1.0]);
+    }
+    if(!nbrs.length)continue;
+    const tw=nbrs.reduce((s,[,,w])=>s+w,0);let r=Math.random()*tw;
+    for(const[nx,ny,w]of nbrs){r-=w;if(r<=0){setCell(nx,ny,{surface:'lichen',daysActive:0,stability:genCell(nx,ny).baseStab});break;}}
+  }
+}
+function checkSlumps(){
+  for(const k of S.revealed){const[x,y]=k.split('_').map(Number);const c=getCell(x,y);if((c.stability??0.7)<.3&&Math.random()<(.3-(c.stability??0.3))*.4)triggerSlump(x,y);}
+}
+function triggerSlump(x,y){
+  const c=getCell(x,y);
+  setCell(x,y,{surface:(x>CX||y>CY)?'hummock':'slip_scar',daysActive:0,stability:Math.min(.45,(c.stability||.3)+.1)});
+  addRecentLayer(x,y,'░','rubble');
+  if(x+1<GRID_W&&y+1<GRID_H&&isRev(x+1,y+1)){const d=getCell(x+1,y+1);if(['dry','grass','cracked'].includes(d.surface))setCell(x+1,y+1,{surface:'rubble',stability:Math.max(.2,(d.stability||.5)-.05)});}
+}
+function gorseInvade(){
+  const edge=S.revealed.filter(k=>{const[x,y]=k.split('_').map(Number);return x<4||x>123||y<4||y>123;});
+  if(!edge.length)return;
+  const[ex,ey]=edge[Math.floor(Math.random()*edge.length)].split('_').map(Number);
+  const c=getCell(ex,ey);if(['dry','grass','cracked','open'].includes(c.surface))setCell(ex,ey,{surface:'gorse',daysActive:0});
+  for(const k of S.revealed){const[x,y]=k.split('_').map(Number);if(getCell(x,y).surface!=='gorse')continue;
+    for(const[nx,ny]of[[x-1,y],[x+1,y],[x,y-1],[x,y+1]]){if(!isRev(nx,ny))continue;const nc=getCell(nx,ny);if(['dry','grass'].includes(nc.surface)&&Math.random()<.07)setCell(nx,ny,{surface:'gorse',daysActive:0});}}
+}
+
+// ── Water ────────────────────────────────────────────────────────
+function spreadWaterA(sx,sy){
+  const q=[[sx,sy]],vis=new Set([ck(sx,sy)]),found=[];
+  while(q.length){const[x,y]=q.shift();found.push([x,y]);for(const[nx,ny]of[[x-1,y],[x+1,y],[x,y-1],[x,y+1]]){const nk=ck(nx,ny);if(vis.has(nk)||nx<0||nx>=GRID_W||ny<0||ny>=GRID_H)continue;if(!genCell(nx,ny).hasWetClay)continue;vis.add(nk);q.push([nx,ny]);}}
+  for(const[x,y]of found){reveal(x,y);revRing(x,y);setCell(x,y,{surface:'water',daysActive:0,stability:Math.max(.1,genCell(x,y).baseStab-.15),waterType:'A'});addRecentLayer(x,y,'≈','mud_seep');}
+}
+function spreadWaterB(sx,sy){
+  const q=[[sx,sy,0]],vis=new Set([ck(sx,sy)]),found=[];
+  while(q.length){const[x,y,d]=q.shift();found.push([x,y,d]);for(const[nx,ny]of[[x-1,y],[x+1,y],[x,y-1],[x,y+1]]){const nk=ck(nx,ny);if(vis.has(nk)||nx<0||nx>=GRID_W||ny<0||ny>=GRID_H)continue;const ng=genCell(nx,ny);if(ng.hasCavity||d<3){vis.add(nk);q.push([nx,ny,d+1]);}}}
+  for(const[x,y,d]of found){reveal(x,y);revRing(x,y);setCell(x,y,{surface:'water',daysActive:0,stability:Math.max(.05,genCell(x,y).baseStab-(d<2?.3:.1)),waterType:'B'});addRecentLayer(x,y,d<2?'░':'≈',d<2?'rubble':'mud_seep');if(d<2)triggerSlump(x,y);}
+}
+
+// ── GPR ──────────────────────────────────────────────────────────
+function runGPR(cx,cy){
+  let n=0;
+  for(let dy=-GPR_RAD;dy<=GPR_RAD;dy++)for(let dx=-GPR_RAD;dx<=GPR_RAD;dx++){
+    if(dx*dx+dy*dy>GPR_RAD*GPR_RAD)continue;
+    const x=cx+dx,y=cy+dy;if(x<0||x>=GRID_W||y<0||y>=GRID_H||!isRev(x,y))continue;
+    const gen=genCell(x,y);const has=gen.hasAnomaly||gen.hasArt||gen.hasSeed;
+    setCell(x,y,{gprAnomaly:has?'confirmed':'clear'});if(has)n++;
+  }
+  return n;
+}
+
+// ── LiDAR ────────────────────────────────────────────────────────
+function runLiDAR(cx,cy){
+  let n=0;
+  for(let dy=-LIDAR_RAD;dy<=LIDAR_RAD;dy++)for(let dx=-LIDAR_RAD;dx<=LIDAR_RAD;dx++){
+    if(dx*dx+dy*dy>LIDAR_RAD*LIDAR_RAD)continue;
+    const x=cx+dx,y=cy+dy;if(x<0||x>=GRID_W||y<0||y>=GRID_H)continue;
+    const was=isRev(x,y);reveal(x,y);
+    const gen=genCell(x,y);setCell(x,y,{lidarScanned:true,lidarHasWater:gen.hasWetClay||gen.hasCavity,lidarZone:gen.zone});
+    if(!was)n++;
+  }
+  S.meta.lastLidarAt=new Date().toISOString();return n;
+}
+function lidarHLeft(){if(!S.meta.lastLidarAt)return 0;return Math.max(0,LIDAR_CD_H-hoursElapsed(S.meta.lastLidarAt));}
+
+// ── Persistence ──────────────────────────────────────────────────
+let remoteSaveTimer=null,remoteSaveBusy=false,remoteSaveQueued=false;
+function saveLocal(){
+  try{localStorage.setItem(LS_KEY,JSON.stringify(S));}catch(_){}
+  queueRemoteSave();
+}
+function hasRemoteAuth(){return !DEV_MODE&&!!sessionStorage.getItem('tn_auth_hash');}
+function queueRemoteSave(){
+  if(!hasRemoteAuth()||!TN_CFG.writeUrl)return;
+  clearTimeout(remoteSaveTimer);
+  remoteSaveTimer=setTimeout(syncRemoteState,700);
+}
+async function syncRemoteState(){
+  if(remoteSaveBusy){remoteSaveQueued=true;return;}
+  remoteSaveBusy=true;
+  try{
+    const r=await fetch(TN_CFG.writeUrl,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({source:'nature',hash:sessionStorage.getItem('tn_auth_hash'),data:S})});
+    if(!r.ok)throw new Error(`remote save failed (${r.status})`);
+  }catch(err){
+    console.warn('[thirdnature] remote save skipped:',err);
+  }finally{
+    remoteSaveBusy=false;
+    if(remoteSaveQueued){remoteSaveQueued=false;queueRemoteSave();}
+  }
+}
+async function loadState(){
+  let ok=false;
+  const stateUrl=String(TN_CFG.stateUrl||'/assets/nature/state.json').trim();
+  try{const r=await fetch(`${stateUrl}${stateUrl.includes('?')?'&':'?'}_=${Date.now()}`,{cache:'no-store'});if(r.ok){const d=await r.json();if(d?.version>=STATE_VER){S=d;ok=true;}}}catch(_){}
+  if(!ok){try{const raw=localStorage.getItem(LS_KEY);if(raw){const p=JSON.parse(raw);if(p?.version>=STATE_VER){S=p;ok=true;}}}catch(_){}}
+  if(!ok)S=mkState();
+  normalizeS(S);
+}
+
+// ── Auth ─────────────────────────────────────────────────────────
+async function sha256(s){const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s));return Array.from(new Uint8Array(b)).map(x=>x.toString(16).padStart(2,'0')).join('');}
+const isAuth=()=>DEV_MODE||!!sessionStorage.getItem('tn_auth_hash');
+
+// ── Viewport ─────────────────────────────────────────────────────
+function centeredViewOrigin(){return CX-Math.floor(VP/2)+1;}
+let viewX=centeredViewOrigin(),viewY=centeredViewOrigin();
+function clampVP(){viewX=Math.max(0,Math.min(GRID_W-VP,viewX));viewY=Math.max(0,Math.min(GRID_H-VP,viewY));}
+function resetView(){viewX=centeredViewOrigin();viewY=centeredViewOrigin();clampVP();}
+
+// ── Render ───────────────────────────────────────────────────────
+function renderStatus(){
+  document.getElementById('tn-day').textContent=t('day',S.meta.day);
+  const weather=S.meta.weather;
+  document.getElementById('tn-weather').textContent=weather?`${weather.season} · ${weather.temp}°C · ${weather.sky}`:'weather: —';
+  document.getElementById('tn-energy').textContent=`Energy: ${t('energy',S.meta.energy)}`;
+  document.getElementById('tn-title').textContent=t('title');
+  document.getElementById('tn-lang-btn').textContent=LANG.cur.toUpperCase();
+  document.getElementById('tn-pan-hint').textContent=t('pan_hint');
+  document.getElementById('tn-auth-badge').textContent=isAuth()?t('auth_on'):t('auth_visitor');
+  document.getElementById('lbl-tools').textContent=t('lbl_tools');
+  document.getElementById('lbl-actions').textContent=t('lbl_actions');
+  document.getElementById('lbl-inv').textContent=t('lbl_inv');
+  document.getElementById('tn-pw-lbl').textContent=t('access_lbl');
+  const lidarH=lidarHLeft();
+  document.getElementById('t-observe').textContent=t('tool_observe');
+  document.getElementById('t-expose').textContent=t('tool_expose');
+  document.getElementById('t-trowel').textContent=t('tool_trowel');
+  document.getElementById('t-probe').textContent=t('tool_probe',probeLeft());
+  document.getElementById('t-gpr').textContent=t('tool_gpr');
+  const lb=document.getElementById('t-lidar');
+  lb.textContent=lidarH>0?`${t('tool_lidar').replace(' ]','')} ${Math.ceil(lidarH)}h ]`:t('tool_lidar');
+  lb.classList.toggle('cooldown',lidarH>0);
+  document.getElementById('t-harvest').textContent=t('act_harvest');
+  document.getElementById('t-plant').textContent=t('act_plant');
+  document.getElementById('t-graft').textContent=t('tool_graft');
+  document.getElementById('t-relieve').textContent=t('act_relieve');
+  document.getElementById('t-relieve').classList.toggle('hidden-hard',!S.meta.needsToilet);
+  document.getElementById('t-relieve').classList.toggle('needs',!!S.meta.needsToilet);
+  document.getElementById('tn-access-btn').title=t('act_access');
+  document.getElementById('tn-guide-btn').title=t('tool_symbols');
+  document.getElementById('tn-notebook-btn').title=t('notebook_lbl');
+  document.getElementById('tn-notebook-title').textContent=t('notebook_lbl');
+  document.getElementById('t-plant').disabled=S.inventory.seeds.length===0;
+  renderSymbolGuide();
+  renderNotebook();
+}
+
+function renderSymbolGuide(){
+  const body=document.getElementById('tn-symbol-guide');
+  if(!body||!S)return;
+  const seen=S.seenSymbols||{};
+  const groups=['ruins','instability','ground','life','disturbance','strata'];
+  const html=groups.map(cat=>{
+    const rows=SYMBOL_DEFS.filter(d=>d.cat===cat&&seen[`${d.cat}:${d.char}`]);
+    if(!rows.length)return'';
+    return`<details class="sym-group" open><summary>${symbolGuideCatLabel(cat,rows)}</summary><div class="sym-list">${
+      rows.map(d=>`<div class="sym-row"><span class="sym-char">${d.char}</span><span class="sym-text">${symbolGuideLabel(d)}</span></div>`).join('')
+    }</div></details>`;
+  }).join('');
+  body.innerHTML=html||`<div class="sym-empty">${t('symbols_empty')}</div>`;
+}
+
+function renderNotebook(){
+  const body=document.getElementById('tn-notebook-body');
+  if(!body||!S)return;
+  const pages=[...NOTEBOOK_ENTRIES,...(S.notebookPages||[])];
+  if(!pages.length){
+    body.innerHTML=`<div class="sym-empty">${t('notebook_empty')}</div>`;
+    return;
+  }
+  body.innerHTML=pages.map(p=>`
+    <article class="note-entry">
+      <div class="note-title">${p.title?.[LANG.cur]||p.title?.en||p.title||'untitled'}</div>
+      <div class="note-body">${p.body?.[LANG.cur]||p.body?.en||p.body||''}</div>
+    </article>
+  `).join('');
+}
+
+function renderGrid(){
+  const grid=document.getElementById('tn-grid');
+  grid.style.gridTemplateColumns=`repeat(${VP},var(--cell-w))`;
+  const frags=[];
+  for(let row=0;row<VP;row++){
+    for(let col=0;col<VP;col++){
+      const x=viewX+col,y=viewY+row;
+      if(x<0||x>=GRID_W||y<0||y>=GRID_H||!isRev(x,y)){
+        const fog=isFogCell(x,y);
+        frags.push(`<button type="button" class="tn-cell tn-void${fog?' tn-fog':''}${col===VP-1?' tn-open-right':''}${row===VP-1?' tn-open-bottom':''}" data-x="${x}" data-y="${y}" onpointerdown="tnCellDown(event)" onpointerup="tnCellUp(event,this)" onmousedown="tnCellDown(event)" onmouseup="tnCellUp(event,this)" onclick="tnCellClick(event,this)" ondblclick="tnCellProfile(event,this)">${(x+y)%4===0?'·':' '}</button>`);
+        continue;
+      }
+      const cell=getCell(x,y);const gen=genCell(x,y);
+      const surf=cell.surface;
+      let ch=(['ruins','floor','open'].includes(surf))?gen.initialChar:(SURF_CHAR[surf]||'?');
+      if(cell.excavatedDepth&&!['water','artifact','mud_seep','toxic_fungi'].includes(surf)){const dl=gen.strata.find(s=>s.depth===-(cell.excavatedDepth));if(dl)ch=dl.char;}
+      let css=SURF_CSS[surf]||'';
+      let extra='';
+      const isGPRAnom=cell.gprAnomaly==='confirmed'&&!['artifact','anomaly'].includes(surf);
+      if(!isGPRAnom&&cell.lidarScanned&&['ruins','open'].includes(surf)){extra=' tn-lidar-mark';}
+      const cat=surfaceCategory(surf,gen);
+      rememberSymbol(ch,cat,hasSubsurfaceEvidence(cell));
+      const sm=MULTI_CH.has(ch)||ch.length>1;
+      const s=SUCC[surf];const flicker=s?.next&&(cell.daysActive||0)>=4;
+      let inner;
+      if(surf==='artifact'){inner=`<span class="tn-art">!</span>`;}
+      else if(isGPRAnom){inner=`<span class="tn-gpr-a">?</span><span class="tn-gpr-b">${ch}</span>`;}
+      else if(flicker){const nc=SURF_CHAR[s.next]||ch;inner=`<span class="tn-alt-a">${ch}</span><span class="tn-alt-b">${nc}</span>`;}
+      else{inner=ch;}
+      const zoneCls=hasSubsurfaceEvidence(cell)?`tn-z-${gen.zone}`:'';
+      frags.push(`<button type="button" class="tn-cell ${zoneCls} ${css}${extra}${sm?' tn-sm':''}" data-x="${x}" data-y="${y}" onpointerdown="tnCellDown(event)" onpointerup="tnCellUp(event,this)" onmousedown="tnCellDown(event)" onmouseup="tnCellUp(event,this)" onclick="tnCellClick(event,this)" ondblclick="tnCellProfile(event,this)">${inner}</button>`);
+    }
+  }
+  grid.innerHTML=frags.join('');
+  renderSymbolGuide();
+}
+
+function renderInv(){
+  const inv=S.inventory;
+  const items=[];
+  if(inv.seeds.length)    items.push({char:'`',   label:`×${inv.seeds.length}`, kind:'seed', cls:''});
+  if(inv.water)           items.push({char:'~',   label:`×${inv.water}`,       kind:'water', cls:'tn-c-water'});
+  if(inv.food.crop)       items.push({char:'◆',   label:`×${inv.food.crop}`,   kind:'crop', cls:''});
+  if(inv.food.rabbit)     items.push({char:'o',   label:`×${inv.food.rabbit}`, kind:'rabbit', cls:''});
+  if(inv.food.fish)       items.push({char:'≈',   label:`×${inv.food.fish}`,   kind:'fish', cls:''});
+  if(inv.waste)           items.push({char:'·',   label:`×${inv.waste}`,       kind:'waste', cls:'tn-c-soil2'});
+  if(inv.artifacts.length)items.push({char:'!',   label:`×${inv.artifacts.length}`, kind:'artifact', cls:'tn-c-anom'});
+  const body=document.getElementById('tn-inv-body');
+  if(!items.length){body.innerHTML=`<span class="tn-inv-none">${t('inv_none')}</span>`;return;}
+  body.innerHTML=items.map(it=>`<span class="tn-inv-item" data-kind="${it.kind}"><span class="tn-inv-char ${it.cls}">${it.char}</span>${it.label}</span>`).join('');
+  body.querySelectorAll('[data-kind]').forEach(el=>el.addEventListener('click',()=>handleInvClick(el.dataset.kind)));
+}
+
+function itemName(kind){
+  const names={
+    seed: LANG.cur==='zh'?'埋藏种子':'buried seed',
+    water: LANG.cur==='zh'?'水':'water',
+    crop: LANG.cur==='zh'?'可食植物':'crop',
+    rabbit: LANG.cur==='zh'?'兔肉':'rabbit',
+    fish: LANG.cur==='zh'?'鱼':'fish',
+    waste: t('waste_name'),
+    artifact: LANG.cur==='zh'?'物件':'artifact'
+  };
+  return names[kind]||kind;
+}
+function itemDesc(kind){
+  const desc={
+    seed: LANG.cur==='zh'?'可以种下，也可以先留着等识别。':'Can be planted, or kept until you know more.',
+    water: LANG.cur==='zh'?'喝掉恢复 2 行动力；也可以灌溉格子。':'Drink for 2 energy, or irrigate a cell.',
+    crop: LANG.cur==='zh'?'可食用，也可堆肥回到地表。':'Can be eaten, or composted back into the surface.',
+    rabbit: LANG.cur==='zh'?'高能量食物，也可以堆肥。':'Dense food; composting is also possible.',
+    fish: LANG.cur==='zh'?'高能量食物，也可以堆肥。':'Dense food; composting is also possible.',
+    waste: t('waste_desc'),
+    artifact: LANG.cur==='zh'?'已取出的物件。只能查看，不能吃。':'Recovered object. Inspectable, not edible.'
+  };
+  return desc[kind]||'';
+}
+function menuButton(label,action,kind){return`<button class="tn-btn" data-item-action="${action}" data-kind="${kind}">[ ${label} ]</button>`;}
+function openItemMenu(kind){
+  const menu=document.getElementById('tn-item-menu');
+  const actions=[];
+  if(['crop','rabbit','fish'].includes(kind)){
+    actions.push(menuButton(t('item_eat'),'eat',kind),menuButton(t('item_compost'),'compost',kind));
+  }else if(kind==='water'){
+    actions.push(menuButton(t('item_drink'),'drink',kind),menuButton(t('item_irrigate'),'irrigate',kind));
+  }else if(kind==='seed'){
+    actions.push(menuButton(t('item_plant'),'plant',kind));
+  }else if(kind==='waste'){
+    actions.push(menuButton(t('item_eat'),'eat',kind),menuButton(t('item_compost'),'compost',kind));
+  }else if(kind==='artifact'){
+    actions.push(menuButton(t('item_inspect'),'inspect',kind));
+  }
+  menu.innerHTML=`
+    <div class="item-menu-head"><span>${t('item_use')}: ${itemName(kind)}</span><button id="tn-item-menu-close">×</button></div>
+    <div class="item-menu-desc">${itemDesc(kind)}</div>
+    <div class="item-menu-actions">${actions.join('')}</div>
+  `;
+  menu.classList.remove('hidden');
+  menu.querySelector('#tn-item-menu-close').addEventListener('click',hideItemMenu);
+  menu.querySelectorAll('[data-item-action]').forEach(btn=>btn.addEventListener('click',()=>handleItemAction(btn.dataset.kind,btn.dataset.itemAction)));
+}
+function hideItemMenu(){document.getElementById('tn-item-menu')?.classList.add('hidden');}
+
+// ── Tool & mode state ────────────────────────────────────────────
+let activeTool='observe', targeting=null;
+let graftSource=null;
+const GRAFT_SRCS=new Set(['lichen','moss','fungi','shrub','ornamental']);
+const GRAFT_SRC_DMGS={lichen:'dry',moss:'lichen',fungi:'moss',shrub:'grass',ornamental:'dry'};
+const GRAFT_MATRIX={
+  lichen:{ruins:'lichen',floor:'lichen',open:'lichen',dry:'lichen',cracked:'lichen',rubble:'lichen'},
+  moss:{lichen:'moss',water:'moss',mud_seep:'moss',dry:'moss'},
+  fungi:{moss:'fungi',water:'fungi',ruins:'toxic_fungi',floor:'toxic_fungi',dry:'toxic_fungi',cracked:'toxic_fungi',rubble:'toxic_fungi'},
+  shrub:{grass:'shrub',lichen:'shrub',dry:'shrub',open:'shrub'},
+  ornamental:{dry:'ornamental',grass:'ornamental',open:'ornamental',cracked:'ornamental'},
+};
+function setTool(id){
+  activeTool=id;targeting=null;
+  document.getElementById('tn-grid').classList.remove('targeting');
+  document.querySelectorAll('.tn-btn[data-tool]').forEach(b=>{b.classList.toggle('active',b.dataset.tool===id);b.classList.remove('targ');});
+  if(id!=='observe') document.getElementById('tn-observe').classList.add('hidden');
+}
+function startTargeting(tool){
+  targeting=tool;
+  document.getElementById('tn-grid').classList.add('targeting');
+  document.getElementById(`t-${tool}`).classList.add('targ');
+}
+function cancelTargeting(){
+  targeting=null;
+  document.getElementById('tn-grid').classList.remove('targeting');
+  document.querySelectorAll('.tn-btn.targ').forEach(b=>b.classList.remove('targ'));
+}
+
+// ── Energy ───────────────────────────────────────────────────────
+function useEnergy(n=1){
+  if(S.meta.energy<n){showToast(n>1?t('nrg_need',n):t('no_nrg'));return false;}
+  S.meta.energy-=n;renderStatus();return true;
+}
+
+// ── Cell click dispatcher ─────────────────────────────────────────
+function handleClick(x,y,el){
+  if(!isRev(x,y))return;
+  lastClickedCell={x,y};
+  // Targeting modes
+  if(targeting==='gpr'){
+    if(!useEnergy(GPR_COST)){cancelTargeting();return;}
+    const n=runGPR(x,y);showToast(t('gpr_done',n));cancelTargeting();setTool('observe');renderGrid();saveLocal();return;
+  }
+  if(targeting==='lidar'){
+    const n=runLiDAR(x,y);showToast(t('lidar_done',n));cancelTargeting();setTool('observe');renderStatus();renderGrid();
+    // flash cells in scan radius
+    requestAnimationFrame(()=>{
+      document.querySelectorAll('.tn-cell[data-x]').forEach(el=>{
+        const dx=+el.dataset.x-x,dy=+el.dataset.y-y;
+        if(dx*dx+dy*dy<=LIDAR_RAD*LIDAR_RAD){el.classList.add('tn-lidar-reveal');setTimeout(()=>el.classList.remove('tn-lidar-reveal'),1800);}
+      });
+    });
+    saveLocal();return;
+  }
+  if(targeting==='harvest'){
+    cancelTargeting();setTool('observe');doHarvest(x,y);return;
+  }
+  if(targeting==='plant'){
+    cancelTargeting();setTool('observe');doPlant(x,y);return;
+  }
+  if(targeting==='relieve'){
+    cancelTargeting();setTool('observe');doRelieve(x,y);return;
+  }
+  if(targeting==='irrigate'){
+    cancelTargeting();setTool('observe');doIrrigate(x,y);return;
+  }
+  if(targeting==='compost'){
+    cancelTargeting();setTool('observe');doCompost(x,y);return;
+  }
+  if(targeting==='graft_step1'){
+    const srcSurf=getCell(x,y).surface;
+    if(!GRAFT_SRCS.has(srcSurf)){showToast(t('graft_no_src'));return;}
+    graftSource={x,y,surface:srcSurf};
+    targeting='graft_step2';
+    if(el)el.classList.add('tn-graft-source');
+    showToast(t('graft_step2',tl('surface_lbl',srcSurf)));
+    return;
+  }
+  if(targeting==='graft_step2'){
+    const src=graftSource;
+    graftSource=null;
+    cancelTargeting();setTool('observe');
+    document.querySelectorAll('.tn-graft-source').forEach(e=>e.classList.remove('tn-graft-source'));
+    const tgtCell=getCell(x,y);
+    const result=(GRAFT_MATRIX[src.surface]||{})[tgtCell.surface];
+    if(!result){showToast(t('graft_fail'));return;}
+    setCell(x,y,{surface:result,daysActive:0});
+    addRecentLayer(x,y,SURF_CHAR[result]||'×',result);
+    const dmgSurf=GRAFT_SRC_DMGS[src.surface]||'dry';
+    setCell(src.x,src.y,{surface:dmgSurf,daysActive:0});
+    addRecentLayer(src.x,src.y,SURF_CHAR[dmgSurf]||'_',dmgSurf);
+    showToast(result==='toxic_fungi'?t('graft_toxic'):t('graft_ok'));
+    renderGrid();saveLocal();return;
+  }
+  if(activeTool==='observe'){doObserve(x,y);return;}
+  if(activeTool==='probe'){
+    if(!isAuth()){showToast(t('need_access'));return;}
+    doProbe(x,y);return;
+  }
+  // Auth gate for owned tools
+  if(!isAuth()){
+    if(el){el.classList.remove('tn-pressed');void el.offsetWidth;el.classList.add('tn-pressed');setTimeout(()=>el.classList.remove('tn-pressed'),300);}
+    const k=ck(x,y);S.cells[k]=S.cells[k]||getCell(x,y);S.cells[k].visitCount=(S.cells[k].visitCount||0)+1;
+    if(S.cells[k].visitCount%50===0)S.cells[k].stability=Math.max(.1,(S.cells[k].stability||.7)-.05);
+    showToast(t('visitor_hit'));saveLocal();return;
+  }
+  if(activeTool==='expose')doExpose(x,y,el);
+  else if(activeTool==='trowel')doTrowel(x,y);
+}
+function tnCellClick(e,el){
+  if(e){e.preventDefault();e.stopPropagation();}
+  if(Date.now()-lastCellActionAt<120)return;
+  lastCellActionAt=Date.now();
+  handleClick(+el.dataset.x,+el.dataset.y,el);
+}
+function tnCellDown(e){
+  cellDownAt={x:e.clientX,y:e.clientY};
+}
+function tnCellUp(e,el){
+  if(!cellDownAt)return;
+  const dx=e.clientX-cellDownAt.x,dy=e.clientY-cellDownAt.y;
+  cellDownAt=null;
+  if(Math.hypot(dx,dy)>8)return;
+  tnCellClick(e,el);
+}
+function tnCellProfile(e,el){
+  if(e){e.preventDefault();e.stopPropagation();}
+  showProfile(+el.dataset.x,+el.dataset.y);
+}
+
+// ── Actions ──────────────────────────────────────────────────────
+const EXPOSE_RUINS=new Set(['ruins','floor','open']);
+const EXPOSE_VEG=new Set(['grass','sedge','lichen','moss','fungi','ice_plant','shrub','gorse','ornamental','tree','willow']);
+function doExpose(x,y,el){
+  const cell=getCell(x,y),gen=genCell(x,y);
+  const surf=cell.surface;
+  if(!EXPOSE_RUINS.has(surf)&&!EXPOSE_VEG.has(surf)){
+    showToast(LANG.cur==='zh'?'地表已光秃秃，清表无处着力。':'Nothing to scrape here.');
+    showProfile(x,y);return;
+  }
+  if(!useEnergy())return;
+  if(EXPOSE_RUINS.has(surf)){
+    unlockLayer(x,y,-1);
+    setCell(x,y,{surface:'cracked',daysActive:0});revRing(x,y);
+    showToast(t('crack'));
+  }else{
+    // vegetation cleared → bare soil
+    addRecentLayer(x,y,SURF_CHAR[surf]||',',surf);
+    setCell(x,y,{surface:'dry',daysActive:0});
+    const cleared=tl('surface_lbl',surf);
+    showToast(LANG.cur==='zh'?`清理：${cleared}`:`Cleared: ${cleared}`);
+  }
+  reveal(x,y);
+  if(el){el.classList.add('tn-grew');setTimeout(()=>el.classList.remove('tn-grew'),1200);}
+  renderGrid();renderInv();saveLocal();
+}
+
+function doObserve(x,y){
+  const cell=getCell(x,y),gen=genCell(x,y);
+  const surf=cell.surface;
+  const ch=(['ruins','floor','open'].includes(surf))?gen.initialChar:(SURF_CHAR[surf]||'?');
+  const label=observedSurfaceLabel(ch,surf,gen,cell);
+  const desc=observedSurfaceDesc(ch,surf,gen,cell);
+  rememberSymbol(ch,surfaceCategory(surf,gen),hasSubsurfaceEvidence(cell));
+  const stabLbl=LANG.cur==='zh'?'稳定性':'stability';
+  const stabPct=Math.round((cell.stability||gen.baseStab)*100);
+  showProfile(x,y);
+  const obsEl=document.getElementById('tn-profile-obs');
+  obsEl.innerHTML=`<div class="tn-obs-head"><span><span class="tn-obs-sym">${ch}</span>${label}</span><span style="opacity:.45;font-weight:400">${x},${y}</span></div><div class="tn-obs-body">${desc}<br>${observedContextLine(cell,gen)} · ${stabLbl} ${stabPct}%</div>`;
+  obsEl.classList.remove('hidden');
+  document.getElementById('tn-observe').classList.add('hidden');
+  renderSymbolGuide();
+}
+
+function probeDepthFromMeters(m){
+  if(m<=.5)return-1;
+  if(m<=1.0)return-2;
+  if(m<=1.5)return-3;
+  if(m<=2.0)return-4;
+  if(m<=2.5)return-5;
+  return null;
+}
+function probeSampleLabel(layer){
+  if(!layer)return t('probe_bedrock');
+  if(layer.type==='artifact')return t('probe_resist');
+  if(layer.type==='heavy_clay_wet'||layer.type==='dissolution_cavity')return tl('strata_lbl',layer.type).replace(/ ← WATER| ← 水源/g,'');
+  return tl('strata_lbl',layer.type);
+}
+function doProbe(x,y){
+  if(probeLeft()<=0){showToast(t('probe_empty'));return;}
+  const meters=Number(document.getElementById('t-probe-depth').value||.5);
+  const depth=probeDepthFromMeters(meters);
+  const gen=genCell(x,y);
+  const layer=depth===null?null:gen.strata.find(s=>s.depth===depth);
+  S.meta.probeUses=(S.meta.probeUses||0)+1;
+  if(depth!==null)unlockLayer(x,y,depth);
+  if(layer&&layer.type!=='artifact')rememberSymbol(layer.char,'strata',true);
+  showToast(depth===null?t('probe_bedrock'):t('probe_done',meters.toFixed(1),probeSampleLabel(layer)));
+  showProfile(x,y);
+  renderStatus();renderGrid();saveLocal();
+}
+
+function doTrowel(x,y){
+  const cell=getCell(x,y),gen=genCell(x,y);
+  if(['ruins','floor','open'].includes(cell.surface)){showToast(t('crack')+'\n(SCRAPE first)');return;}
+  if(cell.surface==='rabbit_hole'){
+    if(!useEnergy(2))return;
+    setCell(x,y,{surface:'dry',daysActive:0,stability:Math.min(1,(cell.stability||gen.baseStab)+.08)});
+    showToast('Rabbit hole filled.');
+    renderGrid();renderStatus();saveLocal();return;
+  }
+  if(cell.surface==='gorse'){
+    if(!useEnergy(3))return;
+    setCell(x,y,{surface:'dry',daysActive:0});
+    showToast('Gorse cleared.');
+    renderGrid();renderStatus();saveLocal();return;
+  }
+  if(cell.surface==='artifact'){
+    if(!useEnergy(2))return;
+    const layer=gen.strata.find(s=>s.type==='artifact');
+    if(layer)unlockLayer(x,y,layer.depth);
+    S.inventory.artifacts.push({text:layer?.text||'unlabelled artifact',x,y});
+    setCell(x,y,{surface:'dry',daysActive:0,artifactFound:true});
+    showToast(`⚑ ${tl('strata_lbl','artifact')} collected.`);
+    renderGrid();renderInv();renderStatus();saveLocal();return;
+  }
+  if(!['dry','cracked','hollow','water','mud_seep'].includes(cell.surface)){showProfile(x,y);return;}
+  const depth=-(cell.excavatedDepth||0)-1;
+  if(depth<-5){showProfile(x,y);return;}
+  const layer=gen.strata.find(s=>s.depth===depth);
+  if(gen.hasSeed&&gen.seedLayer===depth&&!cell.seedFound&&S.inventory.seeds.length>=3){showToast('Seed pouch full.');return;}
+  if(!useEnergy(2))return;
+  unlockLayer(x,y,depth);
+  if(layer)rememberSymbol(layer.char,'strata',true);
+  if(layer?.type==='artifact'){
+    S.inventory.artifacts.push({text:layer.text,x,y});
+    setCell(x,y,{excavatedDepth:-depth,artifactFound:true,gprAnomaly:null});
+    showToast(`⚑ ${tl('strata_lbl','artifact')}:\n"${layer.text}"`);
+  }else if(gen.hasSeed&&gen.seedLayer===depth&&!cell.seedFound){
+    S.inventory.seeds.push(gen.ancientSeed);
+    setCell(x,y,{excavatedDepth:-depth,seedFound:true,gprAnomaly:null});
+    showToast(`Ancient seed recovered:\n${gen.ancientSeed.name}`);
+  }else if(layer?.type==='drain_blocked'){
+    setCell(x,y,{excavatedDepth:-depth,drainCleared:true,surface:'dry',stability:Math.min(1,(cell.stability||gen.baseStab)+.05)});
+    showToast('Blocked drain cleared.');
+  }else if(layer?.type==='dissolution_cavity'){spreadWaterB(x,y);showToast(t('water_b'));}
+  else if(layer?.type==='heavy_clay_wet'){spreadWaterA(x,y);showToast(t('water_a'));}
+  else{setCell(x,y,{excavatedDepth:-depth});showToast(t('trowel_dug',depth));}
+  showProfile(x,y);renderGrid();renderInv();saveLocal();
+}
+
+function doHarvest(x,y){
+  const cell=getCell(x,y);
+  if(cell.toiletTrace&&!cell.wasteHarvested){
+    if(!useEnergy())return;
+    S.inventory.waste=(S.inventory.waste||0)+1;
+    setCell(x,y,{wasteHarvested:true});
+    showToast(LANG.cur==='zh'?'收获：热乎夜土\n+1 奇怪材料':'Harvested: warm night soil\n+1 questionable material');
+    renderGrid();renderInv();renderStatus();saveLocal();return;
+  }
+  if(cell.surface==='water'){
+    const countDay=cell.waterHarvestDay===S.meta.day?(cell.waterHarvestCount||0):0;
+    if(countDay>=3){showToast(t('harvest_water_dry'));return;}
+    if(!useEnergy())return;
+    const nextCount=countDay+1;
+    S.inventory.water=(S.inventory.water||0)+1;
+    const patch={waterHarvestDay:S.meta.day,waterHarvestCount:nextCount};
+    if(nextCount>=3){
+      patch.surface='mud_seep';
+      patch.daysActive=0;
+      addRecentLayer(x,y,'≈','mud_seep');
+    }
+    setCell(x,y,patch);
+    showToast(nextCount>=3?t('harvest_water_dry'):t('harvest_water',S.inventory.water));
+    renderGrid();renderInv();renderStatus();saveLocal();return;
+  }
+  if(!HARVESTABLE.has(cell.surface)){showToast(t('harvest_bad'));return;}
+  if(!useEnergy())return;
+  S.inventory.food.crop++;
+  setCell(x,y,{surface:HARVEST_PREV[cell.surface]||'dry',daysActive:0});
+  showToast(t('harvest_ok',tl('surface_lbl',cell.surface)));
+  renderGrid();renderInv();renderStatus();saveLocal();
+}
+
+function doPlant(x,y){
+  const cell=getCell(x,y);
+  if(!['dry','cracked','open'].includes(cell.surface)){showToast('Plant needs dry/cracked soil.');return;}
+  if(!S.inventory.seeds.length){showToast(t('plant_none'));return;}
+  if(!useEnergy())return;
+  const seed=S.inventory.seeds.pop();
+  const plantedSurface=seed.origin==='institutional'?(seed.path==='wet'?'willow':seed.path==='garden'?'ornamental':'tree'):'shrub';
+  setCell(x,y,{surface:plantedSurface,daysActive:0,species:seed.species||'native',origin:seed.origin||'unknown'});
+  addRecentLayer(x,y,SURF_CHAR[plantedSurface]||'n',plantedSurface);
+  showToast(`Planted ${seed.name||seed.species||'native shrub'}.`);
+  renderGrid();renderInv();renderStatus();saveLocal();
+}
+
+function doEat(kind){
+  if(kind==='waste'&&S.inventory.waste>0){
+    S.inventory.waste--;
+    S.meta.energy=Math.max(0,S.meta.energy-5);
+    S.meta.waterStreak=0;
+    showToast(t('waste_eat'));
+    renderInv();renderStatus();saveLocal();return;
+  }
+  if(S.meta.energy>=MAX_NRG){showToast(t('nrg_full'));return;}
+  const eMap={crop:1,rabbit:2,fish:3};
+  let ate=null;
+  if(kind&&S.inventory.food[kind]>0){ate=kind;}
+  else{for(const k of['rabbit','fish','crop']){if(S.inventory.food[k]>0){ate=k;break;}}}
+  if(!ate&&(kind==='water'||(!kind&&S.inventory.water>0))){
+    S.inventory.water--;
+    const waterGain=2;
+    const gain=Math.min(waterGain,MAX_NRG-S.meta.energy);
+    S.meta.energy=Math.min(MAX_NRG,S.meta.energy+waterGain);
+    S.meta.waterStreak=(S.meta.waterStreak||0)+1;
+    if(S.meta.waterStreak>3&&!S.meta.needsToilet){S.meta.needsToilet=true;startToiletTimer();}
+    showToast(`${t('drink_ok',gain)}${S.meta.needsToilet?`\n${t('toilet_need')}`:''}`);
+    renderInv();renderStatus();saveLocal();return;
+  }
+  if(!ate){showToast(t('eat_empty'));return;}
+  S.inventory.food[ate]--;
+  const gain=Math.min(eMap[ate],MAX_NRG-S.meta.energy);
+  S.meta.energy=Math.min(MAX_NRG,S.meta.energy+eMap[ate]);
+  S.meta.waterStreak=0;
+  showToast(t('eat_ok',ate,gain));
+  renderInv();renderStatus();saveLocal();
+}
+
+function doIrrigate(x,y){
+  if(!S.inventory.water){showToast(t('eat_empty'));return;}
+  const cell=getCell(x,y);
+  S.inventory.water--;
+  const patch={irrigated:true,daysActive:(cell.daysActive||0)+2,stability:Math.min(1,(cell.stability||genCell(x,y).baseStab)+.02)};
+  if(['dry','cracked','open','footprint','rubble'].includes(cell.surface)){
+    patch.surface='mud_seep';
+    patch.daysActive=0;
+  }
+  addRecentLayer(x,y,'≈','mud_seep');
+  setCell(x,y,patch);
+  targetingKind=null;
+  showToast(t('irrigate_done'));
+  renderGrid();renderInv();renderStatus();saveLocal();
+}
+
+function doCompost(x,y){
+  const kind=targetingKind;
+  if(kind==='waste'){
+    if(!S.inventory.waste)return;
+    S.inventory.waste--;
+  }else if(['crop','rabbit','fish'].includes(kind)){
+    if(!S.inventory.food[kind])return;
+    S.inventory.food[kind]--;
+  }else return;
+  const cell=getCell(x,y);
+  const patch={composted:true,nitrogenPulse:(cell.nitrogenPulse||0)+1,daysActive:(cell.daysActive||0)+2,stability:Math.min(1,(cell.stability||genCell(x,y).baseStab)+.03)};
+  if(['dry','cracked','open','footprint','rubble'].includes(cell.surface)){
+    patch.surface='grass';
+    patch.daysActive=0;
+  }
+  addRecentLayer(x,y,'·','compost_trace');
+  setCell(x,y,patch);
+  targetingKind=null;
+  showToast(t('compost_done'));
+  renderGrid();renderInv();renderStatus();saveLocal();
+}
+
+function doRelieve(x,y,auto=false){
+  if(!S.meta.needsToilet){showToast(t('relieve_prompt'));return;}
+  clearTimeout(toiletTimer);toiletTimer=null;
+  const cell=getCell(x,y);
+  addRecentLayer(x,y,'·','toilet_trace');
+  const patch={
+    toiletTrace:true,
+    nitrogenPulse:(cell.nitrogenPulse||0)+1,
+    modernDisturbance:true,
+    stability:Math.min(1,(cell.stability||genCell(x,y).baseStab)+.02)
+  };
+  if(cell.surface==='water'){
+    patch.surface='mud_seep';
+    patch.daysActive=0;
+  }else if(['dry','cracked','open','footprint','rubble'].includes(cell.surface)){
+    patch.surface='grass';
+    patch.daysActive=0;
+  }else if(GROWABLE.has(cell.surface)){
+    patch.daysActive=(cell.daysActive||0)+2;
+  }else{
+    patch.surface='footprint';
+    patch.daysActive=0;
+  }
+  setCell(x,y,patch);
+  S.meta.needsToilet=false;
+  S.meta.waterStreak=0;
+  if(auto){showAccidentModal(x,y);}else{showToast(t('toilet_done'));}
+  renderGrid();renderStatus();saveLocal();
+}
+
+function handleInvClick(kind){
+  openItemMenu(kind);
+}
+
+let targetingKind=null;
+function handleItemAction(kind,action){
+  hideItemMenu();
+  if(action==='eat'){doEat(kind);return;}
+  if(action==='drink'){doEat('water');return;}
+  if(action==='inspect'){
+    const a=S.inventory.artifacts[0];if(a)showToast(`⚑ "${a.text}"`);
+    return;
+  }
+  if(action==='plant'){
+    if(!isAuth()){showToast(t('need_access'));return;}
+    if(!S.inventory.seeds.length){showToast(t('plant_none'));return;}
+    targeting='plant';targetingKind='seed';
+    document.getElementById('tn-grid').classList.add('targeting');
+    document.getElementById('t-plant').classList.add('targ');
+    showToast(t('plant_prompt'));
+    return;
+  }
+  if(action==='irrigate'){
+    if(!isAuth()){showToast(t('need_access'));return;}
+    if(!S.inventory.water){showToast(t('eat_empty'));return;}
+    targeting='irrigate';targetingKind='water';
+    document.getElementById('tn-grid').classList.add('targeting');
+    showToast(t('irrigate_prompt'));
+    return;
+  }
+  if(action==='compost'){
+    if(!isAuth()){showToast(t('need_access'));return;}
+    targeting='compost';targetingKind=kind;
+    document.getElementById('tn-grid').classList.add('targeting');
+    showToast(t('compost_prompt'));
+  }
+}
+
+// ── Profile ───────────────────────────────────────────────────────
+function showProfile(x,y){
+  document.getElementById('tn-profile-obs').classList.add('hidden');
+  const cell=getCell(x,y),gen=genCell(x,y);
+  const surf=cell.surface;
+  const ch=(['ruins','floor','open'].includes(surf))?gen.initialChar:(SURF_CHAR[surf]||'?');
+  const stabF=Math.max(0,Math.min(1,cell.stability||gen.baseStab));
+  rememberSymbol(ch,surfaceCategory(surf,gen),hasSubsurfaceEvidence(cell));
+  const recentH=(cell.recentLayers||[]).map(r=>{
+    rememberSymbol(r.char,'strata',true);
+    const label=tl('surface_lbl',r.labelKey)||t('recent_layer');
+    return`<div class="tn-sr"><span class="tn-sd">[+]</span><span class="tn-sc">${r.char}</span><span class="tn-sl">${t('recent_layer')}: ${label}</span></div>`;
+  }).join('');
+  const strataH=gen.strata.map(s=>{
+    const rev=isLayerUnlocked(cell,s.depth);
+    const hasSeedHere=gen.hasSeed&&gen.seedLayer===s.depth&&!cell.seedFound;
+    if(rev)rememberSymbol(s.char,'strata',true);
+    const seedLabel=hasSeedHere?`${gen.ancientSeed.origin==='institutional'?t('seed_exotic'):t('seed_native')}: ${gen.ancientSeed.name}`:'';
+    const label=!rev?'':s.type==='artifact'?`${tl('strata_lbl','artifact')}: "${s.text}"`:hasSeedHere?seedLabel:tl('strata_lbl',s.type);
+    const artCls=s.type==='artifact'||hasSeedHere?' art':'';
+    const ldrCls=(cell.lidarScanned&&!rev)?' ldr':'';
+    return`<div class="tn-sr${!rev?' tn-dim':''}"><span class="tn-sd">[${s.depth}]</span><span class="tn-sc">${rev?s.char:''}</span><span class="tn-sl${artCls}${ldrCls}">${label}${cell.lidarScanned&&!rev?' <i>LiDAR</i>':''}</span></div>`;
+  }).join('');
+  const gprN=cell.gprAnomaly==='confirmed'?`<div class="tn-pnote anom">GPR: ANOMALY CONFIRMED</div>`:cell.gprAnomaly==='clear'?`<div class="tn-pnote">GPR: clear</div>`:'';
+  const signN=S.signs[ck(x,y)]?`<div class="tn-pnote">|T| "${S.signs[ck(x,y)].text}"</div>`:'';
+  const vcN=cell.visitCount?`<div class="tn-pnote">${cell.visitCount} visitor contact${cell.visitCount>1?'s':''}</div>`:'';
+  document.getElementById('tn-profile-title').textContent=t('profile');
+  document.getElementById('tn-profile-xy').textContent=`${x}, ${y}`;
+  document.getElementById('tn-profile-body').innerHTML=`
+    <div class="tn-strata-list">
+      <div class="tn-sr s0">
+        <span class="tn-sd">[ 0]</span><span class="tn-sc">${ch}</span>
+        <span class="tn-sl">${observedSurfaceLabel(ch,surf,gen,cell)} <span class="tn-stab"><span class="tn-stab-f" style="width:${Math.round(stabF*100)}%"></span></span></span>
+      </div>${recentH}${strataH}</div>${gprN}${signN}${vcN}`;
+  document.getElementById('tn-profile').classList.remove('hidden');
+  renderSymbolGuide();
+}
+
+// ── Observe panel ─────────────────────────────────────────────────
+function showObservePanel(sym,title,body,right=''){
+  const el=document.getElementById('tn-observe');
+  el.innerHTML=`<div class="tn-obs-head"><span><span class="tn-obs-sym">${sym}</span>${title}</span><span style="opacity:.45;font-weight:400">${right}</span></div><div class="tn-obs-body">${body}</div>`;
+  el.classList.remove('hidden');
+}
+function showToolHint(toolId){
+  const symMap={observe:'◎',expose:'≡',trowel:'↓',probe:'·',gpr:'?',lidar:'◌',harvest:'◆',plant:'n'};
+  const sym=symMap[toolId]||'·';
+  const nameKey={'observe':'tool_observe','expose':'tool_expose','trowel':'tool_trowel','probe':'tool_probe','gpr':'tool_gpr','lidar':'tool_lidar','harvest':'act_harvest','plant':'act_plant'}[toolId];
+  const name=nameKey?(t(nameKey,probeLeft())||toolId):toolId;
+  const descKey=`tool_desc_${toolId}`;
+  const m=document.getElementById('t-probe-depth')?.value||'1.5';
+  const desc=typeof T[LANG.cur][descKey]==='function'?T[LANG.cur][descKey](m):(T[LANG.cur][descKey]||T.en[descKey]||'');
+  showObservePanel(sym,name.replace(/[\[\]]/g,'').trim(),desc);
+}
+
+// ── Toast ─────────────────────────────────────────────────────────
+let _tt=null;
+function showToast(msg){const el=document.getElementById('tn-toast');el.textContent=msg;el.classList.add('show');clearTimeout(_tt);_tt=setTimeout(()=>el.classList.remove('show'),3600);}
+
+// ── Accident modal ────────────────────────────────────────────────
+function showAccidentModal(x,y){
+  document.getElementById('tn-acc-modal-text').innerHTML=t('acc_modal',x,y).replace(/\n/g,'<br>');
+  document.getElementById('tn-acc-modal').classList.remove('hidden');
+}
+
+// ── Toilet timer ──────────────────────────────────────────────────
+let toiletTimer=null,lastClickedCell=null;
+function startToiletTimer(){
+  clearTimeout(toiletTimer);
+  toiletTimer=setTimeout(()=>{
+    if(!S.meta.needsToilet)return;
+    const pos=lastClickedCell||{x:Math.floor(128/2),y:Math.floor(128/2)};
+    doRelieve(pos.x,pos.y,true);
+  },60000);
+}
+
+// ── Pan ────────────────────────────────────────────────────────────
+let lastPanAt=0, suppressNextGridClick=false, lastCellActionAt=0, cellDownAt=null;
+function activateCellFromPoint(clientX,clientY){
+  if(Date.now()-lastCellActionAt<120)return false;
+  const el=document.elementFromPoint(clientX,clientY)?.closest?.('.tn-cell[data-x][data-y]');
+  if(!el)return false;
+  lastCellActionAt=Date.now();
+  handleClick(+el.dataset.x,+el.dataset.y,el);
+  return true;
+}
+function bindPan(){
+  const wrap=document.getElementById('tn-grid-wrap');
+  let ori=null;
+  const cellPx=()=>parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--cell-w'))||32;
+  const finishPan=(clientX,clientY)=>{
+    if(!ori)return;
+    const dx=clientX-ori.x,dy=clientY-ori.y;
+    const dragged=Math.hypot(dx,dy)>8;
+    if(dragged){
+      viewX-=Math.round(dx/cellPx());
+      viewY-=Math.round(dy/cellPx());
+      clampVP();renderGrid();lastPanAt=Date.now();suppressNextGridClick=true;
+    }else if(activateCellFromPoint(clientX,clientY))suppressNextGridClick=true;
+    ori=null;wrap.classList.remove('dragging');
+  };
+  wrap.addEventListener('pointerdown',e=>{
+    if(e.button!==0&&e.pointerType==='mouse')return;
+    ori={x:e.clientX,y:e.clientY};
+    wrap.classList.add('dragging');
+    wrap.setPointerCapture?.(e.pointerId);
+  });
+  wrap.addEventListener('pointermove',e=>{
+    if(!ori)return;
+    if(Math.hypot(e.clientX-ori.x,e.clientY-ori.y)>8)e.preventDefault();
+  });
+  wrap.addEventListener('pointerup',e=>finishPan(e.clientX,e.clientY));
+  wrap.addEventListener('pointercancel',()=>{ori=null;wrap.classList.remove('dragging');});
+  wrap.addEventListener('mouseup',e=>{
+    if(e.button!==0)return;
+    if(activateCellFromPoint(e.clientX,e.clientY))suppressNextGridClick=true;
+  });
+  wrap.addEventListener('wheel',e=>{
+    if(Math.abs(e.deltaX)<8&&Math.abs(e.deltaY)<8)return;
+    e.preventDefault();
+    viewX+=Math.sign(e.deltaX||0);
+    viewY+=Math.sign(e.deltaY||0);
+    clampVP();renderGrid();lastPanAt=Date.now();
+  },{passive:false});
+  document.addEventListener('keydown',e=>{
+    const m={ArrowLeft:[-1,0],ArrowRight:[1,0],ArrowUp:[0,-1],ArrowDown:[0,1]}[e.key];
+    if(!m||document.activeElement.tagName==='INPUT')return;e.preventDefault();
+    viewX+=m[0];viewY+=m[1];clampVP();renderGrid();
+  });
+}
+
+// ── UI bindings ────────────────────────────────────────────────────
+function bindUI(){
+  // Tool bar — standard tools
+  document.querySelectorAll('.tn-btn[data-tool]').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      const tool=btn.dataset.tool;
+      if(tool==='gpr'){
+        if(!isAuth()){showToast(t('need_access'));return;}
+        if(targeting==='gpr'){cancelTargeting();setTool('observe');showToolHint('observe');return;}
+        if(S.meta.energy<GPR_COST){showToast(t('gpr_no_nrg'));return;}
+        setTool('gpr');startTargeting('gpr');return;
+      }
+      if(tool==='lidar'){
+        if(!isAuth()){showToast(t('need_access'));return;}
+        if(targeting==='lidar'){cancelTargeting();setTool('observe');showToolHint('observe');return;}
+        const h=lidarHLeft();if(h>0){showToast(t('lidar_cd',h));return;}
+        setTool('lidar');startTargeting('lidar');return;
+      }
+      if(tool==='observe'){
+        setTool('observe');showToolHint('observe');return;
+      }
+      if(tool==='probe'){
+        if(!isAuth()){showToast(t('need_access'));return;}
+        setTool('probe');return;
+      }
+      setTool(tool);
+    });
+  });
+  document.getElementById('t-probe-depth').addEventListener('change',()=>{});
+
+  document.getElementById('tn-guide-btn').addEventListener('click',()=>{
+    document.getElementById('tn-pw').classList.add('hidden');
+    document.getElementById('tn-notebook').classList.add('hidden');
+    document.getElementById('tn-legend').classList.toggle('hidden');
+  });
+  document.getElementById('tn-legend-close').addEventListener('click',()=>document.getElementById('tn-legend').classList.add('hidden'));
+  document.getElementById('tn-notebook-btn').addEventListener('click',()=>{
+    document.getElementById('tn-pw').classList.add('hidden');
+    document.getElementById('tn-legend').classList.add('hidden');
+    document.getElementById('tn-notebook').classList.toggle('hidden');
+  });
+  document.getElementById('tn-notebook-close').addEventListener('click',()=>document.getElementById('tn-notebook').classList.add('hidden'));
+
+  // Action bar
+  document.getElementById('t-harvest').addEventListener('click',()=>{
+    if(!isAuth()){showToast(t('need_access'));return;}
+    targeting='harvest';
+    document.getElementById('tn-grid').classList.add('targeting');
+    document.getElementById('t-harvest').classList.add('targ');
+  });
+  document.getElementById('t-plant').addEventListener('click',()=>{
+    if(!isAuth()){showToast(t('need_access'));return;}
+    if(!S.inventory.seeds.length){showToast(t('plant_none'));return;}
+    targeting='plant';
+    document.getElementById('tn-grid').classList.add('targeting');
+    document.getElementById('t-plant').classList.add('targ');
+  });
+  document.getElementById('t-graft').addEventListener('click',()=>{
+    if(!isAuth()){showToast(t('need_access'));return;}
+    if(!useEnergy(2))return;
+    targeting='graft_step1';
+    document.getElementById('tn-grid').classList.add('targeting');
+    document.getElementById('t-graft').classList.add('targ');
+    showToast(t('graft_step1'));
+  });
+  document.getElementById('t-relieve').addEventListener('click',()=>{
+    if(!S.meta.needsToilet){showToast(t('relieve_prompt'));return;}
+    targeting='relieve';
+    document.getElementById('tn-grid').classList.add('targeting');
+    document.getElementById('t-relieve').classList.add('targ');
+    showToast(t('relieve_prompt'));
+  });
+  document.getElementById('tn-access-btn').addEventListener('click',()=>{
+    if(isAuth()&&!DEV_MODE){sessionStorage.removeItem('tn_auth_hash');renderStatus();showToast('Access cleared.');return;}
+    document.getElementById('tn-legend').classList.add('hidden');
+    document.getElementById('tn-notebook').classList.add('hidden');
+    document.getElementById('tn-pw').classList.remove('hidden');
+    document.getElementById('tn-pw-inp').focus();
+  });
+
+  document.getElementById('tn-acc-modal-close').addEventListener('click',()=>document.getElementById('tn-acc-modal').classList.add('hidden'));
+
+  // Profile close
+  document.getElementById('tn-profile-close').addEventListener('click',()=>document.getElementById('tn-profile').classList.add('hidden'));
+  document.addEventListener('click',e=>{
+    const el=e.target.closest?.('.tn-cell[data-x][data-y]');
+    if(!el)return;
+    e.preventDefault();e.stopPropagation();
+    if(Date.now()-lastCellActionAt>=120){
+      lastCellActionAt=Date.now();
+      handleClick(+el.dataset.x,+el.dataset.y,el);
+    }
+  },true);
+  document.getElementById('tn-grid-wrap').addEventListener('click',e=>{
+    if(suppressNextGridClick){suppressNextGridClick=false;return;}
+    const el=e.target.closest?.('.tn-cell[data-x][data-y]');
+    if(el){
+      if(Date.now()-lastCellActionAt>=120){
+        lastCellActionAt=Date.now();
+        handleClick(+el.dataset.x,+el.dataset.y,el);
+      }
+      return;
+    }
+    document.getElementById('tn-profile').classList.add('hidden');
+  });
+  document.getElementById('tn-grid-wrap').addEventListener('dblclick',e=>{
+    const el=e.target.closest?.('.tn-cell[data-x][data-y]');
+    if(!el)return;
+    e.preventDefault();showProfile(+el.dataset.x,+el.dataset.y);
+  });
+
+  // Password
+  document.getElementById('tn-pw-sub').addEventListener('click',submitPw);
+  document.getElementById('tn-pw-inp').addEventListener('keydown',e=>{if(e.key==='Enter')submitPw();});
+  document.getElementById('tn-pw-cancel').addEventListener('click',()=>{document.getElementById('tn-pw').classList.add('hidden');document.getElementById('tn-pw-err').textContent='';});
+
+  // Lang
+  document.getElementById('tn-lang-btn').addEventListener('click',()=>{LANG.cur=LANG.cur==='en'?'zh':'en';document.documentElement.lang=LANG.cur;renderStatus();renderGrid();renderInv();});
+
+  // Close
+  document.getElementById('tn-close-btn').addEventListener('click',()=>{if(window.history.length>1)window.history.back();else window.close();});
+
+  // Dev extras
+  if(DEV_MODE){
+    const bar=document.getElementById('tn-bar-tools');
+    const mk=(lbl,fn)=>{const b=document.createElement('button');b.className='tn-btn dev';b.textContent=lbl;b.addEventListener('click',fn);bar.appendChild(b);};
+    mk('[ RESET ]',()=>{
+      if(!confirm('Reset all progress?'))return;
+      genCache.clear();chunkCache.clear();
+      S=mkState();bootstrapReveal(S);
+      resetView();
+      renderStatus();renderGrid();renderInv();
+    });
+    mk('[ +1T ]',()=>{
+      S.meta.lastTickAt=new Date(Date.now()-TICK_H*3600001).toISOString();
+      applyTime();renderStatus();renderGrid();renderInv();saveLocal();showToast(`+1 tick (Day ${S.meta.day})`);
+    });
+    const timeBox=document.createElement('span');
+    timeBox.className='tn-dev-time';
+    timeBox.innerHTML=`<span>${t('dev_time')}</span><button class="tn-btn dev" id="tn-dev-time-minus">−</button><input id="tn-dev-time-range" type="range" min="0" max="30" step="1" value="0"><button class="tn-btn dev" id="tn-dev-time-plus">+</button><span id="tn-dev-time-out">0×8h</span><button class="tn-btn dev" id="tn-dev-time-run">[ RUN ]</button>`;
+    bar.appendChild(timeBox);
+    const range=timeBox.querySelector('#tn-dev-time-range');
+    const out=timeBox.querySelector('#tn-dev-time-out');
+    const updateRange=()=>{out.textContent=`${range.value}×8h`;};
+    range.addEventListener('input',updateRange);
+    timeBox.querySelector('#tn-dev-time-minus').addEventListener('click',()=>{range.value=String(Math.max(0,Number(range.value||0)-1));updateRange();});
+    timeBox.querySelector('#tn-dev-time-plus').addEventListener('click',()=>{range.value=String(Math.min(30,Number(range.value||0)+1));updateRange();});
+    timeBox.querySelector('#tn-dev-time-run').addEventListener('click',()=>{
+      const ticks=Number(range.value||0);
+      if(ticks<=0)return;
+      const back=ticks*TICK_H*3600000+1000;
+      S.meta.lastTickAt=new Date(Date.now()-back).toISOString();
+      S.meta.energyLastReset=new Date(Date.now()-back).toISOString();
+      applyTime();renderStatus();renderGrid();renderInv();saveLocal();
+      showToast(`+${ticks} tick${ticks===1?'':'s'} · ${ticks*TICK_H}h`);
+      range.value='0';out.textContent='0×8h';
+    });
+  }
+  bindPan();
+}
+
+async function submitPw(){
+  const pw=document.getElementById('tn-pw-inp').value;if(!pw)return;
+  const hash=await sha256(pw);
+  const err=document.getElementById('tn-pw-err');
+  if(!TN_CFG.writeUrl){
+    err.textContent='no access endpoint configured';
+    return;
+  }
+  try{
+    const r=await fetch(TN_CFG.writeUrl,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({source:'nature.auth',hash,data:{version:STATE_VER}})});
+    if(!r.ok)throw new Error('denied');
+    sessionStorage.setItem('tn_auth_hash',hash);
+    document.getElementById('tn-pw').classList.add('hidden');
+    document.getElementById('tn-pw-inp').value='';
+    err.textContent='';
+    renderStatus();showToast(t('auth_on'));
+  }catch(_){
+    err.textContent=t('auth_fail');
+  }
+}
+
+// ── Real weather ──────────────────────────────────────────────────
+function nzSeason(date=new Date()){
+  const m=date.getMonth();
+  if([11,0,1].includes(m))return'NZ summer';
+  if([2,3,4].includes(m))return'NZ autumn';
+  if([5,6,7].includes(m))return'NZ winter';
+  return'NZ spring';
+}
+function weatherCodeText(code){
+  if([0,1].includes(code))return'clear';
+  if([2,3].includes(code))return'cloud';
+  if([45,48].includes(code))return'fog';
+  if([51,53,55,56,57].includes(code))return'drizzle';
+  if([61,63,65,66,67,80,81,82].includes(code))return'rain';
+  if([71,73,75,77,85,86].includes(code))return'snow';
+  if([95,96,99].includes(code))return'storm';
+  return'weather';
+}
+async function loadRealWeather(){
+  const params=new URLSearchParams({
+    latitude:String(SITE_WEATHER.lat),
+    longitude:String(SITE_WEATHER.lon),
+    current:'temperature_2m,relative_humidity_2m,precipitation,rain,weather_code,wind_speed_10m',
+    daily:'precipitation_sum,temperature_2m_max,temperature_2m_min',
+    forecast_days:'1',
+    timezone:'Pacific/Auckland'
+  });
+  const controller=new AbortController();
+  const timer=setTimeout(()=>controller.abort(),5000);
+  try{
+    const r=await fetch(`${SITE_WEATHER.url}?${params}`,{signal:controller.signal,cache:'no-store'});
+    if(!r.ok)throw new Error(`weather ${r.status}`);
+    const d=await r.json();
+    S.meta.weather={
+      season:nzSeason(new Date()),
+      temp:Math.round(d.current?.temperature_2m),
+      humidity:Math.round(d.current?.relative_humidity_2m),
+      rain:Number(d.current?.rain||d.current?.precipitation||0),
+      wind:Math.round(d.current?.wind_speed_10m||0),
+      sky:weatherCodeText(Number(d.current?.weather_code||0)),
+      source:'Open-Meteo',
+      at:d.current?.time||new Date().toISOString()
+    };
+    renderStatus();
+  }catch(err){
+    console.warn('[thirdnature] weather unavailable:',err);
+  }finally{
+    clearTimeout(timer);
+  }
+}
+
+// ── Init ──────────────────────────────────────────────────────────
+async function init(){
+  const pt=window.parent?.document?.documentElement?.dataset?.theme;
+  if(pt)document.documentElement.dataset.theme=pt;
+  await loadState();
+  if(!S.meta.lastTickAt){S.meta.lastTickAt=new Date().toISOString();S.meta.energyLastReset=new Date().toISOString();}
+  applyTime();
+  resetView();
+  renderStatus();renderGrid();renderInv();bindUI();
+  loadRealWeather();
+  setInterval(liveTick,60_000);
+}
+
+init();
+</script>
+</body>
+</html>

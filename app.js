@@ -89,6 +89,20 @@ const SVG = {
     <path d="M17 15 L27 10 L27 22 L17 27 Z" fill="var(--icon-fill)" stroke="var(--icon-stroke)" stroke-width="1.3" stroke-linejoin="round"/>
     <path d="M10 8.5 L20 13.5 M14 6.5 L24 11.5 M10 12 L10 23 M14 14 L14 25 M20 13.5 L20 25 M24 11.5 L24 23" stroke="var(--icon-stroke)" stroke-width="0.8"/>
   </svg>`,
+
+  ruins_bonsai: `<svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M10 30 L9 26 L23 26 L22 30 Z" fill="var(--icon-fill)" stroke="var(--icon-stroke)" stroke-width="1.3" stroke-linejoin="round"/>
+    <line x1="9" y1="26" x2="23" y2="26" stroke="var(--icon-stroke)" stroke-width="1.2"/>
+    <rect x="11" y="19" width="8" height="7" fill="var(--icon-fill)" stroke="var(--icon-stroke)" stroke-width="1.2"/>
+    <rect x="12" y="12" width="5" height="8" fill="var(--icon-fill)" stroke="var(--icon-stroke)" stroke-width="1.2"/>
+    <line x1="11" y1="22.5" x2="19" y2="22.5" stroke="var(--icon-stroke)" stroke-width="0.65"/>
+    <line x1="12" y1="16"   x2="17" y2="16"   stroke="var(--icon-stroke)" stroke-width="0.65"/>
+    <path d="M14 13 L15 16 L13 19" fill="none" stroke="var(--icon-stroke)" stroke-width="0.85"/>
+    <line x1="14" y1="12" x2="14" y2="7" stroke="var(--icon-stroke)" stroke-width="1.4" stroke-linecap="round"/>
+    <path d="M14 9.5 Q11 8.5 10 5.5" fill="none" stroke="var(--icon-stroke)" stroke-width="1.1" stroke-linecap="round"/>
+    <path d="M14 9.5 Q17 8.5 18 5.5" fill="none" stroke="var(--icon-stroke)" stroke-width="1.1" stroke-linecap="round"/>
+    <path d="M14 7 Q15 5 14 3" fill="none" stroke="var(--icon-stroke)" stroke-width="1.0" stroke-linecap="round"/>
+  </svg>`,
 };
 
 /* ── Drag State ───────────────────────────────────────────────── */
@@ -181,6 +195,7 @@ function getMobilePos(id) {
     fieldmap:     { x: colR, y: topY + rowH * 4 },
     game:         { x: colR, y: topY + rowH * 5 },
     installation: { x: colR, y: topY + rowH * 6 },
+    thirdnature:  { x: colL, y: topY + rowH * 4 },
     bin:          { x: colR, y: topY + rowH * 7 },
   };
   return grid[id] || null;
@@ -2860,6 +2875,43 @@ function openGameWindow() {
   });
 }
 
+/* ── Third Nature launcher ────────────────────────────────────── */
+function openThirdNatureWindow() {
+  if (wm.open['thirdnature']) { wm.focus(wm.open['thirdnature']); return; }
+  const cfg = SITE.thirdNature || {};
+  const srcBase = (cfg.file || 'projects/thirdnature.html');
+  const srcParams = new URLSearchParams();
+  if (cfg.stateUrl) srcParams.set('stateUrl', cfg.stateUrl);
+  if (cfg.writeUrl) srcParams.set('writeUrl', cfg.writeUrl);
+  const src = srcParams.toString()
+    ? `${srcBase}${srcBase.includes('?') ? '&' : '?'}${srcParams.toString()}`
+    : srcBase;
+  const isMobile = window.innerWidth <= 768;
+  const W = isMobile ? window.innerWidth        : 390;
+  const H = isMobile ? window.innerHeight - 28  : 680;
+
+  const html = `<div class="game-frame"><iframe src="${src}" frameborder="0" scrolling="no" allowfullscreen></iframe></div>`;
+
+  const win = wm.show('thirdnature', {
+    title: 'third nature.app',
+    html,
+    nopad: true,
+    w: W,
+    h: H,
+  });
+
+  if (isMobile) {
+    win.style.left   = '0px';
+    win.style.top    = '28px';
+    win.style.width  = '100vw';
+    win.style.height = 'calc(100vh - 28px)';
+    win.dataset.prevW = W;
+    win.dataset.prevH = H;
+    win.dataset.zoomed = '1';
+    win.dataset.mobileFullscreen = '1';
+  }
+}
+
 /* ── Installation launcher ────────────────────────────────────── */
 function openInstallationGate() {
   if (wm.open['installation-gate']) { wm.focus(wm.open['installation-gate']); return; }
@@ -2977,6 +3029,11 @@ function makeIconDefs() {
       id: 'installation', label: 'installation', icon: SVG.mirrorcube, iconKey: 'mirrorcube',
       x: leftColX, y: topY + rowStep * 3,
       action: () => openInstallationGate(),
+    },
+    {
+      id: 'thirdnature', label: 'third nature.app', icon: SVG.ruins_bonsai, iconKey: 'ruins_bonsai',
+      x: leftColX, y: topY + rowStep * 4,
+      action: () => openThirdNatureWindow(),
     },
     // ── Left bottom: bin ─────────────────────────────────────
     {

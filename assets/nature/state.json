@@ -1,0 +1,33 @@
+{
+  "version": 8,
+  "seed": 20260615,
+  "meta": {
+    "day": 1,
+    "lastTickAt": "2026-06-15T00:00:00.000Z",
+    "energy": 8,
+    "energyLastReset": "2026-06-15T00:00:00.000Z",
+    "lastLidarAt": null,
+    "probeUses": 0,
+    "waterStreak": 0,
+    "needsToilet": false,
+    "weather": null
+  },
+  "chunks": {},
+  "cells": {},
+  "revealed": [],
+  "seenSymbols": {},
+  "knownSymbols": {},
+  "signs": {},
+  "notebookPages": [],
+  "inventory": {
+    "seeds": [],
+    "water": 0,
+    "waste": 0,
+    "food": {
+      "crop": 0,
+      "rabbit": 0,
+      "fish": 0
+    },
+    "artifacts": []
+  }
+}

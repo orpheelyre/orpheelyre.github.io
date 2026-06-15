@@ -8,4 +8,4 @@ GITHUB_OWNER = "orpheelyre"
 GITHUB_REPO = "orpheelyre.github.io"
 GITHUB_BRANCH = "main"
 NOW_FILE_PATH = "assets/now/now.live.json"
-
+NATURE_FILE_PATH = "assets/nature/state.json"
