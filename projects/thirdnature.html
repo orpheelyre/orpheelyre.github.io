@@ -79,7 +79,7 @@
     }
     #tn-window {
       display: flex; flex-direction: column;
-      height: 100svh; max-width: 480px; margin: 0 auto;
+      height: 100dvh; max-height: 100dvh; max-width: 480px; margin: 0 auto;
       border-inline: 1px solid var(--grid-line);
       position: relative; overflow: hidden;
     }
@@ -130,6 +130,22 @@
       box-shadow: inset 1px 1px 0 var(--grid-line);
     }
     .tn-cell:hover, .tn-cell:active { background: var(--fg); color: var(--bg) !important; }
+    .tn-cell.selected {
+      background: color-mix(in srgb, var(--fg) 10%, var(--bg));
+      outline: 2px solid var(--fg);
+      outline-offset: -2px;
+      z-index: 2;
+    }
+    .tn-cell.player-mark {
+      box-shadow:
+        inset 1px 1px 0 var(--grid-line),
+        inset 0 0 0 2px color-mix(in srgb, var(--fg) 34%, transparent);
+    }
+    .tn-cell.player-mark::after {
+      content: '·';
+      position: absolute; top: 1px; right: 3px;
+      font-size: 8px; opacity: .42; color: var(--fg);
+    }
     .tn-void {
       background: transparent; color: transparent; cursor: default; font-size: 9px;
       border-color: transparent;
@@ -204,7 +220,7 @@
     .tn-bar::-webkit-scrollbar { display: none; }
     #tn-bar-tools   { border-top: 2px solid var(--bd); }
     #tn-bar-actions { border-top: 1px solid var(--bd); }
-    #tn-bar-inv     { border-top: 1px solid var(--bd); min-height: 32px; }
+    #tn-bar-inv     { border-top: 1px solid var(--bd); min-height: 32px; padding-bottom: calc(5px + env(safe-area-inset-bottom, 0px)); }
     .tn-bar-lbl {
       font-size: 8px; letter-spacing: 0.07em; opacity: 0.3;
       flex-shrink: 0; white-space: nowrap; margin-right: 1px;
@@ -298,10 +314,13 @@
     .tn-graft-source { outline: 2px solid var(--c-anom) !important; }
 
     /* Accident modal */
-    #tn-acc-modal { position:absolute;inset:0;z-index:300;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center; }
-    #tn-acc-modal.hidden { display:none; }
-    #tn-acc-modal-body { background:var(--bg);border:1px solid var(--bd);padding:18px 22px 14px;max-width:260px;width:80%;text-align:center;font-size:11px;line-height:1.7; }
-    #tn-acc-modal-close { display:block;margin:12px auto 0;background:none;border:1px solid var(--bd);color:var(--fg);padding:3px 18px;cursor:pointer;font-size:11px;letter-spacing:.05em; }
+    #tn-acc-modal, #tn-letter-modal { position:absolute;inset:0;z-index:300;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center; }
+    #tn-acc-modal.hidden, #tn-letter-modal.hidden { display:none; }
+    #tn-acc-modal-body, #tn-letter-modal-body { background:var(--bg);border:1px solid var(--bd);padding:18px 22px 14px;max-width:310px;width:82%;text-align:left;font-size:11px;line-height:1.7; }
+    #tn-acc-modal-body { text-align:center; max-width:260px; }
+    #tn-acc-modal-close, #tn-letter-modal-close { display:block;margin:12px auto 0;background:none;border:1px solid var(--bd);color:var(--fg);padding:3px 18px;cursor:pointer;font-size:11px;letter-spacing:.05em; }
+    .tn-letter-title { font-weight:700; letter-spacing:.06em; margin-bottom:8px; }
+    .tn-letter-body { white-space:pre-wrap; opacity:.82; }
 
     /* Minimap */
     #tn-minimap {
@@ -340,6 +359,16 @@
     .note-entry { border-top: 1px dotted var(--grid-fog); padding-top: 7px; margin-top: 7px; }
     .note-title { font-weight: 700; letter-spacing: .04em; }
     .note-body { opacity: .68; margin-top: 3px; }
+    .note-tabs { display:flex; gap:5px; margin:0 22px 8px 0; overflow-x:auto; scrollbar-width:none; }
+    .note-tabs::-webkit-scrollbar { display:none; }
+    .note-tab { background:none; border:1px solid var(--bd); color:var(--fg); font-family:inherit; font-size:9px; padding:3px 7px; cursor:pointer; white-space:nowrap; }
+    .note-tab.active { background:var(--fg); color:var(--bg); }
+    .note-log { display:flex; flex-direction:column; gap:5px; }
+    .note-log-row { border-top:1px dotted var(--grid-fog); padding-top:5px; opacity:.72; }
+    .note-ency-row { display:grid; grid-template-columns:34px 1fr; gap:7px; border-top:1px dotted var(--grid-fog); padding-top:6px; margin-top:6px; }
+    .note-ency-val { opacity:.62; }
+    .note-details { border-top:1px solid var(--grid-line); padding-top:6px; margin-top:6px; }
+    .note-details summary { cursor:pointer; opacity:.7; letter-spacing:.04em; }
 
     /* Password panel — absolute inside #tn-window */
     #tn-pw {
@@ -380,7 +409,6 @@
       font-size: 9px; opacity: 0.22; pointer-events: none; white-space: nowrap;
     }
     .tn-dev-time {
-      position:absolute; right:6px; top:26px; z-index:200; width:max-content;
       display:none; align-items:center; gap:5px; flex-shrink:0;
       font-size:9px; opacity:.92;
       background: color-mix(in srgb, var(--pop) 96%, transparent);
@@ -389,6 +417,21 @@
     .tn-dev-time.open { display:flex; }
     .tn-dev-time input { width:80px; accent-color: var(--fg); }
     .hidden-hard { display: none !important; }
+    @media (max-width: 520px) {
+      #tn-window { width: 100vw; max-width: none; border-inline: 0; }
+      #tn-titlebar { padding: 4px 7px; gap: 6px; }
+      #tn-title { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      #tn-title-right { gap: 4px; flex-shrink: 0; }
+      .tn-hbtn.top { height: 26px; min-width: 30px; justify-content: center; padding: 1px 5px; }
+      #tn-status { padding: 3px 7px; gap: 6px; overflow-x: auto; scrollbar-width: none; }
+      #tn-status::-webkit-scrollbar { display: none; }
+      .tn-bar { padding: 5px 7px; gap: 5px; }
+      .tn-btn { padding: 5px 10px; font-size: 11px; }
+      .tn-select { font-size: 11px; padding: 5px 6px; }
+      #tn-legend, #tn-notebook, #tn-pw { top: 35px; right: 6px; width: calc(100% - 12px); max-height: min(70dvh, 520px); }
+      #tn-profile, #tn-observe { bottom: calc(98px + env(safe-area-inset-bottom, 0px)); }
+      #tn-item-menu { bottom: calc(102px + env(safe-area-inset-bottom, 0px)); }
+    }
   </style>
 </head>
 <body>
@@ -396,7 +439,7 @@
   <div id="tn-titlebar">
     <span id="tn-title">the third nature.sys</span>
     <div id="tn-title-right">
-      <button class="tn-hbtn top" id="tn-access-btn" title="Authority"><svg viewBox="0 0 9 10" width="9" height="10" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linecap="square"><path d="M2.5 4.5V3a2 2 0 0 1 4 0v1.5"/><rect x="1" y="4.5" width="7" height="5"/><rect x="3.5" y="6.5" width="2" height="2" fill="currentColor"/></svg></button>
+      <button class="tn-hbtn top hidden-hard" id="tn-access-btn" title="Authority"><svg viewBox="0 0 9 10" width="9" height="10" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linecap="square"><path d="M2.5 4.5V3a2 2 0 0 1 4 0v1.5"/><rect x="1" y="4.5" width="7" height="5"/><rect x="3.5" y="6.5" width="2" height="2" fill="currentColor"/></svg></button>
       <button class="tn-hbtn top" id="tn-guide-btn" title="Legend"><svg viewBox="0 0 11 9" width="11" height="9" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linecap="square"><path d="M1 1v7c1.5-.8 3-.8 4.5 0V1c-1.5-.8-3-.8-4.5 0Z"/><path d="M10 1v7c-1.5-.8-3-.8-4.5 0V1c1.5-.8 3-.8 4.5 0Z"/></svg></button>
       <button class="tn-hbtn top" id="tn-notebook-btn" title="Notebook"><svg viewBox="0 0 9 10" width="9" height="10" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linecap="square"><rect x="1" y="0.5" width="7" height="9"/><line x1="3" y1="0.5" x2="3" y2="9.5"/><line x1="4" y1="3.5" x2="8" y2="3.5"/><line x1="4" y1="5.5" x2="8" y2="5.5"/><line x1="4" y1="7.5" x2="8" y2="7.5"/></svg></button>
       <button class="tn-hbtn top" id="tn-minimap-btn" title="Minimap"><svg viewBox="0 0 11 9" width="11" height="9" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linecap="square"><rect x="1" y="1" width="9" height="7"/><polyline points="1,4 4,2 7,5 10,3"/></svg></button>
@@ -475,6 +518,13 @@
       <button id="tn-acc-modal-close">[ × ]</button>
     </div>
   </div>
+  <div id="tn-letter-modal" class="hidden">
+    <div id="tn-letter-modal-body">
+      <div class="tn-letter-title" id="tn-letter-title"></div>
+      <div class="tn-letter-body" id="tn-letter-body"></div>
+      <button id="tn-letter-modal-close">[ × ]</button>
+    </div>
+  </div>
 
   <!-- Legend panel -->
   <div id="tn-legend" class="hidden">
@@ -509,7 +559,7 @@
     <div class="lg-row"><span class="lg-c">n</span><span>pioneer shrub (mānuka)</span></div>
     <div class="lg-row"><span class="lg-c">Y</span><span>tree (mānuka / kānuka / kōtukutuku)</span></div>
     <div class="lg-row"><span class="lg-c">W</span><span>weeping willow</span></div>
-    <div class="lg-row"><span class="lg-c">#</span><span>gorse (invasive)</span></div>
+    <div class="lg-row"><span class="lg-c">#</span><span>gorse</span></div>
     <div class="lg-row"><span class="lg-c">@</span><span>ornamental (garden remnant)</span></div>
     <div class="lg-sec">── disturbance ──</div>
     <div class="lg-row"><span class="lg-c">o</span><span>rabbit hole</span></div>
@@ -564,8 +614,8 @@ const GPR_COST   = 3;
 const GPR_RAD    = 5;
 const LIDAR_RAD  = 5;
 const CANON_SEED = 20260615;
-const STATE_VER  = 8;
-const LS_KEY     = 'tn_state_v17';
+const STATE_VER  = 12;
+const LS_KEY     = 'tn_state_v21';
 const SITE_WEATHER = {
   lat: -45.68,
   lon: 170.62,
@@ -595,8 +645,10 @@ const T = {
     item_plant:'plant',
     item_inspect:'inspect',
     waste_name:'warm night soil',
-    waste_desc:'Extremely questionable material. Archaeology is not always dignified.',
-    waste_eat:'You ate it.\n-5 energy.\nSome knowledge should remain theoretical.',
+    waste_desc:'Fresh mushroom-sickness trace. Compostable. Technically edible; spiritually inadvisable.',
+    waste_eat:'You ate it.\nEnergy emptied.\nThree days of observation-only care.',
+    hospital_block:'You are in observation care.\nOnly observing is allowed for now.',
+    hospital_status:n=>`care: ${n}d`,
     irrigate_prompt:'IRRIGATE: tap a dry or living cell.',
     irrigate_done:'Water poured into the surface.',
     compost_prompt:'COMPOST: tap a soil or plant cell.',
@@ -604,7 +656,7 @@ const T = {
     observe_prompt:'OBSERVE: tap a cell.',
     harvest_prompt:'HARVEST: tap a plant or water cell.',
     tool_desc_observe: 'Tap any cell to read its surface and context. No energy cost.',
-    tool_desc_expose:  'Clear masonry or vegetation from a cell surface. Cost: 1 energy. Ruins → cracked · Plants → soil.',
+    tool_desc_expose:  'Clear vegetation or cover deposits. Cost: 1 energy. Exposed masonry remains; buried traces can reappear.',
     tool_desc_trowel:  'Dig one layer deeper into exposed soil. Cost: 2 energy. May release water or uncover finds.',
     tool_desc_probe:   m => `Lower rod to ${m} m. Samples that layer without excavating. ${MAX_PROBE} uses per day.`,
     tool_desc_gpr:     `Scan for subsurface anomalies in radius ${GPR_RAD}. Cost: ${GPR_COST} energy. Tap scan centre.`,
@@ -646,7 +698,7 @@ const T = {
     dry_found:   'Dense fill. No water corridor here.',
     trowel_dug:  d => `Excavated to layer ${d}.`,
     rabbit_found:'a rabbit bolted from the soil.\nyou somehow caught it.\n+2 energy on next eat.',
-    harvest_ok:  s => `Harvested: ${s}\n+1 crop added.`,
+    harvest_ok:  s => `Harvested: ${s}\nAdded to inventory.`,
     harvest_water: n => `Collected water.\nWater in inventory: ${n}`,
     harvest_water_dry:'The pool is exhausted for today.\nThe surface dries into mud.',
     harvest_bad: 'Nothing harvestable here.',
@@ -678,8 +730,12 @@ const T = {
       mud_seep:'mud seep', rubble:'rubble scatter', footprint:'visitor footprint',
       grass:'pioneer grass (browntop)', sedge:'rush / sedge / harakeke',
       lichen:'lichen crust', moss:'moss (Bryum)', fungi:'fungi mat',
+      boletus:'boletus', dung_fungi:'dung fungus', harore:'harore honeycap',
+      basket_fungus:'basket fungus', blue_entoloma:'werewere-kōkako',
+      glow_mycena:'glowing mycena', purple_pouch:'purple pouch fungus',
+      fly_agaric:'fly agaric',
       ice_plant:'Disphyma ice plant', shrub:'pioneer shrub (mānuka)',
-      gorse:'gorse (invasive)', ornamental:'ornamental (garden remnant)',
+	      gorse:'gorse', ornamental:'ornamental (garden remnant)',
       tree:'tree (mānuka / kānuka / kōtukutuku)', willow:'weeping willow',
       rabbit_hole:'rabbit hole', artifact:'artifact emerging', anomaly:'GPR anomaly',
       toilet_trace:'toilet trace', compost_trace:'compost trace',
@@ -696,6 +752,15 @@ const T = {
       lichen:'A crust is binding stone and dust into the first living skin.',
       moss:'Moss is storing water and softening the ruin edge.',
       fungi:'Fungal mats are feeding on damp organic fill.',
+      boletus:'A fleshy bolete has fruited from the fungal mat.',
+      dung_fungi:'A dung-loving mushroom has appeared; edible, technically.',
+      harore:'Honeycap clusters have fruited from buried wood.',
+      basket_fungus:'A pale lattice has unfolded after wet weather.',
+      blue_entoloma:'A small blue mushroom has appeared in the litter.',
+      glow_mycena:'Tiny pale caps gather on damp wood.',
+      purple_pouch:'A purple pouch body pushes up through beech-like litter.',
+      fly_agaric:'Red caps with white flecks appear near introduced trees.',
+      toxic_fungi:'Bright warning fruiting bodies have pushed through the mat.',
       ice_plant:'Dry stone supports a succulent coastal mat.',
       shrub:'Native shrub growth is beginning to anchor the surface.',
       tree:'A later successional tree is stabilising deeper time.',
@@ -712,7 +777,7 @@ const T = {
     strata_lbl: {
       foundation_stone:'stone foundation (old institution)', brick_course:'brick course',
       inst_fill:'institutional fill', void_space:'subsurface void',
-      organic_fill:'organic fill (pre-asylum)',
+      organic_fill:'older organic fill (pre-institution)',
       drain_intact:'drain — intact', drain_blocked:'drain — BLOCKED',
       gravel_fill:'gravel fill',
       heavy_clay_dry:'heavy clay (dry)', heavy_clay_wet:'saturated clay ← WATER',
@@ -742,9 +807,11 @@ const T = {
     item_compost:'堆肥',
     item_plant:'种植',
     item_inspect:'查看',
-    waste_name:'热乎夜土',
-    waste_desc:'极其可疑的材料。考古并不总是体面。',
-    waste_eat:'你吃了。\n-5 行动力。\n有些知识还是停留在理论上比较好。',
+    waste_name:'新鲜夜土',
+    waste_desc:'毒蘑菇后的如厕痕迹。可以堆肥。理论上能吃；精神上不建议。',
+    waste_eat:'你吃了。\n行动力清空。\n接下来三天只能观察，乖乖看病。',
+    hospital_block:'你正在观察治疗。\n现在只能观察，不能行动。',
+    hospital_status:n=>`治疗中：${n}天`,
     irrigate_prompt:'灌溉：点击干土或植物格。',
     irrigate_done:'水渗入了地表。',
     compost_prompt:'堆肥：点击土壤或植物格。',
@@ -752,7 +819,7 @@ const T = {
     observe_prompt:'观察：点击一个格子。',
     harvest_prompt:'收获：点击植物或积水格。',
     tool_desc_observe: '点击任意格子读取地表和背景信息。不消耗行动力。',
-    tool_desc_expose:  '清理地表砌体或植被。消耗 1 行动力。遗迹→裂缝 · 植被→干土。',
+    tool_desc_expose:  '清理植被或覆盖层。消耗 1 行动力。裸露砌体保留；覆盖下硬痕可重新露出。',
     tool_desc_trowel:  '往下挖一层暴露土。消耗 2 行动力。可能触发水脉或发现埋藏物。',
     tool_desc_probe:   m => `探杆下放至 ${m} 米，采样该层但不开挖。每天 ${MAX_PROBE} 次。`,
     tool_desc_gpr:     `在半径 ${GPR_RAD} 范围内扫描地下异常。消耗 ${GPR_COST} 行动力。点击扫描中心。`,
@@ -794,7 +861,7 @@ const T = {
     dry_found:   '密实填土，此处无水廊道。',
     trowel_dug:  d => `挖至第 ${d} 层。`,
     rabbit_found:'一只兔子从土里蹿出来。\n你竟然抓住了它。\n下次进食时 +2 行动力',
-    harvest_ok:  s => `收获：${s}\n+1 食物`,
+    harvest_ok:  s => `收获：${s}\n已加入物品栏。`,
     harvest_water: n => `采集了水。\n物品栏水量：${n}`,
     harvest_water_dry:'这处水今天已经取尽。\n表面变成泥痕。',
     harvest_bad: '这里没有可收获的植物。',
@@ -826,8 +893,12 @@ const T = {
       mud_seep:'泥浆渗出', rubble:'碎石散落', footprint:'访客脚印',
       grass:'先锋草（褐顶草）', sedge:'莎草/灯芯草/哈拉客',
       lichen:'地衣壳', moss:'苔藓（Bryum）', fungi:'真菌垫',
+      boletus:'牛肝菌', dung_fungi:'粪生菌', harore:'哈罗雷蜜环菌',
+      basket_fungus:'篮状菌', blue_entoloma:'蓝粉褶菌',
+      glow_mycena:'发光小菇', purple_pouch:'紫色囊菌',
+      fly_agaric:'毒蝇伞',
       ice_plant:'冰草（Disphyma）', shrub:'先锋灌木（麦卢卡）',
-      gorse:'金雀花（入侵）', ornamental:'装饰植物（花园遗存）',
+	      gorse:'金雀花', ornamental:'装饰植物（花园遗存）',
       tree:'乔木（麦卢卡/卡努卡/倒挂金钟）', willow:'垂柳',
       rabbit_hole:'兔子洞', artifact:'文物露出', anomaly:'探地雷达异常',
       toilet_trace:'如厕痕迹', compost_trace:'堆肥痕迹',
@@ -844,6 +915,15 @@ const T = {
       lichen:'地衣壳把石面与尘土缝成第一层活的皮肤。',
       moss:'苔藓储水，并把遗迹边缘慢慢变软。',
       fungi:'真菌垫正在利用潮湿有机填土。',
+      boletus:'牛肝菌从真菌垫里结出了肉质子实体。',
+      dung_fungi:'粪生菌出现了；严格来说能吃，但很难说体面。',
+      harore:'蜜环菌在埋木边成簇冒出。',
+      basket_fungus:'潮湿之后，一只浅色网篮从地里展开。',
+      blue_entoloma:'落叶层里出现了一枚蓝色小菇。',
+      glow_mycena:'潮湿木屑上聚起很小的浅色菌盖。',
+      purple_pouch:'紫色囊状子实体从类似山毛榉落叶的层里顶出来。',
+      fly_agaric:'红色白点菌盖出现在外来树附近。',
+      toxic_fungi:'颜色过分明确的毒蕈从垫层里冒出。',
       ice_plant:'干石面上形成了海岸型肉质植物垫。',
       shrub:'原生灌木开始锚定表层。',
       tree:'后期乔木把更深的时间稳定下来。',
@@ -890,7 +970,32 @@ const TN_PARAMS = new URLSearchParams(location.search);
 if(TN_PARAMS.get('stateUrl'))TN_CFG.stateUrl=TN_PARAMS.get('stateUrl');
 if(TN_PARAMS.get('writeUrl'))TN_CFG.writeUrl=TN_PARAMS.get('writeUrl');
 
-const NOTEBOOK_ENTRIES = [];
+const FIRST_LETTER = {
+  id:'letter-2026-06-15',
+  title:{en:'15 June - first letter',zh:'15 June - 第一封信'},
+  body:{
+    en:`Dear April,
+
+When you read this letter, it means the wicked wish you made to the white devil last night has already come true. I have cut this grid from my enchanted forest for you. It happens to press down on a landslide from 1887, a water route from 1912, a fire from 1943, and a collapse from 1957. Wall footings are cracked, drains are blocked, and pioneer grass seeds are mixed into the muddy water.
+
+Take the golden trowel I left you, and the unaffordable high-tech equipment from beyond the grid, and see what this breathing ruin still remembers — and what it will become.
+
+The password is one you know. This third nature is yours now.
+
+Yours,
+OL`,
+    zh:`亲爱的蓝色恶魔，
+
+当你读到这封信的时候，证明你在前一夜对白色恶魔许下的邪恶愿望已然成真。我为你截取我的魔法森林的这片网格，它刚好压着1887年的滑坡，1912年的水路，1943年的火，和1957年的瓦解。墙基开裂，暗渠堵死，泥水里混着先锋草的种子。拿上我给你留下的黄金手铲，和网格之外根本买不起的高科技设备，去看看这片仍在呼吸的废墟还记得什么，会成为什么。
+
+密码是你熟悉的。这片第三自然现在是你的了。
+
+你的，
+OL`
+  }
+};
+const NOTEBOOK_ENTRIES = [FIRST_LETTER];
+let NOTEBOOK_TAB = 'story';
 
 // ── RNG ─────────────────────────────────────────────────────────
 function mulberry32(seed) {
@@ -1149,21 +1254,50 @@ function genCell(x,y){
 }
 
 // ── Surface helpers ──────────────────────────────────────────────
-const SURF_CHAR={cracked:';',dry:'_',water:'~',hummock:'^',hollow:'∪',slip_scar:'/',mud_seep:'≈',footprint:"'",rubble:'░',grass:',',sedge:'"',lichen:':',moss:'m',fungi:'i',ice_plant:'*',shrub:'n',gorse:'#',ornamental:'@',tree:'Y',willow:'W',rabbit_hole:'o',artifact:'!',anomaly:'?',toxic_fungi:'×'};
+const SURF_CHAR={cracked:';',dry:'_',water:'~',hummock:'^',hollow:'∪',slip_scar:'/',mud_seep:'≈',footprint:"'",rubble:'░',grass:',',sedge:'"',lichen:':',moss:'m',fungi:'i',toxic_fungi:'×',boletus:'b',dung_fungi:'d',harore:'h',basket_fungus:'k',blue_entoloma:'e',glow_mycena:'g',purple_pouch:'p',fly_agaric:'a',ice_plant:'*',shrub:'n',gorse:'#',ornamental:'@',tree:'Y',willow:'W',rabbit_hole:'o',artifact:'!',anomaly:'?'};
 const SURF_CSS={
   water:'tn-c-water',sedge:'tn-c-water',willow:'tn-c-willow',
   grass:'tn-c-grass',lichen:'tn-c-lichen',moss:'tn-c-moss',
   ice_plant:'tn-c-succ',shrub:'tn-c-shrub',tree:'tn-c-tree',
-  fungi:'tn-c-fungi',gorse:'tn-c-gorse',ornamental:'tn-c-shrub',
+  fungi:'tn-c-fungi',toxic_fungi:'tn-c-anom',boletus:'tn-c-fungi',dung_fungi:'tn-c-fungi',harore:'tn-c-fungi',basket_fungus:'tn-c-lichen',blue_entoloma:'tn-c-water',glow_mycena:'tn-c-fungi',purple_pouch:'tn-c-succ',fly_agaric:'tn-c-anom',gorse:'tn-c-gorse',ornamental:'tn-c-shrub',
   dry:'tn-c-soil',cracked:'tn-c-soil2',rubble:'tn-c-soil2',
   mud_seep:'tn-c-soil2',hummock:'tn-c-soil',hollow:'tn-c-soil',
   slip_scar:'tn-c-soil2',footprint:'tn-c-soil2',
-  artifact:'tn-c-anom',anomaly:'tn-c-anom',
-  toxic_fungi:'tn-c-anom'
+  artifact:'tn-c-anom',anomaly:'tn-c-anom'
 };
 const MULTI_CH=new Set(['::','[ ]']);
-const HARVESTABLE=new Set(['grass','sedge','moss','fungi','ice_plant','shrub']);
-const HARVEST_PREV={grass:'dry',sedge:'water',moss:'lichen',fungi:'moss',ice_plant:'moss',shrub:'lichen'};
+const MUSHROOM_KINDS=['toxic_fungi','fly_agaric','boletus','harore','basket_fungus','dung_fungi','blue_entoloma','glow_mycena','purple_pouch'];
+const TOILET_FOOD=new Set(['toxic_fungi','fly_agaric','purple_pouch']);
+const HARVESTABLE=new Set(['grass','sedge','lichen','moss','fungi',...MUSHROOM_KINDS,'ice_plant','shrub']);
+const HARVEST_PREV={grass:'dry',sedge:'water',lichen:'dry',moss:'lichen',fungi:'moss',ice_plant:'moss',shrub:'lichen'};
+MUSHROOM_KINDS.forEach(k=>HARVEST_PREV[k]='moss');
+const FOOD_EFFECTS={crop:1,grass:1,ice_plant:2,water:2,lichen:-1,moss:-1,fungi:-1,toxic_fungi:-999,fly_agaric:-5,boletus:5,harore:3,basket_fungus:1,dung_fungi:3,blue_entoloma:-2,glow_mycena:-1,purple_pouch:-3,rabbit:2,fish:3,waste:-5};
+const FOOD_SYMBOLS={crop:'◆',grass:',',ice_plant:'*',lichen:':',moss:'m',fungi:'i',toxic_fungi:'×',fly_agaric:'a',boletus:'b',harore:'h',basket_fungus:'k',dung_fungi:'d',blue_entoloma:'e',glow_mycena:'g',purple_pouch:'p',rabbit:'o',fish:'≈'};
+const PLANTABLE_FOOD=new Set(['grass','ice_plant','lichen','moss','fungi',...MUSHROOM_KINDS]);
+function foodKindFromSurface(surface,x,y){
+  if(surface==='sedge'||surface==='shrub')return'crop';
+  if(surface==='fungi'||MUSHROOM_KINDS.includes(surface)){
+    const r=cellRng(CANON_SEED+131,x,y)();
+    if(surface!=='fungi')return surface;
+    return weightedMushroom(r);
+  }
+  return surface;
+}
+function plantedSurfaceFromFood(kind){
+  if(MUSHROOM_KINDS.includes(kind))return'fungi';
+  return kind;
+}
+function foodName(kind){
+  const zh={crop:'可食植物',grass:'先锋草',ice_plant:'冰草',lichen:'地衣',moss:'苔藓',fungi:'真菌垫',toxic_fungi:'变异毒蕈',fly_agaric:'毒蝇伞',boletus:'牛肝菌',harore:'哈罗雷蜜环菌',basket_fungus:'篮状菌',dung_fungi:'粪生菌',blue_entoloma:'蓝粉褶菌',glow_mycena:'发光小菇',purple_pouch:'紫色囊菌',rabbit:'兔肉',fish:'鱼'};
+  const en={crop:'edible plant',grass:'pioneer grass',ice_plant:'ice plant',lichen:'lichen',moss:'moss',fungi:'fungal mat',toxic_fungi:'mutated toxic mushroom',fly_agaric:'fly agaric',boletus:'boletus',harore:'harore honeycap',basket_fungus:'basket fungus',dung_fungi:'dung fungus',blue_entoloma:'werewere-kōkako',glow_mycena:'glowing mycena',purple_pouch:'purple pouch fungus',rabbit:'rabbit',fish:'fish'};
+  return (LANG.cur==='zh'?zh:en)[kind]||kind;
+}
+function weightedMushroom(r){
+  const w=[['toxic_fungi',.11],['fly_agaric',.10],['boletus',.15],['harore',.14],['basket_fungus',.10],['dung_fungi',.14],['blue_entoloma',.12],['glow_mycena',.12],['purple_pouch',.12]];
+  let acc=0;
+  for(const[k,p]of w){acc+=p;if(r<acc)return k;}
+  return'boletus';
+}
 
 const SYMBOL_DEFS=[
   {char:'▓',cat:'ruins',label:{en:'standing masonry wall',zh:'残存砌体墙'}},
@@ -1187,6 +1321,15 @@ const SYMBOL_DEFS=[
   {char:':',cat:'life',key:'lichen'},
   {char:'m',cat:'life',key:'moss'},
   {char:'i',cat:'life',key:'fungi'},
+  {char:'×',cat:'life',key:'toxic_fungi'},
+  {char:'a',cat:'life',key:'fly_agaric'},
+  {char:'b',cat:'life',key:'boletus'},
+  {char:'h',cat:'life',key:'harore'},
+  {char:'k',cat:'life',key:'basket_fungus'},
+  {char:'d',cat:'life',key:'dung_fungi'},
+  {char:'e',cat:'life',key:'blue_entoloma'},
+  {char:'g',cat:'life',key:'glow_mycena'},
+  {char:'p',cat:'life',key:'purple_pouch'},
   {char:'*',cat:'life',key:'ice_plant'},
   {char:'n',cat:'life',key:'shrub'},
   {char:'#',cat:'life',key:'gorse'},
@@ -1255,9 +1398,9 @@ function symbolGuideCatLabel(cat,rows){
   return symCatLabel(cat);
 }
 function surfaceCategory(surf,gen){
-  if(['ruins','floor'].includes(surf)||gen?.isRuins)return'ruins';
+  if(['ruins','floor'].includes(surf))return'ruins';
   if(['water','hollow','hummock','slip_scar','mud_seep'].includes(surf))return'instability';
-  if(['grass','sedge','lichen','moss','fungi','ice_plant','shrub','gorse','ornamental','tree','willow'].includes(surf))return'life';
+  if(['grass','sedge','lichen','moss','fungi',...MUSHROOM_KINDS,'ice_plant','shrub','gorse','ornamental','tree','willow'].includes(surf))return'life';
   if(['rabbit_hole','artifact','anomaly'].includes(surf))return'disturbance';
   return'ground';
 }
@@ -1269,8 +1412,13 @@ const SUCC={
   lichen:{ticks:4,next:'moss',stab:.02},moss:{ticks:5,next:'_branch',stab:.02},
   mud_seep:{ticks:2,next:'sedge',stab:.01},rubble:{ticks:3,next:'lichen',stab:0},
   hummock:{ticks:3,next:'grass',stab:.01},slip_scar:{ticks:4,next:'dry',stab:0},
-  hollow:{ticks:2,next:'mud_seep',stab:.01},toxic_fungi:{ticks:0,next:null,stab:0},
-  fungi:{ticks:0,next:null,stab:.02},ice_plant:{ticks:0,next:null,stab:.01},
+  hollow:{ticks:2,next:'mud_seep',stab:.01},
+  fungi:{ticks:4,next:'_mushroom',stab:.02},toxic_fungi:{ticks:0,next:null,stab:0},
+  fly_agaric:{ticks:0,next:null,stab:0},boletus:{ticks:0,next:null,stab:.02},
+  harore:{ticks:0,next:null,stab:.02},basket_fungus:{ticks:0,next:null,stab:.01},
+  dung_fungi:{ticks:0,next:null,stab:.01},blue_entoloma:{ticks:0,next:null,stab:.01},
+  glow_mycena:{ticks:0,next:null,stab:.01},purple_pouch:{ticks:0,next:null,stab:0},
+  ice_plant:{ticks:10,next:'shrub',stab:.01},
   shrub:{ticks:15,next:'tree',stab:.05},gorse:{ticks:0,next:null,stab:.03},
   ornamental:{ticks:0,next:null,stab:0},tree:{ticks:0,next:null,stab:.06},willow:{ticks:0,next:null,stab:.05},
 };
@@ -1280,14 +1428,18 @@ const GROWABLE=new Set(Object.keys(SUCC));
 let S;
 function mkState(){
   const n=new Date().toISOString();
-  return{version:STATE_VER,seed:CANON_SEED,meta:{day:1,lastTickAt:n,energy:MAX_NRG,energyLastReset:n,lastLidarAt:null,probeUses:0,waterStreak:0,needsToilet:false,weather:null,rainDays:0,droughtDays:0},cells:{},revealed:[],seenSymbols:{},knownSymbols:{},signs:{},notebookPages:[],inventory:{seeds:[],water:0,waste:0,food:{crop:0,rabbit:0,fish:0},artifacts:[]}};
+  return{version:STATE_VER,seed:CANON_SEED,meta:{day:1,lastTickAt:n,energy:MAX_NRG,energyLastReset:n,lastLidarAt:null,probeUses:0,waterStreak:0,needsToilet:false,toiletKind:null,hospitalUntilDay:0,weather:null,rainDays:0,droughtDays:0},cells:{},revealed:[],seenSymbols:{},knownSymbols:{},knownFood:{},actionLog:[],signs:{},notebookPages:[],inventory:{seeds:[],water:0,waste:0,food:{crop:0,rabbit:0,fish:0},artifacts:[]}};
 }
 function normalizeS(s){
   if(!s)return;
+  const loadedVersion=s.version||0;
+  s.version=STATE_VER;
   s.revealed=Array.isArray(s.revealed)?s.revealed:[];
   s.notebookPages=Array.isArray(s.notebookPages)?s.notebookPages:[];
   s.seenSymbols=s.seenSymbols||{};
   s.knownSymbols=s.knownSymbols||{};
+  s.knownFood=s.knownFood||{};
+  s.actionLog=Array.isArray(s.actionLog)?s.actionLog:[];
   s.cells=s.cells||{};s.signs=s.signs||{};
   s.meta=s.meta||{};
   s.meta.energy=Math.min(MAX_NRG,s.meta.energy??MAX_NRG);
@@ -1296,16 +1448,21 @@ function normalizeS(s){
   s.meta.probeUses=s.meta.probeUses||0;
   s.meta.waterStreak=s.meta.waterStreak||0;
   s.meta.needsToilet=!!s.meta.needsToilet;
+  s.meta.toiletKind=s.meta.toiletKind||null;
+  s.meta.hospitalUntilDay=s.meta.hospitalUntilDay||0;
+  s.meta.firstLetterClosed=!!s.meta.firstLetterClosed;
+  if(loadedVersion<10&&s.meta.energy<MAX_NRG)s.meta.energy=MAX_NRG;
   s.inventory=s.inventory||{};
   s.inventory.seeds=Array.isArray(s.inventory.seeds)?s.inventory.seeds:[];
   s.inventory.water=s.inventory.water||0;
   s.inventory.waste=s.inventory.waste||0;
   s.inventory.food=s.inventory.food||{};
-  ['crop','rabbit','fish'].forEach(k=>{ s.inventory.food[k]=s.inventory.food[k]||0; });
+  ['crop','rabbit','fish','grass','ice_plant','lichen','moss','fungi',...MUSHROOM_KINDS].forEach(k=>{ s.inventory.food[k]=s.inventory.food[k]||0; });
   s.inventory.artifacts=Array.isArray(s.inventory.artifacts)?s.inventory.artifacts:[];
   Object.values(s.cells).forEach(c=>{
     c.unlockedLayers=Array.isArray(c.unlockedLayers)?c.unlockedLayers:[];
     c.recentLayers=Array.isArray(c.recentLayers)?c.recentLayers:[];
+    if(c.buriedRuin&&typeof c.buriedRuin.known!=='boolean')c.buriedRuin.known=Boolean(c.ruinKnown);
   });
   if(s.revealed.length===0)bootstrapReveal(s);
   revSet=new Set(s.revealed);
@@ -1334,6 +1491,46 @@ function initialSurfaceForGen(g){
 }
 function getCell(x,y){const k=ck(x,y);if(S.cells[k])return S.cells[k];const g=genCell(x,y);return{surface:initialSurfaceForGen(g),daysActive:0,stability:g.baseStab,unlockedLayers:[],recentLayers:[]};}
 function setCell(x,y,p){const k=ck(x,y);S.cells[k]={...(S.cells[k]||getCell(x,y)),...p};}
+function ruinRecordFor(x,y,cell=getCell(x,y),gen=genCell(x,y)){
+  if(cell.buriedRuin)return cell.buriedRuin;
+  if(gen.isRuins||['ruins','floor'].includes(cell.surface)){
+    return{
+      surface:['floor'].includes(cell.surface)?cell.surface:'ruins',
+      char:gen.initialChar,
+      zone:gen.zone,
+      siteKind:gen.siteKind||null,
+      firstSeenDay:S?.meta?.day||1,
+      known:Boolean(cell.ruinKnown||['ruins','floor'].includes(cell.surface))
+    };
+  }
+  return null;
+}
+function coverSurface(x,y,nextSurface,patch={}){
+  const cell=getCell(x,y),gen=genCell(x,y);
+  const next={...patch,surface:nextSurface};
+  const buried=ruinRecordFor(x,y,cell,gen);
+  if(buried&&!['ruins','floor'].includes(nextSurface)){
+    const known=Boolean(buried.known||cell.ruinKnown||['ruins','floor'].includes(cell.surface));
+    next.buriedRuin={...buried,known,coverSurface:nextSurface,coveredDay:S?.meta?.day||1};
+  }
+  if(['ruins','floor'].includes(nextSurface))next.buriedRuin=null;
+  setCell(x,y,next);
+}
+function exposeBuriedRuin(x,y,coverLabelKey=null){
+  const cell=getCell(x,y),gen=genCell(x,y);
+  const buried=ruinRecordFor(x,y,cell,gen);
+  if(!buried)return false;
+  addRecentLayer(x,y,SURF_CHAR[cell.surface]||'.',coverLabelKey||cell.surface);
+  setCell(x,y,{
+    surface:buried.surface||'ruins',
+    daysActive:0,
+    stability:Math.min(1,Math.max(cell.stability||0,gen.baseStab)),
+    buriedRuin:null,
+    ruinKnown:true
+  });
+  rememberSymbol(buried.char||gen.initialChar,'ruins',true);
+  return true;
+}
 function unlockLayer(x,y,depth){
   const cell=getCell(x,y);
   const unlocked=new Set(cell.unlockedLayers||[]);
@@ -1352,6 +1549,53 @@ function addRecentLayer(x,y,char,labelKey){
   }
   setCell(x,y,{recentLayers:recent.slice(-4)});
   rememberSymbol(char,'strata',true);
+}
+function markPlayerCell(x,y,kind){
+  setCell(x,y,{playerTouched:{kind,day:S.meta.day,tick:currentTickIndex()}});
+}
+function hasFreshPlayerMark(cell){
+  if(!cell.playerTouched)return false;
+  return (S.meta.day-(cell.playerTouched.day||0))<3;
+}
+function logEvent(kind,text,opts={}){
+  if(!S)return;
+  S.actionLog=S.actionLog||[];
+  S.actionLog.push({ts:new Date().toISOString(),day:S.meta?.day||1,kind,text,...opts});
+  while(S.actionLog.length>120){
+    const i=S.actionLog.findIndex(r=>!r.permanent);
+    if(i<0)break;
+    S.actionLog.splice(i,1);
+  }
+}
+function currentTickIndex(){return Math.floor((S.meta.totalPlayedHours||0)/TICK_H);}
+function isHospitalized(){return (S.meta.hospitalUntilDay||0)>S.meta.day;}
+function hospitalDaysLeft(){return Math.max(0,(S.meta.hospitalUntilDay||0)-S.meta.day);}
+function blockHospital(){
+  if(!isHospitalized())return false;
+  showToast(t('hospital_block'));
+  cancelTargeting();
+  setTool('observe');
+  renderStatus();
+  return true;
+}
+function compostOldWasteTraces(){
+  const nowTick=currentTickIndex();
+  for(const k of Object.keys(S.cells||{})){
+    const c=S.cells[k];
+    if(c.toiletKind!=='mushroom'||c.wasteHarvested||c.wasteComposted)continue;
+    const age=nowTick-(c.toiletAtTick??nowTick);
+    if(age<2)continue;
+    const [x,y]=k.split('_').map(Number);
+    addRecentLayer(x,y,'·','compost_trace');
+    setCell(x,y,{
+      wasteComposted:true,
+      composted:true,
+      nitrogenPulse:(c.nitrogenPulse||0)+1,
+      daysActive:(c.daysActive||0)+1,
+      stability:Math.min(1,(c.stability||genCell(x,y).baseStab)+.02)
+    });
+    logEvent('disturbance',`night soil composted in place @ ${x},${y}`);
+  }
 }
 
 // ── Time ─────────────────────────────────────────────────────────
@@ -1376,26 +1620,38 @@ function advanceCell(x,y,ticks){
   if(w?.rain>0 && WET_PATH.has(cell.surface)) effectiveTicks=ticks+1;
   // Weather: drought retreats moss on dry ground
   if(w?.temp>22 && !w?.rain && cell.surface==='moss' && !genCell(x,y).hasWetClay){
-    if(Math.random()<0.2*ticks){setCell(x,y,{surface:'lichen',daysActive:0});return;}
+    if(Math.random()<0.2*ticks){coverSurface(x,y,'lichen',{daysActive:0});return;}
   }
   // Weather: drought evaporates water
   if(w?.temp>22 && !w?.rain && cell.surface==='water' && cell.waterType!=='B'){
-    if(Math.random()<0.15*ticks){setCell(x,y,{surface:'mud_seep',daysActive:0});addRecentLayer(x,y,'≈','mud_seep');return;}
+    if(Math.random()<0.15*ticks){coverSurface(x,y,'mud_seep',{daysActive:0});addRecentLayer(x,y,'≈','mud_seep');return;}
+  }
+  if(cell.surface==='water'&&cell.waterType==='B'){
+    setCell(x,y,{daysActive:(cell.daysActive||0)+effectiveTicks,stability:Math.min(1,(cell.stability||genCell(x,y).baseStab)+.01*ticks)});
+    return;
   }
   let days=(cell.daysActive||0)+effectiveTicks,newSurf=cell.surface;
   while(s && s.next!==null && days>=s.ticks){
     days-=s.ticks;
-    newSurf=s.next==='_branch'?(genCell(x,y).hasWetClay?'fungi':'ice_plant'):s.next;
+    if(s.next==='_branch'){
+      newSurf=genCell(x,y).hasWetClay?'fungi':'ice_plant';
+    }else if(s.next==='_mushroom'){
+      const r=cellRng(CANON_SEED+77,x,y)();
+      newSurf=weightedMushroom(r);
+    }else{
+      newSurf=s.next;
+    }
     s=SUCC[newSurf];
   }
   const newStab=Math.min(1,(cell.stability||genCell(x,y).baseStab)+(s?.stab||0)*ticks);
-  setCell(x,y,{surface:newSurf,daysActive:days,stability:newStab});
+  coverSurface(x,y,newSurf,{daysActive:days,stability:newStab});
   if(newSurf!==cell.surface)addRecentLayer(x,y,SURF_CHAR[newSurf]||'.',newSurf);
 }
 function applyTime(){
   resetDailyResources();
   const ticks=ticksElapsed(S.meta.lastTickAt);
   if(ticks<=0)return false;
+  logEvent('time',`+${ticks} ticks · ${ticks*TICK_H}h`);
   for(const k of S.revealed){const[x,y]=k.split('_').map(Number);advanceCell(x,y,ticks);}
   for(let i=0;i<ticks;i++){spreadSpores();gorseInvade();}
   checkSlumps();
@@ -1419,6 +1675,7 @@ function applyTime(){
   }
   S.meta.totalPlayedHours=(S.meta.totalPlayedHours||0)+(ticks*TICK_H);
   S.meta.day=Math.max(1,1+Math.floor(S.meta.totalPlayedHours/24));
+  compostOldWasteTraces();
   S.meta.lastTickAt=new Date(new Date(S.meta.lastTickAt).getTime()+ticks*TICK_H*3600000).toISOString();
   resetDailyResources();
   return true;
@@ -1442,7 +1699,7 @@ function spreadSpores(){
     }
     if(!nbrs.length)continue;
     const tw=nbrs.reduce((s,[,,w])=>s+w,0);let r=Math.random()*tw;
-    for(const[nx,ny,w]of nbrs){r-=w;if(r<=0){setCell(nx,ny,{surface:'lichen',daysActive:0,stability:genCell(nx,ny).baseStab});break;}}
+    for(const[nx,ny,w]of nbrs){r-=w;if(r<=0){coverSurface(nx,ny,'lichen',{daysActive:0,stability:genCell(nx,ny).baseStab});break;}}
   }
 }
 function checkSlumps(){
@@ -1450,29 +1707,30 @@ function checkSlumps(){
 }
 function triggerSlump(x,y){
   const c=getCell(x,y);
-  setCell(x,y,{surface:(x>CX||y>CY)?'hummock':'slip_scar',daysActive:0,stability:Math.min(.45,(c.stability||.3)+.1)});
+  coverSurface(x,y,(x>CX||y>CY)?'hummock':'slip_scar',{daysActive:0,stability:Math.min(.45,(c.stability||.3)+.1)});
   addRecentLayer(x,y,'░','rubble');
-  if(x+1<GRID_W&&y+1<GRID_H&&isRev(x+1,y+1)){const d=getCell(x+1,y+1);if(['dry','grass','cracked'].includes(d.surface))setCell(x+1,y+1,{surface:'rubble',stability:Math.max(.2,(d.stability||.5)-.05)});}
+  logEvent('disturbance',`slope movement covered surface @ ${x},${y}`);
+  if(x+1<GRID_W&&y+1<GRID_H&&isRev(x+1,y+1)){const d=getCell(x+1,y+1);if(['dry','grass','cracked','ruins','floor'].includes(d.surface))coverSurface(x+1,y+1,'rubble',{stability:Math.max(.2,(d.stability||.5)-.05)});}
 }
 function gorseInvade(){
   const edge=S.revealed.filter(k=>{const[x,y]=k.split('_').map(Number);return!isRev(x-1,y)||!isRev(x+1,y)||!isRev(x,y-1)||!isRev(x,y+1);});
   if(!edge.length)return;
   const[ex,ey]=edge[Math.floor(Math.random()*edge.length)].split('_').map(Number);
-  const c=getCell(ex,ey);if(['dry','grass','cracked','open'].includes(c.surface))setCell(ex,ey,{surface:'gorse',daysActive:0});
+  const c=getCell(ex,ey);if(['dry','grass','cracked','open'].includes(c.surface)){coverSurface(ex,ey,'gorse',{daysActive:0});logEvent('disturbance',`gorse appeared @ ${ex},${ey}`);}
   for(const k of S.revealed){const[x,y]=k.split('_').map(Number);if(getCell(x,y).surface!=='gorse')continue;
-    for(const[nx,ny]of[[x-1,y],[x+1,y],[x,y-1],[x,y+1]]){if(!isRev(nx,ny))continue;const nc=getCell(nx,ny);if(['dry','grass'].includes(nc.surface)&&Math.random()<.07)setCell(nx,ny,{surface:'gorse',daysActive:0});}}
+    for(const[nx,ny]of[[x-1,y],[x+1,y],[x,y-1],[x,y+1]]){if(!isRev(nx,ny))continue;const nc=getCell(nx,ny);if(['dry','grass'].includes(nc.surface)&&Math.random()<.07)coverSurface(nx,ny,'gorse',{daysActive:0});}}
 }
 
 // ── Water ────────────────────────────────────────────────────────
 function spreadWaterA(sx,sy){
   const q=[[sx,sy]],vis=new Set([ck(sx,sy)]),found=[];
   while(q.length){const[x,y]=q.shift();found.push([x,y]);for(const[nx,ny]of[[x-1,y],[x+1,y],[x,y-1],[x,y+1]]){const nk=ck(nx,ny);if(vis.has(nk)||nx<0||nx>=GRID_W||ny<0||ny>=GRID_H)continue;if(!genCell(nx,ny).hasWetClay)continue;vis.add(nk);q.push([nx,ny]);}}
-  for(const[x,y]of found){reveal(x,y);revRing(x,y);setCell(x,y,{surface:'water',daysActive:0,stability:Math.max(.1,genCell(x,y).baseStab-.15),waterType:'A'});addRecentLayer(x,y,'≈','mud_seep');}
+  for(const[x,y]of found){reveal(x,y);revRing(x,y);coverSurface(x,y,'water',{daysActive:0,stability:Math.max(.1,genCell(x,y).baseStab-.15),waterType:'A'});addRecentLayer(x,y,'≈','mud_seep');}
 }
 function spreadWaterB(sx,sy){
   const q=[[sx,sy,0]],vis=new Set([ck(sx,sy)]),found=[];
   while(q.length){const[x,y,d]=q.shift();found.push([x,y,d]);for(const[nx,ny]of[[x-1,y],[x+1,y],[x,y-1],[x,y+1]]){const nk=ck(nx,ny);if(vis.has(nk)||nx<0||nx>=GRID_W||ny<0||ny>=GRID_H)continue;const ng=genCell(nx,ny);if(ng.hasCavity||d<3){vis.add(nk);q.push([nx,ny,d+1]);}}}
-  for(const[x,y,d]of found){reveal(x,y);revRing(x,y);setCell(x,y,{surface:'water',daysActive:0,stability:Math.max(.05,genCell(x,y).baseStab-(d<2?.3:.1)),waterType:'B'});addRecentLayer(x,y,d<2?'░':'≈',d<2?'rubble':'mud_seep');if(d<2)triggerSlump(x,y);}
+  for(const[x,y,d]of found){reveal(x,y);revRing(x,y);coverSurface(x,y,'water',{daysActive:0,stability:Math.max(.05,genCell(x,y).baseStab-(d<2?.3:.1)),waterType:'B'});addRecentLayer(x,y,d<2?'░':'≈',d<2?'rubble':'mud_seep');if(d<2)triggerSlump(x,y);}
 }
 
 // ── GPR ──────────────────────────────────────────────────────────
@@ -1483,8 +1741,9 @@ function runGPR(cx,cy){
     const x=cx+dx,y=cy+dy;if(x<0||x>=GRID_W||y<0||y>=GRID_H||!isRev(x,y))continue;
     const gen=genCell(x,y);const cell=getCell(x,y);
     const has=gen.hasAnomaly||(gen.hasArt&&!cell.artifactFound)||(gen.hasSeed&&!cell.seedFound);
-    setCell(x,y,{gprAnomaly:has?'confirmed':'clear'});if(has)n++;
+      setCell(x,y,{gprAnomaly:has?'confirmed':'clear'});if(has)n++;
   }
+  logEvent('gpr',`${n} anomaly ${n===1?'cell':'cells'} @ ${cx},${cy}`);
   return n;
 }
 
@@ -1495,10 +1754,16 @@ function runLiDAR(cx,cy){
     if(dx*dx+dy*dy>LIDAR_RAD*LIDAR_RAD)continue;
     const x=cx+dx,y=cy+dy;if(x<0||x>=GRID_W||y<0||y>=GRID_H)continue;
     const was=isRev(x,y);reveal(x,y);
+    if(!was){
+      const catchupTicks=Math.min(30,Math.floor((S.meta.totalPlayedHours||0)/TICK_H));
+      if(catchupTicks>0)advanceCell(x,y,catchupTicks);
+    }
     const gen=genCell(x,y);setCell(x,y,{lidarScanned:true,lidarHasWater:gen.hasWetClay||gen.hasCavity,lidarZone:gen.zone});
     if(!was)n++;
   }
-  S.meta.lastLidarAt=new Date().toISOString();return n;
+  S.meta.lastLidarAt=new Date().toISOString();
+  logEvent('lidar',`${n} cells revealed @ ${cx},${cy}`);
+  return n;
 }
 function lidarHLeft(){if(!S.meta.lastLidarAt)return 0;return Math.max(0,LIDAR_CD_H-hoursElapsed(S.meta.lastLidarAt));}
 
@@ -1544,8 +1809,14 @@ const isAuth=()=>DEV_MODE||!!sessionStorage.getItem('tn_auth_hash');
 function centeredViewOrigin(){return CX-Math.floor(VPW/2)+1;}
 function centeredViewOriginY(){return CY-Math.floor(VPH/2)+1;}
 let viewX=centeredViewOrigin(),viewY=centeredViewOriginY();
+let selectedCell=null;
 function clampVP(){viewX=Math.max(0,Math.min(GRID_W-VPW,viewX));viewY=Math.max(0,Math.min(GRID_H-VPH,viewY));}
 function resetView(){viewX=centeredViewOrigin();viewY=centeredViewOriginY();clampVP();}
+function selectCell(x,y){
+  selectedCell={x,y};
+  document.querySelectorAll('.tn-cell.selected').forEach(el=>el.classList.remove('selected'));
+  document.querySelector(`.tn-cell[data-x="${x}"][data-y="${y}"]`)?.classList.add('selected');
+}
 
 // ── Render ───────────────────────────────────────────────────────
 function renderStatus(){
@@ -1553,7 +1824,9 @@ function renderStatus(){
   document.getElementById('tn-day').textContent=t('day',S.meta.day);
   const weather=S.meta.weather;
   document.getElementById('tn-weather').textContent=weather?`${weather.season} · ${weather.temp}°C · ${weather.sky}`:'weather: —';
-  document.getElementById('tn-energy').textContent=`Energy: ${t('energy',S.meta.energy)}`;
+  document.getElementById('tn-energy').textContent=isHospitalized()
+    ? `${t('hospital_status',hospitalDaysLeft())} · Energy: ${t('energy',S.meta.energy)}`
+    : `Energy: ${t('energy',S.meta.energy)}`;
   document.getElementById('tn-title').textContent=t('title');
   document.getElementById('tn-lang-btn').textContent=LANG.cur.toUpperCase();
   document.getElementById('tn-pan-hint').textContent=t('pan_hint');
@@ -1601,20 +1874,110 @@ function renderSymbolGuide(){
   body.innerHTML=html||`<div class="sym-empty">${t('symbols_empty')}</div>`;
 }
 
+function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function logGroup(kind){
+  if(['time','weather','gpr','lidar'].includes(kind))return'system';
+  if(['disturbance','visitor','slump','gorse'].includes(kind))return'disturbance';
+  return'player';
+}
+function logTimeLabel(row){
+  const d=new Date(row.ts);
+  const hm=Number.isFinite(d.getTime())?d.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}):'--:--';
+  return `${LANG.cur==='zh'?'第':'Day '}${row.day}${LANG.cur==='zh'?'天':' '} · ${hm}`;
+}
+function fieldInfoForKey(key){
+  const zh={
+    gorse:'入侵植物；会从迷雾边缘扩散，抢占裸地。',
+    ornamental:'制度期园林遗留；通常不是原生群落。',
+    willow:'制度期引入/栽植线索；偏湿地。',
+    ice_plant:'海岸肉质植物；干石面上能活。',
+    shrub:'本地先锋灌木；会慢慢稳定表层。',
+    tree:'后期乔木；说明演替已经走得比较远。',
+    grass:'先锋草；最早占住扰动表面。',
+    lichen:'地衣壳；石面/裸土上的第一层活皮。',
+    moss:'苔藓；代表更湿、更能蓄水的表层。',
+    fungi:'真菌垫；潮湿有机质里会继续出菇。',
+    water:'可饮用/灌溉；地表积水会干，地下水更稳定。',
+    rubble:'覆盖层/崩塌物；可能盖住更硬的痕迹。',
+    mud_seep:'湿泥渗出；常提示下方有水或排水问题。',
+    drain_blocked:'堵塞排水；清开后可能改变水路。',
+    inst_fill:'制度期填土；种子更可能是外来/栽培来源。',
+    organic_fill:'更老的有机填土；种子更可能是本地长期背景。'
+  };
+  const en={
+    gorse:'Invasive plant; spreads from fog edges and takes bare ground.',
+    ornamental:'Institution-period garden remnant; usually not native succession.',
+    willow:'Introduced/planted wet-ground clue from the institution period.',
+    ice_plant:'Coastal succulent; survives on dry stone.',
+    shrub:'Native pioneer shrub; gradually stabilises the surface.',
+    tree:'Later successional tree; the surface has been stable for a while.',
+    grass:'Pioneer grass; first to hold disturbed ground.',
+    lichen:'Lichen crust; first living skin on stone or bare soil.',
+    moss:'Moss; wetter, water-holding surface.',
+    fungi:'Fungal mat; damp organic fill may fruit into mushrooms.',
+    water:'Drinkable/irrigation water; surface pools dry, groundwater persists.',
+    rubble:'Cover/slump deposit; may hide harder traces underneath.',
+    mud_seep:'Wet mud seep; often hints at water or drainage below.',
+    drain_blocked:'Blocked drainage; clearing it may change water routes.',
+    inst_fill:'Institution-period fill; seeds are more likely introduced/cultivated.',
+    organic_fill:'Older organic fill; seeds are more likely long-term local background.'
+  };
+  return (LANG.cur==='zh'?zh:en)[key]||tl('surface_desc',key)||tl('surface_lbl',key);
+}
+function noteDetails(title,rows,open=false){
+  return rows.length?`<details class="note-details"${open?' open':''}><summary>${esc(title)} · ${rows.length}</summary>${rows.join('')}</details>`:'';
+}
+function foodEffectText(kind,e){
+  if(kind==='toxic_fungi')return LANG.cur==='zh'?'清空行动力':'empties energy';
+  return `${e>=0?'+':''}${e} ${LANG.cur==='zh'?'行动力':'energy'}`;
+}
+function uniqueDefs(defs){
+  const seen=new Set();
+  return defs.filter(d=>{
+    const key=d.key||`${d.cat}:${d.char}`;
+    if(seen.has(key))return false;
+    seen.add(key);
+    return true;
+  });
+}
 function renderNotebook(){
   const body=document.getElementById('tn-notebook-body');
   if(!body||!S)return;
-  const pages=[...NOTEBOOK_ENTRIES,...(S.notebookPages||[])];
-  if(!pages.length){
-    body.innerHTML=`<div class="sym-empty">${t('notebook_empty')}</div>`;
-    return;
+  const labels=LANG.cur==='zh'?{story:'剧情',log:'日志',ency:'百科'}:{story:'story',log:'log',ency:'field guide'};
+  let content='';
+  if(NOTEBOOK_TAB==='story'){
+    const pages=[...NOTEBOOK_ENTRIES,...(S.notebookPages||[])];
+    content=pages.length?pages.map((p,i)=>`
+      <details class="note-details"${i===0?' open':''}>
+        <summary>${esc(p.title?.[LANG.cur]||p.title?.en||p.title||'untitled')}</summary>
+        <div class="note-body">${esc(p.body?.[LANG.cur]||p.body?.en||p.body||'').replace(/\n/g,'<br>')}</div>
+      </details>
+    `).join(''):`<div class="sym-empty">${t('notebook_empty')}</div>`;
+  }else if(NOTEBOOK_TAB==='log'){
+    const rows=[...(S.actionLog||[])].slice(-40).reverse();
+    if(rows.length){
+      const groupLabels=LANG.cur==='zh'?{player:'玩家行为',system:'系统 / 天气',disturbance:'扰动 / 访客'}:{player:'player actions',system:'system / weather',disturbance:'disturbance / visitors'};
+      const grouped={player:[],system:[],disturbance:[]};
+      rows.forEach(r=>grouped[logGroup(r.kind)].push(`<div class="note-log-row"><b>${esc(logTimeLabel(r))}</b><br>${esc(r.text)}</div>`));
+      content=`<div class="note-log">${noteDetails(groupLabels.player,grouped.player,true)}${noteDetails(groupLabels.system,grouped.system)}${noteDetails(groupLabels.disturbance,grouped.disturbance)}</div>`;
+    }else content=`<div class="sym-empty">${LANG.cur==='zh'?'还没有日志。':'No log entries yet.'}</div>`;
+  }else{
+    const foodRows=Object.keys(S.knownFood||{}).filter(k=>S.knownFood[k]).map(k=>{
+      const e=FOOD_EFFECTS[k];
+      const label=k==='waste'?t('waste_name'):foodName(k);
+      return`<div class="note-ency-row"><b>${esc(FOOD_SYMBOLS[k]||'·')}</b><span>${esc(label)}<br><span class="note-ency-val">${esc(foodEffectText(k,e))}</span></span></div>`;
+    });
+    const seenDefs=uniqueDefs(SYMBOL_DEFS.filter(d=>S.seenSymbols?.[`${d.cat}:${d.char}`]&&d.key));
+    const edibleKeys=new Set(Object.keys(FOOD_EFFECTS).filter(k=>!['water','waste'].includes(k)));
+    const lifeRows=seenDefs.filter(d=>(d.cat==='life'||d.cat==='instability')&&!edibleKeys.has(d.key)).map(d=>`<div class="note-ency-row"><b>${esc(tl('surface_lbl',d.key))}</b><span>${esc(fieldInfoForKey(d.key))}</span></div>`);
+    const materialRows=seenDefs.filter(d=>['ruins','ground','strata','disturbance'].includes(d.cat)&&!edibleKeys.has(d.key)).map(d=>`<div class="note-ency-row"><b>${esc(symCatLabel(d.cat))}</b><span>${esc(symLabel(d))}<br><span class="note-ency-val">${esc(fieldInfoForKey(d.key))}</span></span></div>`);
+    const fl=LANG.cur==='zh'?{food:'食用经验',life:'生态 / 来源',mat:'材质 / 层位'}:{food:'ingestion notes',life:'ecology / origin',mat:'materials / strata'};
+    content=foodRows.length||lifeRows.length||materialRows.length
+      ? `${noteDetails(fl.food,foodRows,true)}${noteDetails(fl.life,lifeRows,true)}${noteDetails(fl.mat,materialRows)}`
+      : `<div class="sym-empty">${t('symbols_empty')}</div>`;
   }
-  body.innerHTML=pages.map(p=>`
-    <article class="note-entry">
-      <div class="note-title">${p.title?.[LANG.cur]||p.title?.en||p.title||'untitled'}</div>
-      <div class="note-body">${p.body?.[LANG.cur]||p.body?.en||p.body||''}</div>
-    </article>
-  `).join('');
+  body.innerHTML=`<div class="note-tabs">${['story','log','ency'].map(k=>`<button class="note-tab ${NOTEBOOK_TAB===k?'active':''}" data-note-tab="${k}">${labels[k]}</button>`).join('')}</div>${content}`;
+  body.querySelectorAll('[data-note-tab]').forEach(btn=>btn.addEventListener('click',()=>{NOTEBOOK_TAB=btn.dataset.noteTab;renderNotebook();}));
 }
 
 function renderGrid(){
@@ -1647,7 +2010,9 @@ function renderGrid(){
       else if(flicker){const nextSurf=s.next==='_branch'?(genCell(x,y).hasWetClay?'fungi':'ice_plant'):s.next;const nc=SURF_CHAR[nextSurf]||ch;inner=`<span class="tn-alt-a">${ch}</span><span class="tn-alt-b">${nc}</span>`;}
       else{inner=ch;}
       const zoneCls=hasSubsurfaceEvidence(cell)?`tn-z-${gen.zone}`:'';
-      frags.push(`<button type="button" class="tn-cell ${zoneCls} ${css}${extra}${sm?' tn-sm':''}" data-x="${x}" data-y="${y}">${inner}</button>`);
+      const sel=selectedCell&&selectedCell.x===x&&selectedCell.y===y?' selected':'';
+      const pm=hasFreshPlayerMark(cell)?' player-mark':'';
+      frags.push(`<button type="button" class="tn-cell ${zoneCls} ${css}${extra}${sm?' tn-sm':''}${sel}${pm}" data-x="${x}" data-y="${y}">${inner}</button>`);
     }
   }
   grid.innerHTML=frags.join('');
@@ -1661,7 +2026,7 @@ function minimapSurf(surf){
     dry:[120,110,80],cracked:[100,90,70],rubble:[110,95,75],
     grass:[60,110,50],sedge:[50,120,70],
     lichen:[90,140,110],moss:[40,120,60],
-    fungi:[120,100,40],toxic_fungi:[180,60,40],
+    fungi:[120,100,40],toxic_fungi:[180,60,40],boletus:[130,80,45],dung_fungi:[95,70,55],
     ice_plant:[160,90,120],ornamental:[80,140,80],
     shrub:[40,90,40],gorse:[100,120,30],
     tree:[20,70,20],willow:[30,100,40],
@@ -1699,9 +2064,9 @@ function renderInv(){
   const items=[];
   if(inv.seeds.length)    items.push({char:'`',   label:`×${inv.seeds.length}`, kind:'seed', cls:''});
   if(inv.water)           items.push({char:'~',   label:`×${inv.water}`,       kind:'water', cls:'tn-c-water'});
-  if(inv.food.crop)       items.push({char:'◆',   label:`×${inv.food.crop}`,   kind:'crop', cls:''});
-  if(inv.food.rabbit)     items.push({char:'o',   label:`×${inv.food.rabbit}`, kind:'rabbit', cls:''});
-  if(inv.food.fish)       items.push({char:'≈',   label:`×${inv.food.fish}`,   kind:'fish', cls:''});
+  Object.keys(FOOD_SYMBOLS).forEach(kind=>{
+    if(inv.food[kind])items.push({char:FOOD_SYMBOLS[kind],label:`×${inv.food[kind]}`,kind,cls:SURF_CSS[kind]||''});
+  });
   if(inv.waste)           items.push({char:'·',   label:`×${inv.waste}`,       kind:'waste', cls:'tn-c-soil2'});
   if(inv.artifacts.length)items.push({char:'!',   label:`×${inv.artifacts.length}`, kind:'artifact', cls:'tn-c-anom'});
   const body=document.getElementById('tn-inv-body');
@@ -1714,21 +2079,24 @@ function itemName(kind){
   const names={
     seed: LANG.cur==='zh'?'埋藏种子':'buried seed',
     water: LANG.cur==='zh'?'水':'water',
-    crop: LANG.cur==='zh'?'可食植物':'crop',
-    rabbit: LANG.cur==='zh'?'兔肉':'rabbit',
-    fish: LANG.cur==='zh'?'鱼':'fish',
     waste: t('waste_name'),
     artifact: LANG.cur==='zh'?'物件':'artifact'
   };
+  if(kind in FOOD_EFFECTS&&kind!=='water'&&kind!=='waste')return foodName(kind);
   return names[kind]||kind;
 }
 function itemDesc(kind){
+  if(kind in FOOD_EFFECTS&&kind!=='water'&&kind!=='waste'){
+    const known=S.knownFood?.[kind];
+    const effect=FOOD_EFFECTS[kind];
+    const effTxt=foodEffectText(kind,effect);
+    const unknown=LANG.cur==='zh'?'食用效果未知。':'Eating effect unknown.';
+    const knownTxt=LANG.cur==='zh'?`已知效果：${effTxt}。`:`Known effect: ${effTxt}.`;
+    return `${known?knownTxt:unknown}${PLANTABLE_FOOD.has(kind)?(LANG.cur==='zh'?' 可种回地表。':' Can be planted back.') : ''}`;
+  }
   const desc={
     seed: LANG.cur==='zh'?'可以种下，也可以先留着等识别。':'Can be planted, or kept until you know more.',
     water: LANG.cur==='zh'?'喝掉恢复 2 行动力；也可以灌溉格子。':'Drink for 2 energy, or irrigate a cell.',
-    crop: LANG.cur==='zh'?'可食用，也可堆肥回到地表。':'Can be eaten, or composted back into the surface.',
-    rabbit: LANG.cur==='zh'?'高能量食物，也可以堆肥。':'Dense food; composting is also possible.',
-    fish: LANG.cur==='zh'?'高能量食物，也可以堆肥。':'Dense food; composting is also possible.',
     waste: t('waste_desc'),
     artifact: LANG.cur==='zh'?'已取出的物件。只能查看，不能吃。':'Recovered object. Inspectable, not edible.'
   };
@@ -1738,8 +2106,9 @@ function menuButton(label,action,kind){return`<button class="tn-btn" data-item-a
 function openItemMenu(kind){
   const menu=document.getElementById('tn-item-menu');
   const actions=[];
-  if(['crop','rabbit','fish'].includes(kind)){
+  if((kind in FOOD_EFFECTS)&&!['water','waste'].includes(kind)){
     actions.push(menuButton(t('item_eat'),'eat',kind),menuButton(t('item_compost'),'compost',kind));
+    if(PLANTABLE_FOOD.has(kind))actions.push(menuButton(t('item_plant'),'plant_food',kind));
   }else if(kind==='water'){
     actions.push(menuButton(t('item_drink'),'drink',kind),menuButton(t('item_irrigate'),'irrigate',kind));
   }else if(kind==='seed'){
@@ -1792,6 +2161,7 @@ function cancelTargeting(){
 
 // ── Energy ───────────────────────────────────────────────────────
 function useEnergy(n=1){
+  if(isHospitalized())return !blockHospital();
   if(S.meta.energy<n){showToast(n>1?t('nrg_need',n):t('no_nrg'));return false;}
   S.meta.energy-=n;renderStatus();return true;
 }
@@ -1800,6 +2170,8 @@ function useEnergy(n=1){
 function handleClick(x,y,el){
   if(!isRev(x,y))return;
   lastClickedCell={x,y};
+  selectCell(x,y);
+  if(isHospitalized()&&(targeting||activeTool!=='observe')){blockHospital();return;}
   // Targeting modes
   if(targeting==='gpr'){
     if(!useEnergy(GPR_COST)){cancelTargeting();return;}
@@ -1821,6 +2193,9 @@ function handleClick(x,y,el){
   }
   if(targeting==='plant'){
     cancelTargeting();setTool('observe');doPlant(x,y);return;
+  }
+  if(targeting==='plant_food'){
+    cancelTargeting();setTool('observe');doPlantFood(x,y);return;
   }
   if(targeting==='relieve'){
     cancelTargeting();setTool('observe');doRelieve(x,y);return;
@@ -1849,10 +2224,12 @@ function handleClick(x,y,el){
     const tgtCell=getCell(x,y);
     const result=(GRAFT_MATRIX[src.surface]||{})[tgtCell.surface];
     if(!result){showToast(t('graft_fail'));return;}
-    setCell(x,y,{surface:result,daysActive:0});
+    coverSurface(x,y,result,{daysActive:0});
+    markPlayerCell(x,y,'graft');
     addRecentLayer(x,y,SURF_CHAR[result]||'×',result);
     const dmgSurf=GRAFT_SRC_DMGS[src.surface]||'dry';
-    setCell(src.x,src.y,{surface:dmgSurf,daysActive:0});
+    coverSurface(src.x,src.y,dmgSurf,{daysActive:0});
+    markPlayerCell(src.x,src.y,'graft_source');
     addRecentLayer(src.x,src.y,SURF_CHAR[dmgSurf]||'_',dmgSurf);
     showToast(result==='toxic_fungi'?t('graft_toxic'):t('graft_ok'));
     renderGrid();saveLocal();return;
@@ -1873,11 +2250,21 @@ function handleClick(x,y,el){
   else if(activeTool==='trowel')doTrowel(x,y);
 }
 // ── Actions ──────────────────────────────────────────────────────
-const RUINS_SUBSTRATES=new Set(['ruins','floor','open']);
-const EXPOSE_VEG=new Set(['grass','sedge','lichen','moss','fungi','ice_plant','shrub','gorse','ornamental','tree','willow','toxic_fungi']);
+const RUINS_SUBSTRATES=new Set(['ruins','floor']);
+const EXPOSE_VEG=new Set(['grass','sedge','lichen','moss','fungi',...MUSHROOM_KINDS,'ice_plant','shrub','gorse','ornamental','tree','willow']);
+const EXPOSE_COVER=new Set(['rubble','hummock','slip_scar','mud_seep','dry','cracked']);
 function doExpose(x,y,el){
   const cell=getCell(x,y),gen=genCell(x,y);
   const surf=cell.surface;
+  if(!RUINS_SUBSTRATES.has(surf)&&ruinRecordFor(x,y,cell,gen)&&(EXPOSE_VEG.has(surf)||EXPOSE_COVER.has(surf))){
+    if(!useEnergy())return;
+    exposeBuriedRuin(x,y,surf);
+    logEvent('clear',`buried ruin exposed @ ${x},${y}`);
+    showToast(LANG.cur==='zh'?'覆盖层清掉了；硬质遗迹重新露出。':'Cover cleared; hard ruin trace re-exposed.');
+    reveal(x,y);
+    if(el){el.classList.add('tn-grew');setTimeout(()=>el.classList.remove('tn-grew'),1200);}
+    renderGrid();renderInv();renderStatus();saveLocal();return;
+  }
   // Permanent masonry — cannot be scraped
   if(RUINS_SUBSTRATES.has(surf)){
     const msg=LANG.cur==='zh'?'砌体已被发现。可以探底，但无法移除。':'Masonry exposed. Can be probed, not removed.';
@@ -1888,10 +2275,9 @@ function doExpose(x,y,el){
     showProfile(x,y);return;
   }
   if(!useEnergy())return;
-  // Plant on ruins substrate → clear back to bare masonry (open)
-  const returnSurf=gen.isRuins?'open':'dry';
   addRecentLayer(x,y,SURF_CHAR[surf]||',',surf);
-  setCell(x,y,{surface:returnSurf,daysActive:0});
+  coverSurface(x,y,'dry',{daysActive:0});
+  logEvent('clear',`${tl('surface_lbl',surf)} @ ${x},${y}`);
   const cleared=tl('surface_lbl',surf);
   showToast(LANG.cur==='zh'?`清理：${cleared}`:`Cleared: ${cleared}`);
   reveal(x,y);
@@ -1939,6 +2325,7 @@ function doProbe(x,y){
   S.meta.probeUses=(S.meta.probeUses||0)+1;
   if(depth!==null)unlockLayer(x,y,depth);
   if(layer&&layer.type!=='artifact')rememberSymbol(layer.char,'strata',true);
+  logEvent('probe',`${meters.toFixed(1)}m @ ${x},${y}`);
   showToast(depth===null?t('probe_bedrock'):t('probe_done',meters.toFixed(1),probeSampleLabel(layer)));
   showProfile(x,y);
   renderStatus();renderGrid();saveLocal();
@@ -1946,16 +2333,28 @@ function doProbe(x,y){
 
 function doTrowel(x,y){
   const cell=getCell(x,y),gen=genCell(x,y);
+  if(!RUINS_SUBSTRATES.has(cell.surface)&&ruinRecordFor(x,y,cell,gen)&&['rubble','hummock','slip_scar','mud_seep','dry','cracked'].includes(cell.surface)){
+    if(!useEnergy(2))return;
+    exposeBuriedRuin(x,y,cell.surface);
+    markPlayerCell(x,y,'trowel');
+    logEvent('trowel',`buried ruin exposed @ ${x},${y}`);
+    showToast(LANG.cur==='zh'?'手铲碰到硬质遗迹；覆盖层被翻开。':'Trowel hit hard ruin fabric; cover removed.');
+    showProfile(x,y);renderGrid();renderInv();renderStatus();saveLocal();return;
+  }
   if(RUINS_SUBSTRATES.has(cell.surface)){showToast(LANG.cur==='zh'?'砌体无法挖掘。用探杆探底下有什么。':'Masonry cannot be excavated. Use probe to read below.');return;}
   if(cell.surface==='rabbit_hole'){
     if(!useEnergy(2))return;
-    setCell(x,y,{surface:'dry',daysActive:0,stability:Math.min(1,(cell.stability||gen.baseStab)+.08)});
+    coverSurface(x,y,'dry',{daysActive:0,stability:Math.min(1,(cell.stability||gen.baseStab)+.08)});
+    markPlayerCell(x,y,'trowel');
+    logEvent('trowel',`rabbit hole filled @ ${x},${y}`);
     showToast('Rabbit hole filled.');
     renderGrid();renderStatus();saveLocal();return;
   }
   if(cell.surface==='gorse'){
     if(!useEnergy(3))return;
-    setCell(x,y,{surface:'dry',daysActive:0});
+    coverSurface(x,y,'dry',{daysActive:0});
+    markPlayerCell(x,y,'clear');
+    logEvent('clear',`gorse cleared @ ${x},${y}`);
     showToast('Gorse cleared.');
     renderGrid();renderStatus();saveLocal();return;
   }
@@ -1964,7 +2363,9 @@ function doTrowel(x,y){
     const layer=gen.strata.find(s=>s.type==='artifact');
     if(layer)unlockLayer(x,y,layer.depth);
     S.inventory.artifacts.push({text:layer?.text||(LANG.cur==='zh'?'未标注物件':'unlabelled artifact'),x,y});
-    setCell(x,y,{surface:'dry',daysActive:0,artifactFound:true});
+    coverSurface(x,y,'dry',{daysActive:0,artifactFound:true});
+    markPlayerCell(x,y,'trowel');
+    logEvent('artifact',`collected @ ${x},${y}`);
     showToast(t('artifact_collected'));
     renderGrid();renderInv();renderStatus();saveLocal();return;
   }
@@ -1974,6 +2375,7 @@ function doTrowel(x,y){
   const layer=gen.strata.find(s=>s.depth===depth);
   if(!useEnergy(2))return;
   unlockLayer(x,y,depth);
+  markPlayerCell(x,y,'trowel');
   if(layer)rememberSymbol(layer.char,'strata',true);
   if(layer?.type==='artifact'){
     S.inventory.artifacts.push({text:layer.text,x,y});
@@ -1989,7 +2391,8 @@ function doTrowel(x,y){
       showToast(t('seed_found',gen.ancientSeed.name));
     }
   }else if(layer?.type==='drain_blocked'){
-    setCell(x,y,{excavatedDepth:-depth,drainCleared:true,surface:'dry',stability:Math.min(1,(cell.stability||gen.baseStab)+.05)});
+    coverSurface(x,y,'dry',{excavatedDepth:-depth,drainCleared:true,stability:Math.min(1,(cell.stability||gen.baseStab)+.05)});
+    logEvent('trowel',`blocked drain cleared @ ${x},${y}`);
     showToast('Blocked drain cleared.');
   }else if(layer?.type==='dissolution_cavity'){spreadWaterB(x,y);showToast(t('water_b'));}
   else if(layer?.type==='heavy_clay_wet'){spreadWaterA(x,y);showToast(t('water_a'));}
@@ -1998,35 +2401,44 @@ function doTrowel(x,y){
 }
 
 function doHarvest(x,y){
-  const cell=getCell(x,y);
-  if(cell.toiletTrace&&!cell.wasteHarvested){
+  const cell=getCell(x,y),gen=genCell(x,y);
+  if(cell.toiletTrace&&cell.toiletKind==='mushroom'&&!cell.wasteHarvested&&!cell.wasteComposted){
+    const age=currentTickIndex()-(cell.toiletAtTick??currentTickIndex());
+    if(age>=2){compostOldWasteTraces();showToast(LANG.cur==='zh'?'已经在原地堆肥了，不能再收获。':'Already composted in place. No longer harvestable.');renderGrid();saveLocal();return;}
     if(!useEnergy())return;
     S.inventory.waste=(S.inventory.waste||0)+1;
-    setCell(x,y,{wasteHarvested:true});
-    showToast(LANG.cur==='zh'?'收获：热乎夜土\n+1 奇怪材料':'Harvested: warm night soil\n+1 questionable material');
+    setCell(x,y,{wasteHarvested:true,toiletTrace:false});
+    logEvent('player',`harvested fresh night soil @ ${x},${y}`);
+    showToast(LANG.cur==='zh'?'收获：新鲜夜土\n+1 奇怪材料':'Harvested: fresh night soil\n+1 questionable material');
     renderGrid();renderInv();renderStatus();saveLocal();return;
   }
   if(cell.surface==='water'){
     const countDay=cell.waterHarvestDay===S.meta.day?(cell.waterHarvestCount||0):0;
-    if(countDay>=3){showToast(t('harvest_water_dry'));return;}
+    if(cell.waterType!=='B'&&countDay>=3){showToast(t('harvest_water_dry'));return;}
     if(!useEnergy())return;
     const nextCount=countDay+1;
     S.inventory.water=(S.inventory.water||0)+1;
     const patch={waterHarvestDay:S.meta.day,waterHarvestCount:nextCount};
-    if(nextCount>=3){
-      patch.surface='mud_seep';
+    if(cell.waterType!=='B'&&nextCount>=3){
       patch.daysActive=0;
       addRecentLayer(x,y,'≈','mud_seep');
+      coverSurface(x,y,'mud_seep',patch);
+    }else{
+      setCell(x,y,patch);
     }
-    setCell(x,y,patch);
-    showToast(nextCount>=3?t('harvest_water_dry'):t('harvest_water',S.inventory.water));
+    showToast(cell.waterType!=='B'&&nextCount>=3?t('harvest_water_dry'):t('harvest_water',S.inventory.water));
+    logEvent('harvest',`water @ ${x},${y}`);
     renderGrid();renderInv();renderStatus();saveLocal();return;
   }
   if(!HARVESTABLE.has(cell.surface)){showToast(t('harvest_bad'));return;}
   if(!useEnergy())return;
-  S.inventory.food.crop++;
-  setCell(x,y,{surface:HARVEST_PREV[cell.surface]||'dry',daysActive:0});
-  showToast(t('harvest_ok',tl('surface_lbl',cell.surface)));
+  const foodKind=foodKindFromSurface(cell.surface,x,y);
+  S.inventory.food[foodKind]=(S.inventory.food[foodKind]||0)+1;
+  if(ruinRecordFor(x,y,cell,gen))exposeBuriedRuin(x,y,cell.surface);
+  else coverSurface(x,y,HARVEST_PREV[cell.surface]||'dry',{daysActive:0});
+  rememberSymbol(SURF_CHAR[foodKind]||SURF_CHAR[cell.surface],surfaceCategory(foodKind,gen),true);
+  logEvent('harvest',`${foodName(foodKind)} @ ${x},${y}`);
+  showToast(t('harvest_ok',foodName(foodKind)));
   renderGrid();renderInv();renderStatus();saveLocal();
 }
 
@@ -2037,41 +2449,79 @@ function doPlant(x,y){
   if(!useEnergy())return;
   const seed=S.inventory.seeds.pop();
   const plantedSurface=seed.origin==='institutional'?(seed.path==='wet'?'willow':seed.path==='garden'?'ornamental':'tree'):'shrub';
-  setCell(x,y,{surface:plantedSurface,daysActive:0,species:seed.species||'native',origin:seed.origin||'unknown'});
+  coverSurface(x,y,plantedSurface,{daysActive:0,species:seed.species||'native',origin:seed.origin||'unknown'});
+  markPlayerCell(x,y,'plant');
   addRecentLayer(x,y,SURF_CHAR[plantedSurface]||'n',plantedSurface);
   showToast(`Planted ${seed.name||seed.species||'native shrub'}.`);
   renderGrid();renderInv();renderStatus();saveLocal();
 }
+function doPlantFood(x,y){
+  const kind=targetingKind;
+  if(!PLANTABLE_FOOD.has(kind)||!S.inventory.food[kind]){showToast(t('eat_empty'));return;}
+  const cell=getCell(x,y);
+  const surface=plantedSurfaceFromFood(kind);
+  const ok={
+    grass:['dry','cracked','open','rubble','footprint'],
+    ice_plant:['dry','cracked','open','rubble','ruins','floor'],
+    lichen:['dry','cracked','open','rubble','ruins','floor'],
+    moss:['lichen','mud_seep','water','dry'],
+    fungi:['moss','mud_seep','water','dry','rubble']
+  }[surface]||[];
+  if(!ok.includes(cell.surface)){showToast(LANG.cur==='zh'?'这里种不活。':'It will not take here.');return;}
+  if(!useEnergy())return;
+  S.inventory.food[kind]--;
+  coverSurface(x,y,surface,{daysActive:0});
+  markPlayerCell(x,y,'plant');
+  addRecentLayer(x,y,SURF_CHAR[surface]||'.',surface);
+  logEvent('plant',`${itemName(kind)} → ${x},${y}`);
+  showToast(LANG.cur==='zh'?`种回：${itemName(kind)}`:`Planted back: ${itemName(kind)}`);
+  targetingKind=null;
+  renderGrid();renderInv();renderStatus();saveLocal();
+}
 
 function doEat(kind){
+  if(isHospitalized()){blockHospital();return;}
   if(kind==='waste'&&S.inventory.waste>0){
     S.inventory.waste--;
-    S.meta.energy=Math.max(0,S.meta.energy-5);
+    S.meta.energy=0;
     S.meta.waterStreak=0;
+    S.knownFood.waste=true;
+    S.meta.hospitalUntilDay=S.meta.day+3;
+    logEvent('player',`ate night soil; observation care until day ${S.meta.hospitalUntilDay}`,{permanent:true});
     showToast(t('waste_eat'));
     renderInv();renderStatus();saveLocal();return;
   }
-  if(S.meta.energy>=MAX_NRG){showToast(t('nrg_full'));return;}
-  const eMap={crop:1,rabbit:2,fish:3};
   let ate=null;
-  if(kind&&S.inventory.food[kind]>0){ate=kind;}
-  else{for(const k of['rabbit','fish','crop']){if(S.inventory.food[k]>0){ate=k;break;}}}
   if(!ate&&(kind==='water'||(!kind&&S.inventory.water>0))){
+    if(S.meta.energy>=MAX_NRG){showToast(t('nrg_full'));return;}
     S.inventory.water--;
     const waterGain=2;
     const gain=Math.min(waterGain,MAX_NRG-S.meta.energy);
     S.meta.energy=Math.min(MAX_NRG,S.meta.energy+waterGain);
     S.meta.waterStreak=(S.meta.waterStreak||0)+1;
-    if(S.meta.waterStreak>3&&!S.meta.needsToilet){S.meta.needsToilet=true;startToiletTimer();}
+    if(S.meta.waterStreak>3&&!S.meta.needsToilet){S.meta.needsToilet=true;S.meta.toiletKind='urine';startToiletTimer();}
     showToast(`${t('drink_ok',gain)}${S.meta.needsToilet?`\n${t('toilet_need')}`:''}`);
     renderInv();renderStatus();saveLocal();return;
   }
+  if(kind&&S.inventory.food[kind]>0){ate=kind;}
+  else{for(const k of Object.keys(FOOD_EFFECTS)){if(S.inventory.food[k]>0){ate=k;break;}}}
   if(!ate){showToast(t('eat_empty'));return;}
+  const effect=FOOD_EFFECTS[ate]??1;
+  if(effect>0&&S.meta.energy>=MAX_NRG){showToast(t('nrg_full'));return;}
   S.inventory.food[ate]--;
-  const gain=Math.min(eMap[ate],MAX_NRG-S.meta.energy);
-  S.meta.energy=Math.min(MAX_NRG,S.meta.energy+eMap[ate]);
-  S.meta.waterStreak=0;
-  showToast(t('eat_ok',ate,gain));
+  const before=S.meta.energy;
+  if(ate==='toxic_fungi')S.meta.energy=0;
+  else S.meta.energy=Math.max(0,Math.min(MAX_NRG,S.meta.energy+effect));
+  S.knownFood[ate]=true;
+  if(TOILET_FOOD.has(ate)){S.meta.needsToilet=true;S.meta.toiletKind='mushroom';startToiletTimer();}
+  if(effect<0)S.meta.waterStreak=TOILET_FOOD.has(ate)?4:0;
+  else S.meta.waterStreak=0;
+  const delta=S.meta.energy-before;
+  const name=foodName(ate);
+  const effectMsg=ate==='toxic_fungi'?(LANG.cur==='zh'?'行动力清空。':'Energy emptied.'):(LANG.cur==='zh'?`${effect} 行动力。`:`${effect} energy.`);
+  const msg=effect>=0?t('eat_ok',name,Math.max(0,delta)):(LANG.cur==='zh'?`吃了${name}。\n${effectMsg}${TOILET_FOOD.has(ate)?'\n需要找个格子上厕所。':''}`:`Ate ${name}.\n${effectMsg}${TOILET_FOOD.has(ate)?'\nYou need to find somewhere to relieve yourself.':''}`);
+  logEvent('eat',`${name} ${foodEffectText(ate,effect)}`);
+  showToast(msg);
   renderInv();renderStatus();saveLocal();
 }
 
@@ -2081,14 +2531,15 @@ function doIrrigate(x,y){
   S.inventory.water--;
   const patch={irrigated:true,daysActive:(cell.daysActive||0)+2,stability:Math.min(1,(cell.stability||genCell(x,y).baseStab)+.02)};
   if(['dry','cracked','open','footprint','rubble'].includes(cell.surface)){
-    patch.surface='mud_seep';
     patch.daysActive=0;
     addRecentLayer(x,y,'≈','mud_seep');
+    coverSurface(x,y,'mud_seep',patch);
   }else{
     addRecentLayer(x,y,'~','water');
+    setCell(x,y,patch);
   }
-  setCell(x,y,patch);
   targetingKind=null;
+  logEvent('irrigate',`water → ${x},${y}`);
   showToast(t('irrigate_done'));
   renderGrid();renderInv();renderStatus();saveLocal();
 }
@@ -2098,19 +2549,21 @@ function doCompost(x,y){
   if(kind==='waste'){
     if(!S.inventory.waste)return;
     S.inventory.waste--;
-  }else if(['crop','rabbit','fish'].includes(kind)){
+  }else if((kind in FOOD_EFFECTS)&&kind!=='water'){
     if(!S.inventory.food[kind])return;
     S.inventory.food[kind]--;
   }else return;
   const cell=getCell(x,y);
   const patch={composted:true,nitrogenPulse:(cell.nitrogenPulse||0)+1,daysActive:(cell.daysActive||0)+2,stability:Math.min(1,(cell.stability||genCell(x,y).baseStab)+.03)};
   if(['dry','cracked','open','footprint','rubble'].includes(cell.surface)){
-    patch.surface='grass';
     patch.daysActive=0;
+    coverSurface(x,y,'grass',patch);
+  }else{
+    setCell(x,y,patch);
   }
   addRecentLayer(x,y,'·','compost_trace');
-  setCell(x,y,patch);
   targetingKind=null;
+  logEvent('compost',`${itemName(kind)} → ${x},${y}`);
   showToast(t('compost_done'));
   renderGrid();renderInv();renderStatus();saveLocal();
 }
@@ -2122,25 +2575,31 @@ function doRelieve(x,y,auto=false){
   addRecentLayer(x,y,'·','toilet_trace');
   const patch={
     toiletTrace:true,
+    toiletKind:S.meta.toiletKind||'urine',
+    toiletAtTick:currentTickIndex(),
+    wasteHarvested:false,
+    wasteComposted:false,
     nitrogenPulse:(cell.nitrogenPulse||0)+1,
     modernDisturbance:true,
     stability:Math.min(1,(cell.stability||genCell(x,y).baseStab)+.02)
   };
   if(cell.surface==='water'){
-    patch.surface='mud_seep';
     patch.daysActive=0;
+    coverSurface(x,y,'mud_seep',patch);
   }else if(['dry','cracked','open','footprint','rubble'].includes(cell.surface)){
-    patch.surface='grass';
     patch.daysActive=0;
+    coverSurface(x,y,'grass',patch);
   }else if(GROWABLE.has(cell.surface)){
     patch.daysActive=(cell.daysActive||0)+2;
+    setCell(x,y,patch);
   }else{
-    patch.surface='footprint';
     patch.daysActive=0;
+    coverSurface(x,y,'footprint',patch);
   }
-  setCell(x,y,patch);
   S.meta.needsToilet=false;
   S.meta.waterStreak=0;
+  logEvent('player',`${patch.toiletKind==='mushroom'?'mushroom sickness trace':'toilet trace'} @ ${x},${y}`);
+  S.meta.toiletKind=null;
   if(auto){showAccidentModal(x,y);}else{showToast(t('toilet_done'));}
   renderGrid();renderStatus();saveLocal();
 }
@@ -2159,6 +2618,7 @@ function handleItemAction(kind,action){
     return;
   }
   if(action==='plant'){
+    if(blockHospital())return;
     if(!isAuth()){showToast(t('need_access'));return;}
     if(!S.inventory.seeds.length){showToast(t('plant_none'));return;}
     targeting='plant';targetingKind='seed';
@@ -2167,7 +2627,18 @@ function handleItemAction(kind,action){
     showToast(t('plant_prompt'));
     return;
   }
+  if(action==='plant_food'){
+    if(blockHospital())return;
+    if(!isAuth()){showToast(t('need_access'));return;}
+    if(!S.inventory.food[kind]){showToast(t('eat_empty'));return;}
+    targeting='plant_food';targetingKind=kind;
+    document.getElementById('tn-grid').classList.add('targeting');
+    document.getElementById('t-plant').classList.add('targ');
+    showToast(t('plant_prompt'));
+    return;
+  }
   if(action==='irrigate'){
+    if(blockHospital())return;
     if(!isAuth()){showToast(t('need_access'));return;}
     if(!S.inventory.water){showToast(t('eat_empty'));return;}
     targeting='irrigate';targetingKind='water';
@@ -2176,6 +2647,7 @@ function handleItemAction(kind,action){
     return;
   }
   if(action==='compost'){
+    if(blockHospital())return;
     if(!isAuth()){showToast(t('need_access'));return;}
     targeting='compost';targetingKind=kind;
     document.getElementById('tn-grid').classList.add('targeting');
@@ -2207,6 +2679,7 @@ function showProfile(x,y){
     return`<div class="tn-sr${!rev?' tn-dim':''}"><span class="tn-sd">[${s.depth}]</span><span class="tn-sc">${rev?s.char:''}</span><span class="tn-sl${artCls}${ldrCls}">${label}${cell.lidarScanned&&!rev?' <i>LiDAR</i>':''}</span></div>`;
   }).join('');
   const gprN=cell.gprAnomaly==='confirmed'?`<div class="tn-pnote anom">GPR: ANOMALY CONFIRMED</div>`:cell.gprAnomaly==='clear'?`<div class="tn-pnote">GPR: clear</div>`:'';
+  const buriedN=cell.buriedRuin?.known?`<div class="tn-pnote">${LANG.cur==='zh'?'覆盖下硬痕':'buried hard trace'}: ${clueLabel(cell.buriedRuin.char||gen.initialChar)}</div>`:'';
   const signN=S.signs[ck(x,y)]?`<div class="tn-pnote">|T| "${S.signs[ck(x,y)].text}"</div>`:'';
   const vcN=cell.visitCount?`<div class="tn-pnote">${cell.visitCount} visitor contact${cell.visitCount>1?'s':''}</div>`:'';
   document.getElementById('tn-profile-title').textContent=t('profile');
@@ -2216,7 +2689,7 @@ function showProfile(x,y){
       <div class="tn-sr s0">
         <span class="tn-sd">[ 0]</span><span class="tn-sc">${ch}</span>
         <span class="tn-sl">${observedSurfaceLabel(ch,surf,gen,cell)} <span class="tn-stab"><span class="tn-stab-f" style="width:${Math.round(stabF*100)}%"></span></span></span>
-      </div>${recentH}${strataH}</div>${gprN}${signN}${vcN}`;
+      </div>${recentH}${strataH}</div>${gprN}${buriedN}${signN}${vcN}`;
   document.getElementById('tn-profile').classList.remove('hidden');
   renderSymbolGuide();
 }
@@ -2246,6 +2719,19 @@ function showToast(msg){const el=document.getElementById('tn-toast');el.textCont
 function showAccidentModal(x,y){
   document.getElementById('tn-acc-modal-text').innerHTML=t('acc_modal',x,y).replace(/\n/g,'<br>');
   document.getElementById('tn-acc-modal').classList.remove('hidden');
+}
+function showFirstLetterIfNeeded(){
+  if(S.meta.firstLetterClosed)return;
+  document.getElementById('tn-letter-title').textContent=FIRST_LETTER.title[LANG.cur]||FIRST_LETTER.title.en;
+  document.getElementById('tn-letter-body').textContent=FIRST_LETTER.body[LANG.cur]||FIRST_LETTER.body.en;
+  document.getElementById('tn-letter-modal').classList.remove('hidden');
+}
+function closeFirstLetter(){
+  document.getElementById('tn-letter-modal').classList.add('hidden');
+  S.meta.firstLetterClosed=true;
+  NOTEBOOK_TAB='story';
+  renderNotebook();
+  saveLocal();
 }
 
 // ── Toilet timer ──────────────────────────────────────────────────
@@ -2322,12 +2808,14 @@ function bindUI(){
       const tool=btn.dataset.tool;
       showToolHint(tool);
       if(tool==='gpr'){
+        if(blockHospital())return;
         if(!isAuth()){showToast(t('need_access'));return;}
         if(targeting==='gpr'){cancelTargeting();setTool('observe');return;}
         if(S.meta.energy<GPR_COST){showToast(t('gpr_no_nrg'));return;}
         setTool('gpr');startTargeting('gpr');return;
       }
       if(tool==='lidar'){
+        if(blockHospital())return;
         if(!isAuth()){showToast(t('need_access'));return;}
         if(targeting==='lidar'){cancelTargeting();setTool('observe');return;}
         const h=lidarHLeft();if(h>0){showToast(t('lidar_cd',h));return;}
@@ -2336,6 +2824,7 @@ function bindUI(){
       if(tool==='observe'){
         setTool('observe');return;
       }
+      if(blockHospital())return;
       if(tool==='probe'){
         if(!isAuth()){showToast(t('need_access'));return;}
         setTool('probe');return;
@@ -2361,6 +2850,7 @@ function bindUI(){
   // Action bar
   document.getElementById('t-harvest').addEventListener('click',()=>{
     showToolHint('harvest');
+    if(blockHospital())return;
     if(!isAuth()){showToast(t('need_access'));return;}
     targeting='harvest';
     document.getElementById('tn-grid').classList.add('targeting');
@@ -2368,6 +2858,7 @@ function bindUI(){
   });
   document.getElementById('t-plant').addEventListener('click',()=>{
     showToolHint('plant');
+    if(blockHospital())return;
     if(!isAuth()){showToast(t('need_access'));return;}
     if(!S.inventory.seeds.length){showToast(t('plant_none'));return;}
     targeting='plant';
@@ -2376,6 +2867,7 @@ function bindUI(){
   });
   document.getElementById('t-graft').addEventListener('click',()=>{
     showToolHint('graft');
+    if(blockHospital())return;
     if(!isAuth()){showToast(t('need_access'));return;}
     if(!useEnergy(2))return;
     targeting='graft_step1';
@@ -2385,6 +2877,7 @@ function bindUI(){
   });
   document.getElementById('t-relieve').addEventListener('click',()=>{
     showToolHint('relieve');
+    if(blockHospital())return;
     if(!S.meta.needsToilet){showToast(t('relieve_prompt'));return;}
     targeting='relieve';
     document.getElementById('tn-grid').classList.add('targeting');
@@ -2400,6 +2893,7 @@ function bindUI(){
   });
 
   document.getElementById('tn-acc-modal-close').addEventListener('click',()=>document.getElementById('tn-acc-modal').classList.add('hidden'));
+  document.getElementById('tn-letter-modal-close').addEventListener('click',closeFirstLetter);
 
   // Profile close
   document.getElementById('tn-profile-close').addEventListener('click',()=>document.getElementById('tn-profile').classList.add('hidden'));
@@ -2464,11 +2958,11 @@ function bindUI(){
     const timeBox=document.createElement('div');
     timeBox.className='tn-dev-time';
     timeBox.innerHTML=`<span>${t('dev_time')}</span><button class="tn-btn dev" id="tn-dev-time-minus">−</button><input id="tn-dev-time-range" type="range" min="0" max="30" step="1" value="0"><button class="tn-btn dev" id="tn-dev-time-plus">+</button><span id="tn-dev-time-out">0×8h</span><button class="tn-btn dev" id="tn-dev-time-run">[ RUN ]</button>`;
-    document.getElementById('tn-window').appendChild(timeBox);
+    bar.insertBefore(timeBox,bar.children[1]||null);
     const timeToggleBtn=document.createElement('button');
     timeToggleBtn.className='tn-hbtn top';timeToggleBtn.title='Time test';
     timeToggleBtn.innerHTML=`<svg viewBox="0 0 9 9" width="9" height="9" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linecap="square"><circle cx="4.5" cy="4.5" r="3.5"/><polyline points="4.5,2.5 4.5,4.5 6,5.5"/></svg>`;
-    timeToggleBtn.addEventListener('click',()=>timeBox.classList.toggle('open'));
+    timeToggleBtn.addEventListener('click',()=>{timeBox.classList.toggle('open');if(timeBox.classList.contains('open'))timeBox.scrollIntoView({block:'nearest',inline:'start'});});
     document.getElementById('tn-title-right').prepend(timeToggleBtn);
     const range=timeBox.querySelector('#tn-dev-time-range');
     const out=timeBox.querySelector('#tn-dev-time-out');
@@ -2554,6 +3048,12 @@ async function loadRealWeather(){
       source:'Open-Meteo',
       at:d.current?.time||new Date().toISOString()
     };
+    const wk=`${new Date().toISOString().slice(0,10)}:${S.meta.weather.sky}:${S.meta.weather.rain}:${S.meta.weather.temp}`;
+    if(S.meta.weatherLogKey!==wk&&(S.meta.weather.rain>0||S.meta.weather.sky==='storm'||S.meta.weather.temp>22)){
+      logEvent('weather',`${S.meta.weather.sky} · ${S.meta.weather.temp}°C · rain ${S.meta.weather.rain}mm`);
+      S.meta.weatherLogKey=wk;
+      saveLocal();
+    }
     renderStatus();
   }catch(err){
     console.warn('[thirdnature] weather unavailable:',err);
@@ -2565,9 +3065,9 @@ async function loadRealWeather(){
 function fitCells(){
   const wrap=document.getElementById('tn-grid-wrap');
   if(!wrap)return;
-  const px=Math.floor(wrap.clientWidth/VP);
+  const px=Math.floor(Math.min(wrap.clientWidth/VP,wrap.clientHeight/VP));
   if(px<16)return;
-  VPW=VP;
+  VPW=Math.min(GRID_W,Math.max(VP,Math.floor(wrap.clientWidth/px)));
   VPH=Math.min(GRID_H,Math.max(VP,Math.floor(wrap.clientHeight/px)));
   document.documentElement.style.setProperty('--cell-w',px+'px');
   document.documentElement.style.setProperty('--cell-h',px+'px');
@@ -2584,6 +3084,7 @@ async function init(){
   resetView();
   fitCells();
   renderStatus();renderGrid();renderInv();bindUI();
+  showFirstLetterIfNeeded();
   loadRealWeather();
   setInterval(liveTick,60_000);
   window.addEventListener('resize',()=>{fitCells();renderGrid();renderMinimap();});
