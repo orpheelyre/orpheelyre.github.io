@@ -2370,8 +2370,12 @@ function doTrowel(x,y){
     renderGrid();renderInv();renderStatus();saveLocal();return;
   }
   if(!['dry','cracked','hollow','water','mud_seep'].includes(cell.surface)){showProfile(x,y);return;}
+  if(cell.surface==='water'&&(cell.excavatedDepth||0)>0){
+    showToast(LANG.cur==='zh'?'积水无法继续挖掘。先采水让表面干燥。':'Cannot dig through standing water. Harvest first to drain.');
+    showProfile(x,y);return;
+  }
   const depth=-(cell.excavatedDepth||0)-1;
-  if(depth<-5){showProfile(x,y);return;}
+  if(depth<-5){showToast(LANG.cur==='zh'?'已挖至基岩，无法再深。':'Reached bedrock. Cannot dig further.');showProfile(x,y);return;}
   const layer=gen.strata.find(s=>s.depth===depth);
   if(!useEnergy(2))return;
   unlockLayer(x,y,depth);
@@ -2394,8 +2398,8 @@ function doTrowel(x,y){
     coverSurface(x,y,'dry',{excavatedDepth:-depth,drainCleared:true,stability:Math.min(1,(cell.stability||gen.baseStab)+.05)});
     logEvent('trowel',`blocked drain cleared @ ${x},${y}`);
     showToast('Blocked drain cleared.');
-  }else if(layer?.type==='dissolution_cavity'){spreadWaterB(x,y);showToast(t('water_b'));}
-  else if(layer?.type==='heavy_clay_wet'){spreadWaterA(x,y);showToast(t('water_a'));}
+  }else if(layer?.type==='dissolution_cavity'){spreadWaterB(x,y);setCell(x,y,{excavatedDepth:-depth});showToast(t('water_b'));}
+  else if(layer?.type==='heavy_clay_wet'){spreadWaterA(x,y);setCell(x,y,{excavatedDepth:-depth});showToast(t('water_a'));}
   else{setCell(x,y,{excavatedDepth:-depth});showToast(t('trowel_dug',depth));}
   showProfile(x,y);renderGrid();renderInv();saveLocal();
 }
