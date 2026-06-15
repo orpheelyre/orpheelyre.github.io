@@ -380,13 +380,14 @@
       font-size: 9px; opacity: 0.22; pointer-events: none; white-space: nowrap;
     }
     .tn-dev-time {
-      position:absolute; left:10px; right:10px; top:60px; z-index:70;
-      display:flex; align-items:center; gap:5px; flex-shrink:0;
-      font-size:9px; opacity:.72;
-      background: color-mix(in srgb, var(--pop) 94%, transparent);
+      position:absolute; right:6px; top:26px; z-index:200; width:max-content;
+      display:none; align-items:center; gap:5px; flex-shrink:0;
+      font-size:9px; opacity:.92;
+      background: color-mix(in srgb, var(--pop) 96%, transparent);
       border: 1px solid var(--grid-fog); padding:5px 7px;
     }
-    .tn-dev-time input { flex:1; min-width:80px; accent-color: var(--fg); }
+    .tn-dev-time.open { display:flex; }
+    .tn-dev-time input { width:80px; accent-color: var(--fg); }
     .hidden-hard { display: none !important; }
   </style>
 </head>
@@ -2458,10 +2459,15 @@ function bindUI(){
       S.meta.lastTickAt=new Date(Date.now()-TICK_H*3600001).toISOString();
       applyTime();renderStatus();renderGrid();renderInv();saveLocal();showToast(`+1 tick (Day ${S.meta.day})`);
     });
-    const timeBox=document.createElement('span');
+    const timeBox=document.createElement('div');
     timeBox.className='tn-dev-time';
     timeBox.innerHTML=`<span>${t('dev_time')}</span><button class="tn-btn dev" id="tn-dev-time-minus">−</button><input id="tn-dev-time-range" type="range" min="0" max="30" step="1" value="0"><button class="tn-btn dev" id="tn-dev-time-plus">+</button><span id="tn-dev-time-out">0×8h</span><button class="tn-btn dev" id="tn-dev-time-run">[ RUN ]</button>`;
-    bar.appendChild(timeBox);
+    document.getElementById('tn-window').appendChild(timeBox);
+    const timeToggleBtn=document.createElement('button');
+    timeToggleBtn.className='tn-hbtn top';timeToggleBtn.title='Time test';
+    timeToggleBtn.innerHTML=`<svg viewBox="0 0 9 9" width="9" height="9" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linecap="square"><circle cx="4.5" cy="4.5" r="3.5"/><polyline points="4.5,2.5 4.5,4.5 6,5.5"/></svg>`;
+    timeToggleBtn.addEventListener('click',()=>timeBox.classList.toggle('open'));
+    document.getElementById('tn-title-right').prepend(timeToggleBtn);
     const range=timeBox.querySelector('#tn-dev-time-range');
     const out=timeBox.querySelector('#tn-dev-time-out');
     const updateRange=()=>{out.textContent=`${range.value}×8h`;};
