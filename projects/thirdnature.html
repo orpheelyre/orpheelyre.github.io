@@ -553,9 +553,10 @@
 const DEV_MODE   = location.search.includes('dev');
 const GRID_W = 128, GRID_H = 128, CX = 64, CY = 64;
 const VP         = 10;
+let VPW = VP, VPH = VP;
 const CHUNK_SZ   = 8;
 const TICK_H     = 8;
-const MAX_NRG    = 8;
+const MAX_NRG    = 12;
 const NRG_RST_H  = 24;
 const MAX_PROBE  = 3;
 const LIDAR_CD_H = 168;   // 7 days
@@ -1540,10 +1541,11 @@ async function sha256(s){const b=await crypto.subtle.digest('SHA-256',new TextEn
 const isAuth=()=>DEV_MODE||!!sessionStorage.getItem('tn_auth_hash');
 
 // ── Viewport ─────────────────────────────────────────────────────
-function centeredViewOrigin(){return CX-Math.floor(VP/2)+1;}
-let viewX=centeredViewOrigin(),viewY=centeredViewOrigin();
-function clampVP(){viewX=Math.max(0,Math.min(GRID_W-VP,viewX));viewY=Math.max(0,Math.min(GRID_H-VP,viewY));}
-function resetView(){viewX=centeredViewOrigin();viewY=centeredViewOrigin();clampVP();}
+function centeredViewOrigin(){return CX-Math.floor(VPW/2)+1;}
+function centeredViewOriginY(){return CY-Math.floor(VPH/2)+1;}
+let viewX=centeredViewOrigin(),viewY=centeredViewOriginY();
+function clampVP(){viewX=Math.max(0,Math.min(GRID_W-VPW,viewX));viewY=Math.max(0,Math.min(GRID_H-VPH,viewY));}
+function resetView(){viewX=centeredViewOrigin();viewY=centeredViewOriginY();clampVP();}
 
 // ── Render ───────────────────────────────────────────────────────
 function renderStatus(){
@@ -1617,14 +1619,14 @@ function renderNotebook(){
 
 function renderGrid(){
   const grid=document.getElementById('tn-grid');
-  grid.style.gridTemplateColumns=`repeat(${VP},var(--cell-w))`;
+  grid.style.gridTemplateColumns=`repeat(${VPW},var(--cell-w))`;
   const frags=[];
-  for(let row=0;row<VP;row++){
-    for(let col=0;col<VP;col++){
+  for(let row=0;row<VPH;row++){
+    for(let col=0;col<VPW;col++){
       const x=viewX+col,y=viewY+row;
       if(x<0||x>=GRID_W||y<0||y>=GRID_H||!isRev(x,y)){
         const fog=isFogCell(x,y);
-        frags.push(`<button type="button" class="tn-cell tn-void${fog?' tn-fog':''}${col===VP-1?' tn-open-right':''}${row===VP-1?' tn-open-bottom':''}" data-x="${x}" data-y="${y}">${(x+y)%4===0?'·':' '}</button>`);
+        frags.push(`<button type="button" class="tn-cell tn-void${fog?' tn-fog':''}${col===VPW-1?' tn-open-right':''}${row===VPH-1?' tn-open-bottom':''}" data-x="${x}" data-y="${y}">${(x+y)%4===0?'·':' '}</button>`);
         continue;
       }
       const cell=getCell(x,y);const gen=genCell(x,y);
@@ -1689,7 +1691,7 @@ function renderMinimap(){
   ctx.putImageData(img,0,0);
   ctx.strokeStyle='rgba(255,255,255,0.85)';
   ctx.lineWidth=1;
-  ctx.strokeRect(viewX+0.5,viewY+0.5,VP,VP);
+  ctx.strokeRect(viewX+0.5,viewY+0.5,VPW,VPH);
 }
 
 function renderInv(){
@@ -2433,8 +2435,8 @@ function bindUI(){
     const rect=e.target.getBoundingClientRect();
     const px=Math.round((e.clientX-rect.left)*(GRID_W/rect.width));
     const py=Math.round((e.clientY-rect.top)*(GRID_H/rect.height));
-    viewX=Math.max(0,Math.min(GRID_W-VP,px-Math.floor(VP/2)));
-    viewY=Math.max(0,Math.min(GRID_H-VP,py-Math.floor(VP/2)));
+    viewX=Math.max(0,Math.min(GRID_W-VPW,px-Math.floor(VPW/2)));
+    viewY=Math.max(0,Math.min(GRID_H-VPH,py-Math.floor(VPH/2)));
     renderGrid();
   });
 
@@ -2560,6 +2562,17 @@ async function loadRealWeather(){
   }
 }
 
+function fitCells(){
+  const wrap=document.getElementById('tn-grid-wrap');
+  if(!wrap)return;
+  const px=Math.floor(wrap.clientWidth/VP);
+  if(px<16)return;
+  VPW=VP;
+  VPH=Math.min(GRID_H,Math.max(VP,Math.floor(wrap.clientHeight/px)));
+  document.documentElement.style.setProperty('--cell-w',px+'px');
+  document.documentElement.style.setProperty('--cell-h',px+'px');
+}
+
 // ── Init ──────────────────────────────────────────────────────────
 async function init(){
   const pt=window.parent?.document?.documentElement?.dataset?.theme;
@@ -2569,9 +2582,11 @@ async function init(){
   if(S.meta.needsToilet)startToiletTimer();
   applyTime();
   resetView();
+  fitCells();
   renderStatus();renderGrid();renderInv();bindUI();
   loadRealWeather();
   setInterval(liveTick,60_000);
+  window.addEventListener('resize',()=>{fitCells();renderGrid();renderMinimap();});
 }
 
 init();
