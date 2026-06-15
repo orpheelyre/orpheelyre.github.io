@@ -221,6 +221,13 @@
     .tn-btn.targ { border-color: var(--c-lidar); color: var(--c-lidar); animation: tn-scan 1.4s ease-out infinite; }
     .tn-btn.dev { border-style: dashed; opacity: 0.55; }
     .tn-btn.dev:hover { opacity: 1; }
+    .tn-btn.cooldown { opacity: 0.38; }
+    /* Visitor lock — all tools/actions except OBSERVE are non-interactive */
+    #tn-window.visitor #tn-bar-tools .tn-btn,
+    #tn-window.visitor #tn-bar-actions .tn-btn:not(#t-observe) {
+      opacity: 0.22; pointer-events: none; cursor: default;
+    }
+    #tn-window.visitor #tn-bar-inv { display: none; }
     .tn-select {
       background: var(--bg); color: var(--fg); border: 1px solid var(--bd);
       font-family: inherit; font-size: 10px; padding: 4px 5px; flex-shrink: 0;
@@ -296,6 +303,16 @@
     #tn-acc-modal-body { background:var(--bg);border:1px solid var(--bd);padding:18px 22px 14px;max-width:260px;width:80%;text-align:center;font-size:11px;line-height:1.7; }
     #tn-acc-modal-close { display:block;margin:12px auto 0;background:none;border:1px solid var(--bd);color:var(--fg);padding:3px 18px;cursor:pointer;font-size:11px;letter-spacing:.05em; }
 
+    /* Minimap */
+    #tn-minimap {
+      position:absolute; top:6px; left:6px; z-index:100;
+      background:var(--bg); border:1px solid var(--bd); padding:3px;
+      transition:transform 0.18s ease,opacity 0.18s ease;
+      transform-origin:top left;
+    }
+    #tn-minimap.hidden { transform:scale(0.82); opacity:0; pointer-events:none; }
+    #tn-minimap canvas { display:block; width:96px; height:96px; image-rendering:pixelated; cursor:crosshair; }
+
     /* Top panels — absolute inside #tn-window */
     #tn-legend, #tn-notebook {
       position: absolute; top: 31px; right: 8px; width: min(300px, calc(100% - 16px));
@@ -363,7 +380,7 @@
       font-size: 9px; opacity: 0.22; pointer-events: none; white-space: nowrap;
     }
     .tn-dev-time {
-      position:absolute; left:10px; right:10px; bottom:132px; z-index:70;
+      position:absolute; left:10px; right:10px; top:60px; z-index:70;
       display:flex; align-items:center; gap:5px; flex-shrink:0;
       font-size:9px; opacity:.72;
       background: color-mix(in srgb, var(--pop) 94%, transparent);
@@ -381,6 +398,7 @@
       <button class="tn-hbtn top" id="tn-access-btn" title="Authority"><svg viewBox="0 0 9 10" width="9" height="10" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linecap="square"><path d="M2.5 4.5V3a2 2 0 0 1 4 0v1.5"/><rect x="1" y="4.5" width="7" height="5"/><rect x="3.5" y="6.5" width="2" height="2" fill="currentColor"/></svg></button>
       <button class="tn-hbtn top" id="tn-guide-btn" title="Legend"><svg viewBox="0 0 11 9" width="11" height="9" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linecap="square"><path d="M1 1v7c1.5-.8 3-.8 4.5 0V1c-1.5-.8-3-.8-4.5 0Z"/><path d="M10 1v7c-1.5-.8-3-.8-4.5 0V1c1.5-.8 3-.8 4.5 0Z"/></svg></button>
       <button class="tn-hbtn top" id="tn-notebook-btn" title="Notebook"><svg viewBox="0 0 9 10" width="9" height="10" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linecap="square"><rect x="1" y="0.5" width="7" height="9"/><line x1="3" y1="0.5" x2="3" y2="9.5"/><line x1="4" y1="3.5" x2="8" y2="3.5"/><line x1="4" y1="5.5" x2="8" y2="5.5"/><line x1="4" y1="7.5" x2="8" y2="7.5"/></svg></button>
+      <button class="tn-hbtn top" id="tn-minimap-btn" title="Minimap"><svg viewBox="0 0 11 9" width="11" height="9" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linecap="square"><rect x="1" y="1" width="9" height="7"/><polyline points="1,4 4,2 7,5 10,3"/></svg></button>
       <button class="tn-hbtn" id="tn-lang-btn">EN</button>
       <button class="tn-hbtn bare" id="tn-close-btn">✕</button>
     </div>
@@ -395,6 +413,9 @@
   <div id="tn-grid-wrap">
     <div id="tn-grid" tabindex="0"></div>
     <div id="tn-pan-hint">swipe to explore</div>
+    <div id="tn-minimap" class="hidden">
+      <canvas id="tn-minimap-canvas" width="128" height="128"></canvas>
+    </div>
   </div>
   <div id="tn-observe" class="hidden"></div>
 
@@ -421,7 +442,7 @@
     <button class="tn-btn active" data-tool="observe" id="t-observe">[ OBSERVE ]</button>
     <button class="tn-btn"        data-tool="expose"  id="t-expose">[ SCRAPE ]</button>
     <button class="tn-btn" id="t-harvest">[ HARVEST ]</button>
-    <button class="tn-btn" id="t-plant" disabled>[ PLANT ]</button>
+    <button class="tn-btn" id="t-plant">[ PLANT ]</button>
     <button class="tn-btn" id="t-graft">[ GRAFT ]</button>
     <button class="tn-btn hidden-hard" id="t-relieve">[ RELIEVE ]</button>
   </div>
@@ -539,7 +560,7 @@ const MAX_PROBE  = 3;
 const LIDAR_CD_H = 168;   // 7 days
 const GPR_COST   = 3;
 const GPR_RAD    = 5;
-const LIDAR_RAD  = 8;
+const LIDAR_RAD  = 5;
 const CANON_SEED = 20260615;
 const STATE_VER  = 8;
 const LS_KEY     = 'tn_state_v17';
@@ -588,6 +609,8 @@ const T = {
     tool_desc_lidar:   `Reveal fog of war in radius ${LIDAR_RAD}. No energy cost. Once per 7 days.`,
     tool_desc_harvest: 'Tap a plant or water cell to harvest it.',
     tool_desc_plant:   'Tap a dry or cracked cell to plant a seed.',
+    tool_desc_graft:   'Extract a plant and apply it to compatible ground. Two steps. Cost: 2 energy.',
+    tool_desc_relieve: 'Choose a cell to deposit a toilet trace. Adds nitrogen — something may grow.',
     plant_prompt:'PLANT: tap a dry/cracked cell.',
     relieve_prompt:'RELIEVE: tap a cell to pee.',
     probe_prompt: m => `Probe set to ${m} m.\nTap a revealed cell.`,
@@ -641,6 +664,9 @@ const T = {
     graft_toxic: 'Fungal stress response. Something mutated.',
     graft_no_src:'Cannot extract from this surface.',
     tool_graft:  '[ GRAFT ]',
+    artifact_found:     text => `⚑ artifact found:\n"${text}"`,
+    artifact_collected: '⚑ artifact collected.',
+    seed_found:         name => `Ancient seed recovered:\n${name}`,
     visitor_hit: 'your presence disturbs the soil',
     inv_none: '—',
     surface_lbl: {
@@ -731,6 +757,8 @@ const T = {
     tool_desc_lidar:   `在半径 ${LIDAR_RAD} 范围内揭露迷雾。无行动力消耗。每 7 天一次。`,
     tool_desc_harvest: '点击植物或积水格进行收获。',
     tool_desc_plant:   '点击干土或裂缝格种植种子。',
+    tool_desc_graft:   '提取植物，移植到相容地表。两步操作。消耗 2 行动力。',
+    tool_desc_relieve: '选择格子如厕，留下氮沉积——也许会有什么生长。',
     plant_prompt:'种植：点击干土/裂缝格。',
     relieve_prompt:'如厕：点击一个格子。',
     probe_prompt: m => `探杆下放 ${m} 米。\n点击已探索格。`,
@@ -784,6 +812,9 @@ const T = {
     graft_toxic: '真菌应激反应。产生了变异体。',
     graft_no_src:'无法从此地表提取。',
     tool_graft:  '[ 嫁接 ]',
+    artifact_found:     text => `⚑ 出土物件：\n"${text}"`,
+    artifact_collected: '⚑ 出土物件已取回。',
+    seed_found:         name => `发现古代种子：\n${name}`,
     visitor_hit: '你的到来扰动了土层',
     inv_none:    '空',
     surface_lbl: {
@@ -1233,7 +1264,10 @@ function surfaceCategory(surf,gen){
 const SUCC={
   dry:{ticks:2,next:'grass',stab:0},water:{ticks:1,next:'sedge',stab:0},
   grass:{ticks:3,next:'lichen',stab:.01},sedge:{ticks:3,next:'moss',stab:.03},
-  lichen:{ticks:4,next:'moss',stab:.02},moss:{ticks:5,next:null,stab:.02},
+  lichen:{ticks:4,next:'moss',stab:.02},moss:{ticks:5,next:'_branch',stab:.02},
+  mud_seep:{ticks:2,next:'sedge',stab:.01},rubble:{ticks:3,next:'lichen',stab:0},
+  hummock:{ticks:3,next:'grass',stab:.01},slip_scar:{ticks:4,next:'dry',stab:0},
+  hollow:{ticks:2,next:'mud_seep',stab:.01},toxic_fungi:{ticks:0,next:null,stab:0},
   fungi:{ticks:0,next:null,stab:.02},ice_plant:{ticks:0,next:null,stab:.01},
   shrub:{ticks:15,next:'tree',stab:.05},gorse:{ticks:0,next:null,stab:.03},
   ornamental:{ticks:0,next:null,stab:0},tree:{ticks:0,next:null,stab:.06},willow:{ticks:0,next:null,stab:.05},
@@ -1272,6 +1306,7 @@ function normalizeS(s){
     c.recentLayers=Array.isArray(c.recentLayers)?c.recentLayers:[];
   });
   if(s.revealed.length===0)bootstrapReveal(s);
+  revSet=new Set(s.revealed);
 }
 function bootstrapReveal(s){
   for(let dy=-2;dy<=3;dy++)for(let dx=-2;dx<=3;dx++){
@@ -1281,14 +1316,15 @@ function bootstrapReveal(s){
 }
 
 const ck=(x,y)=>`${x}_${y}`;
-const isRev=(x,y)=>S.revealed.includes(ck(x,y));
+let revSet=new Set();
+const isRev=(x,y)=>revSet.has(ck(x,y));
 function isFogCell(x,y){
   for(let dy=-2;dy<=2;dy++)for(let dx=-2;dx<=2;dx++){
-    if(isRev(x+dx,y+dy))return true;
+    if(revSet.has(ck(x+dx,y+dy)))return true;
   }
   return false;
 }
-function reveal(x,y){if(x<0||x>=GRID_W||y<0||y>=GRID_H)return;const k=ck(x,y);if(!S.revealed.includes(k))S.revealed.push(k);}
+function reveal(x,y){if(x<0||x>=GRID_W||y<0||y>=GRID_H)return;const k=ck(x,y);if(!revSet.has(k)){revSet.add(k);S.revealed.push(k);}}
 function revRing(x,y){for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++)reveal(x+dx,y+dy);}
 function initialSurfaceForGen(g){
   if(g.isRuins)return'ruins';
@@ -1321,16 +1357,16 @@ function ticksElapsed(iso){if(!iso)return 0;return Math.max(0,Math.floor((Date.n
 function hoursElapsed(iso){if(!iso)return 9999;return(Date.now()-new Date(iso).getTime())/3600000;}
 function probeLeft(){return Math.max(0,MAX_PROBE-(S.meta.probeUses||0));}
 function resetDailyResources(){
-  if(hoursElapsed(S.meta.energyLastReset)>=NRG_RST_H){
+  while(hoursElapsed(S.meta.energyLastReset)>=NRG_RST_H){
     S.meta.energy=MAX_NRG;
     S.meta.probeUses=0;
-    S.meta.energyLastReset=new Date().toISOString();
+    S.meta.energyLastReset=new Date(new Date(S.meta.energyLastReset).getTime()+NRG_RST_H*3600000).toISOString();
   }
 }
 
 function advanceCell(x,y,ticks){
   if(ticks<=0)return;
-  const cell=getCell(x,y);const s=SUCC[cell.surface];if(!s)return;
+  const cell=getCell(x,y);let s=SUCC[cell.surface];if(!s)return;
   const w=S.meta.weather;
   const WET_PATH=new Set(['water','sedge','moss','fungi','mud_seep']);
   // Weather: rain speeds up wet-path succession
@@ -1345,11 +1381,12 @@ function advanceCell(x,y,ticks){
     if(Math.random()<0.15*ticks){setCell(x,y,{surface:'mud_seep',daysActive:0});addRecentLayer(x,y,'≈','mud_seep');return;}
   }
   let days=(cell.daysActive||0)+effectiveTicks,newSurf=cell.surface;
-  if(s.next!==null&&days>=s.ticks){
+  while(s && s.next!==null && days>=s.ticks){
     days-=s.ticks;
-    newSurf=cell.surface==='moss'?(genCell(x,y).hasWetClay?'fungi':'ice_plant'):s.next;
+    newSurf=s.next==='_branch'?(genCell(x,y).hasWetClay?'fungi':'ice_plant'):s.next;
+    s=SUCC[newSurf];
   }
-  const newStab=Math.min(1,(cell.stability||genCell(x,y).baseStab)+(s.stab||0)*ticks);
+  const newStab=Math.min(1,(cell.stability||genCell(x,y).baseStab)+(s?.stab||0)*ticks);
   setCell(x,y,{surface:newSurf,daysActive:days,stability:newStab});
   if(newSurf!==cell.surface)addRecentLayer(x,y,SURF_CHAR[newSurf]||'.',newSurf);
 }
@@ -1378,9 +1415,9 @@ function applyTime(){
     if(w?.temp>22) S.meta.droughtDays=(S.meta.droughtDays||0)+ticks;
     else S.meta.droughtDays=0;
   }
-  const hrs=(Date.now()-new Date(S.meta.lastTickAt).getTime())/3600000;
-  S.meta.day=Math.max(1,S.meta.day+Math.floor(hrs/24));
-  S.meta.lastTickAt=new Date().toISOString();
+  S.meta.totalPlayedHours=(S.meta.totalPlayedHours||0)+(ticks*TICK_H);
+  S.meta.day=Math.max(1,1+Math.floor(S.meta.totalPlayedHours/24));
+  S.meta.lastTickAt=new Date(new Date(S.meta.lastTickAt).getTime()+ticks*TICK_H*3600000).toISOString();
   resetDailyResources();
   return true;
 }
@@ -1416,7 +1453,7 @@ function triggerSlump(x,y){
   if(x+1<GRID_W&&y+1<GRID_H&&isRev(x+1,y+1)){const d=getCell(x+1,y+1);if(['dry','grass','cracked'].includes(d.surface))setCell(x+1,y+1,{surface:'rubble',stability:Math.max(.2,(d.stability||.5)-.05)});}
 }
 function gorseInvade(){
-  const edge=S.revealed.filter(k=>{const[x,y]=k.split('_').map(Number);return x<4||x>123||y<4||y>123;});
+  const edge=S.revealed.filter(k=>{const[x,y]=k.split('_').map(Number);return!isRev(x-1,y)||!isRev(x+1,y)||!isRev(x,y-1)||!isRev(x,y+1);});
   if(!edge.length)return;
   const[ex,ey]=edge[Math.floor(Math.random()*edge.length)].split('_').map(Number);
   const c=getCell(ex,ey);if(['dry','grass','cracked','open'].includes(c.surface))setCell(ex,ey,{surface:'gorse',daysActive:0});
@@ -1442,7 +1479,8 @@ function runGPR(cx,cy){
   for(let dy=-GPR_RAD;dy<=GPR_RAD;dy++)for(let dx=-GPR_RAD;dx<=GPR_RAD;dx++){
     if(dx*dx+dy*dy>GPR_RAD*GPR_RAD)continue;
     const x=cx+dx,y=cy+dy;if(x<0||x>=GRID_W||y<0||y>=GRID_H||!isRev(x,y))continue;
-    const gen=genCell(x,y);const has=gen.hasAnomaly||gen.hasArt||gen.hasSeed;
+    const gen=genCell(x,y);const cell=getCell(x,y);
+    const has=gen.hasAnomaly||(gen.hasArt&&!cell.artifactFound)||(gen.hasSeed&&!cell.seedFound);
     setCell(x,y,{gprAnomaly:has?'confirmed':'clear'});if(has)n++;
   }
   return n;
@@ -1508,6 +1546,7 @@ function resetView(){viewX=centeredViewOrigin();viewY=centeredViewOrigin();clamp
 
 // ── Render ───────────────────────────────────────────────────────
 function renderStatus(){
+  document.getElementById('tn-window').classList.toggle('visitor',!isAuth());
   document.getElementById('tn-day').textContent=t('day',S.meta.day);
   const weather=S.meta.weather;
   document.getElementById('tn-weather').textContent=weather?`${weather.season} · ${weather.temp}°C · ${weather.sky}`:'weather: —';
@@ -1539,7 +1578,7 @@ function renderStatus(){
   document.getElementById('tn-guide-btn').title=t('tool_symbols');
   document.getElementById('tn-notebook-btn').title=t('notebook_lbl');
   document.getElementById('tn-notebook-title').textContent=t('notebook_lbl');
-  document.getElementById('t-plant').disabled=S.inventory.seeds.length===0;
+  document.getElementById('t-plant').classList.toggle('cooldown',S.inventory.seeds.length===0);
   renderSymbolGuide();
   renderNotebook();
 }
@@ -1584,7 +1623,7 @@ function renderGrid(){
       const x=viewX+col,y=viewY+row;
       if(x<0||x>=GRID_W||y<0||y>=GRID_H||!isRev(x,y)){
         const fog=isFogCell(x,y);
-        frags.push(`<button type="button" class="tn-cell tn-void${fog?' tn-fog':''}${col===VP-1?' tn-open-right':''}${row===VP-1?' tn-open-bottom':''}" data-x="${x}" data-y="${y}" onpointerdown="tnCellDown(event)" onpointerup="tnCellUp(event,this)" onmousedown="tnCellDown(event)" onmouseup="tnCellUp(event,this)" onclick="tnCellClick(event,this)" ondblclick="tnCellProfile(event,this)">${(x+y)%4===0?'·':' '}</button>`);
+        frags.push(`<button type="button" class="tn-cell tn-void${fog?' tn-fog':''}${col===VP-1?' tn-open-right':''}${row===VP-1?' tn-open-bottom':''}" data-x="${x}" data-y="${y}">${(x+y)%4===0?'·':' '}</button>`);
         continue;
       }
       const cell=getCell(x,y);const gen=genCell(x,y);
@@ -1602,14 +1641,54 @@ function renderGrid(){
       let inner;
       if(surf==='artifact'){inner=`<span class="tn-art">!</span>`;}
       else if(isGPRAnom){inner=`<span class="tn-gpr-a">?</span><span class="tn-gpr-b">${ch}</span>`;}
-      else if(flicker){const nc=SURF_CHAR[s.next]||ch;inner=`<span class="tn-alt-a">${ch}</span><span class="tn-alt-b">${nc}</span>`;}
+      else if(flicker){const nextSurf=s.next==='_branch'?(genCell(x,y).hasWetClay?'fungi':'ice_plant'):s.next;const nc=SURF_CHAR[nextSurf]||ch;inner=`<span class="tn-alt-a">${ch}</span><span class="tn-alt-b">${nc}</span>`;}
       else{inner=ch;}
       const zoneCls=hasSubsurfaceEvidence(cell)?`tn-z-${gen.zone}`:'';
-      frags.push(`<button type="button" class="tn-cell ${zoneCls} ${css}${extra}${sm?' tn-sm':''}" data-x="${x}" data-y="${y}" onpointerdown="tnCellDown(event)" onpointerup="tnCellUp(event,this)" onmousedown="tnCellDown(event)" onmouseup="tnCellUp(event,this)" onclick="tnCellClick(event,this)" ondblclick="tnCellProfile(event,this)">${inner}</button>`);
+      frags.push(`<button type="button" class="tn-cell ${zoneCls} ${css}${extra}${sm?' tn-sm':''}" data-x="${x}" data-y="${y}">${inner}</button>`);
     }
   }
   grid.innerHTML=frags.join('');
   renderSymbolGuide();
+  renderMinimap();
+}
+
+function minimapSurf(surf){
+  const m={
+    ruins:[80,70,60],floor:[90,80,70],open:[70,65,60],
+    dry:[120,110,80],cracked:[100,90,70],rubble:[110,95,75],
+    grass:[60,110,50],sedge:[50,120,70],
+    lichen:[90,140,110],moss:[40,120,60],
+    fungi:[120,100,40],toxic_fungi:[180,60,40],
+    ice_plant:[160,90,120],ornamental:[80,140,80],
+    shrub:[40,90,40],gorse:[100,120,30],
+    tree:[20,70,20],willow:[30,100,40],
+    water:[40,80,160],mud_seep:[70,90,100],
+    artifact:[180,160,60],slip_scar:[140,100,60],hummock:[80,120,60],
+  };
+  return m[surf]||[60,60,60];
+}
+
+function renderMinimap(){
+  const panel=document.getElementById('tn-minimap');
+  if(!panel||panel.classList.contains('hidden'))return;
+  const canvas=document.getElementById('tn-minimap-canvas');
+  const ctx=canvas.getContext('2d');
+  const img=ctx.createImageData(GRID_W,GRID_H);
+  for(let y=0;y<GRID_H;y++){
+    for(let x=0;x<GRID_W;x++){
+      const i=(y*GRID_W+x)*4;
+      if(!isRev(x,y)){
+        img.data[i]=18;img.data[i+1]=18;img.data[i+2]=18;img.data[i+3]=255;
+      }else{
+        const[r,g,b]=minimapSurf(getCell(x,y).surface);
+        img.data[i]=r;img.data[i+1]=g;img.data[i+2]=b;img.data[i+3]=255;
+      }
+    }
+  }
+  ctx.putImageData(img,0,0);
+  ctx.strokeStyle='rgba(255,255,255,0.85)';
+  ctx.lineWidth=1;
+  ctx.strokeRect(viewX+0.5,viewY+0.5,VP,VP);
 }
 
 function renderInv(){
@@ -1693,8 +1772,9 @@ const GRAFT_MATRIX={
 function setTool(id){
   activeTool=id;targeting=null;
   document.getElementById('tn-grid').classList.remove('targeting');
-  document.querySelectorAll('.tn-btn[data-tool]').forEach(b=>{b.classList.toggle('active',b.dataset.tool===id);b.classList.remove('targ');});
-  if(id!=='observe') document.getElementById('tn-observe').classList.add('hidden');
+  document.querySelectorAll('.tn-btn').forEach(b=>b.classList.remove('targ'));
+  document.querySelectorAll('.tn-btn[data-tool]').forEach(b=>b.classList.toggle('active',b.dataset.tool===id));
+  showToolHint(id);
 }
 function startTargeting(tool){
   targeting=tool;
@@ -1759,6 +1839,7 @@ function handleClick(x,y,el){
   }
   if(targeting==='graft_step2'){
     const src=graftSource;
+    if(!src){cancelTargeting();setTool('observe');return;}
     graftSource=null;
     cancelTargeting();setTool('observe');
     document.querySelectorAll('.tn-graft-source').forEach(e=>e.classList.remove('tn-graft-source'));
@@ -1788,49 +1869,28 @@ function handleClick(x,y,el){
   if(activeTool==='expose')doExpose(x,y,el);
   else if(activeTool==='trowel')doTrowel(x,y);
 }
-function tnCellClick(e,el){
-  if(e){e.preventDefault();e.stopPropagation();}
-  if(Date.now()-lastCellActionAt<120)return;
-  lastCellActionAt=Date.now();
-  handleClick(+el.dataset.x,+el.dataset.y,el);
-}
-function tnCellDown(e){
-  cellDownAt={x:e.clientX,y:e.clientY};
-}
-function tnCellUp(e,el){
-  if(!cellDownAt)return;
-  const dx=e.clientX-cellDownAt.x,dy=e.clientY-cellDownAt.y;
-  cellDownAt=null;
-  if(Math.hypot(dx,dy)>8)return;
-  tnCellClick(e,el);
-}
-function tnCellProfile(e,el){
-  if(e){e.preventDefault();e.stopPropagation();}
-  showProfile(+el.dataset.x,+el.dataset.y);
-}
-
 // ── Actions ──────────────────────────────────────────────────────
-const EXPOSE_RUINS=new Set(['ruins','floor','open']);
-const EXPOSE_VEG=new Set(['grass','sedge','lichen','moss','fungi','ice_plant','shrub','gorse','ornamental','tree','willow']);
+const RUINS_SUBSTRATES=new Set(['ruins','floor','open']);
+const EXPOSE_VEG=new Set(['grass','sedge','lichen','moss','fungi','ice_plant','shrub','gorse','ornamental','tree','willow','toxic_fungi']);
 function doExpose(x,y,el){
   const cell=getCell(x,y),gen=genCell(x,y);
   const surf=cell.surface;
-  if(!EXPOSE_RUINS.has(surf)&&!EXPOSE_VEG.has(surf)){
+  // Permanent masonry — cannot be scraped
+  if(RUINS_SUBSTRATES.has(surf)){
+    const msg=LANG.cur==='zh'?'砌体已被发现。可以探底，但无法移除。':'Masonry exposed. Can be probed, not removed.';
+    showToast(msg);showProfile(x,y);return;
+  }
+  if(!EXPOSE_VEG.has(surf)){
     showToast(LANG.cur==='zh'?'地表已光秃秃，清表无处着力。':'Nothing to scrape here.');
     showProfile(x,y);return;
   }
   if(!useEnergy())return;
-  if(EXPOSE_RUINS.has(surf)){
-    unlockLayer(x,y,-1);
-    setCell(x,y,{surface:'cracked',daysActive:0});revRing(x,y);
-    showToast(t('crack'));
-  }else{
-    // vegetation cleared → bare soil
-    addRecentLayer(x,y,SURF_CHAR[surf]||',',surf);
-    setCell(x,y,{surface:'dry',daysActive:0});
-    const cleared=tl('surface_lbl',surf);
-    showToast(LANG.cur==='zh'?`清理：${cleared}`:`Cleared: ${cleared}`);
-  }
+  // Plant on ruins substrate → clear back to bare masonry (open)
+  const returnSurf=gen.isRuins?'open':'dry';
+  addRecentLayer(x,y,SURF_CHAR[surf]||',',surf);
+  setCell(x,y,{surface:returnSurf,daysActive:0});
+  const cleared=tl('surface_lbl',surf);
+  showToast(LANG.cur==='zh'?`清理：${cleared}`:`Cleared: ${cleared}`);
   reveal(x,y);
   if(el){el.classList.add('tn-grew');setTimeout(()=>el.classList.remove('tn-grew'),1200);}
   renderGrid();renderInv();saveLocal();
@@ -1883,7 +1943,7 @@ function doProbe(x,y){
 
 function doTrowel(x,y){
   const cell=getCell(x,y),gen=genCell(x,y);
-  if(['ruins','floor','open'].includes(cell.surface)){showToast(t('crack')+'\n(SCRAPE first)');return;}
+  if(RUINS_SUBSTRATES.has(cell.surface)){showToast(LANG.cur==='zh'?'砌体无法挖掘。用探杆探底下有什么。':'Masonry cannot be excavated. Use probe to read below.');return;}
   if(cell.surface==='rabbit_hole'){
     if(!useEnergy(2))return;
     setCell(x,y,{surface:'dry',daysActive:0,stability:Math.min(1,(cell.stability||gen.baseStab)+.08)});
@@ -1900,27 +1960,31 @@ function doTrowel(x,y){
     if(!useEnergy(2))return;
     const layer=gen.strata.find(s=>s.type==='artifact');
     if(layer)unlockLayer(x,y,layer.depth);
-    S.inventory.artifacts.push({text:layer?.text||'unlabelled artifact',x,y});
+    S.inventory.artifacts.push({text:layer?.text||(LANG.cur==='zh'?'未标注物件':'unlabelled artifact'),x,y});
     setCell(x,y,{surface:'dry',daysActive:0,artifactFound:true});
-    showToast(`⚑ ${tl('strata_lbl','artifact')} collected.`);
+    showToast(t('artifact_collected'));
     renderGrid();renderInv();renderStatus();saveLocal();return;
   }
   if(!['dry','cracked','hollow','water','mud_seep'].includes(cell.surface)){showProfile(x,y);return;}
   const depth=-(cell.excavatedDepth||0)-1;
   if(depth<-5){showProfile(x,y);return;}
   const layer=gen.strata.find(s=>s.depth===depth);
-  if(gen.hasSeed&&gen.seedLayer===depth&&!cell.seedFound&&S.inventory.seeds.length>=3){showToast('Seed pouch full.');return;}
   if(!useEnergy(2))return;
   unlockLayer(x,y,depth);
   if(layer)rememberSymbol(layer.char,'strata',true);
   if(layer?.type==='artifact'){
     S.inventory.artifacts.push({text:layer.text,x,y});
     setCell(x,y,{excavatedDepth:-depth,artifactFound:true,gprAnomaly:null});
-    showToast(`⚑ ${tl('strata_lbl','artifact')}:\n"${layer.text}"`);
+    showToast(t('artifact_found',layer.text));
   }else if(gen.hasSeed&&gen.seedLayer===depth&&!cell.seedFound){
-    S.inventory.seeds.push(gen.ancientSeed);
-    setCell(x,y,{excavatedDepth:-depth,seedFound:true,gprAnomaly:null});
-    showToast(`Ancient seed recovered:\n${gen.ancientSeed.name}`);
+    if(S.inventory.seeds.length>=3){
+      setCell(x,y,{excavatedDepth:-depth});
+      showToast(LANG.cur==='zh'?'种子袋已满，古老种子在出土时破碎。':'Seed pouch full. Ancient seed shattered.');
+    }else{
+      S.inventory.seeds.push(gen.ancientSeed);
+      setCell(x,y,{excavatedDepth:-depth,seedFound:true,gprAnomaly:null});
+      showToast(t('seed_found',gen.ancientSeed.name));
+    }
   }else if(layer?.type==='drain_blocked'){
     setCell(x,y,{excavatedDepth:-depth,drainCleared:true,surface:'dry',stability:Math.min(1,(cell.stability||gen.baseStab)+.05)});
     showToast('Blocked drain cleared.');
@@ -2016,8 +2080,10 @@ function doIrrigate(x,y){
   if(['dry','cracked','open','footprint','rubble'].includes(cell.surface)){
     patch.surface='mud_seep';
     patch.daysActive=0;
+    addRecentLayer(x,y,'≈','mud_seep');
+  }else{
+    addRecentLayer(x,y,'~','water');
   }
-  addRecentLayer(x,y,'≈','mud_seep');
   setCell(x,y,patch);
   targetingKind=null;
   showToast(t('irrigate_done'));
@@ -2159,9 +2225,9 @@ function showObservePanel(sym,title,body,right=''){
   el.classList.remove('hidden');
 }
 function showToolHint(toolId){
-  const symMap={observe:'◎',expose:'≡',trowel:'↓',probe:'·',gpr:'?',lidar:'◌',harvest:'◆',plant:'n'};
+  const symMap={observe:'◎',expose:'≡',trowel:'↓',probe:'·',gpr:'?',lidar:'◌',harvest:'◆',plant:'n',graft:'+',relieve:'↑'};
   const sym=symMap[toolId]||'·';
-  const nameKey={'observe':'tool_observe','expose':'tool_expose','trowel':'tool_trowel','probe':'tool_probe','gpr':'tool_gpr','lidar':'tool_lidar','harvest':'act_harvest','plant':'act_plant'}[toolId];
+  const nameKey={'observe':'tool_observe','expose':'tool_expose','trowel':'tool_trowel','probe':'tool_probe','gpr':'tool_gpr','lidar':'tool_lidar','harvest':'act_harvest','plant':'act_plant','graft':'tool_graft','relieve':'act_relieve'}[toolId];
   const name=nameKey?(t(nameKey,probeLeft())||toolId):toolId;
   const descKey=`tool_desc_${toolId}`;
   const m=document.getElementById('t-probe-depth')?.value||'1.5';
@@ -2251,20 +2317,21 @@ function bindUI(){
   document.querySelectorAll('.tn-btn[data-tool]').forEach(btn=>{
     btn.addEventListener('click',()=>{
       const tool=btn.dataset.tool;
+      showToolHint(tool);
       if(tool==='gpr'){
         if(!isAuth()){showToast(t('need_access'));return;}
-        if(targeting==='gpr'){cancelTargeting();setTool('observe');showToolHint('observe');return;}
+        if(targeting==='gpr'){cancelTargeting();setTool('observe');return;}
         if(S.meta.energy<GPR_COST){showToast(t('gpr_no_nrg'));return;}
         setTool('gpr');startTargeting('gpr');return;
       }
       if(tool==='lidar'){
         if(!isAuth()){showToast(t('need_access'));return;}
-        if(targeting==='lidar'){cancelTargeting();setTool('observe');showToolHint('observe');return;}
+        if(targeting==='lidar'){cancelTargeting();setTool('observe');return;}
         const h=lidarHLeft();if(h>0){showToast(t('lidar_cd',h));return;}
         setTool('lidar');startTargeting('lidar');return;
       }
       if(tool==='observe'){
-        setTool('observe');showToolHint('observe');return;
+        setTool('observe');return;
       }
       if(tool==='probe'){
         if(!isAuth()){showToast(t('need_access'));return;}
@@ -2290,12 +2357,14 @@ function bindUI(){
 
   // Action bar
   document.getElementById('t-harvest').addEventListener('click',()=>{
+    showToolHint('harvest');
     if(!isAuth()){showToast(t('need_access'));return;}
     targeting='harvest';
     document.getElementById('tn-grid').classList.add('targeting');
     document.getElementById('t-harvest').classList.add('targ');
   });
   document.getElementById('t-plant').addEventListener('click',()=>{
+    showToolHint('plant');
     if(!isAuth()){showToast(t('need_access'));return;}
     if(!S.inventory.seeds.length){showToast(t('plant_none'));return;}
     targeting='plant';
@@ -2303,6 +2372,7 @@ function bindUI(){
     document.getElementById('t-plant').classList.add('targ');
   });
   document.getElementById('t-graft').addEventListener('click',()=>{
+    showToolHint('graft');
     if(!isAuth()){showToast(t('need_access'));return;}
     if(!useEnergy(2))return;
     targeting='graft_step1';
@@ -2311,6 +2381,7 @@ function bindUI(){
     showToast(t('graft_step1'));
   });
   document.getElementById('t-relieve').addEventListener('click',()=>{
+    showToolHint('relieve');
     if(!S.meta.needsToilet){showToast(t('relieve_prompt'));return;}
     targeting='relieve';
     document.getElementById('tn-grid').classList.add('targeting');
@@ -2329,15 +2400,6 @@ function bindUI(){
 
   // Profile close
   document.getElementById('tn-profile-close').addEventListener('click',()=>document.getElementById('tn-profile').classList.add('hidden'));
-  document.addEventListener('click',e=>{
-    const el=e.target.closest?.('.tn-cell[data-x][data-y]');
-    if(!el)return;
-    e.preventDefault();e.stopPropagation();
-    if(Date.now()-lastCellActionAt>=120){
-      lastCellActionAt=Date.now();
-      handleClick(+el.dataset.x,+el.dataset.y,el);
-    }
-  },true);
   document.getElementById('tn-grid-wrap').addEventListener('click',e=>{
     if(suppressNextGridClick){suppressNextGridClick=false;return;}
     const el=e.target.closest?.('.tn-cell[data-x][data-y]');
@@ -2361,6 +2423,20 @@ function bindUI(){
   document.getElementById('tn-pw-inp').addEventListener('keydown',e=>{if(e.key==='Enter')submitPw();});
   document.getElementById('tn-pw-cancel').addEventListener('click',()=>{document.getElementById('tn-pw').classList.add('hidden');document.getElementById('tn-pw-err').textContent='';});
 
+  // Minimap
+  document.getElementById('tn-minimap-btn').addEventListener('click',()=>{
+    document.getElementById('tn-minimap').classList.toggle('hidden');
+    renderMinimap();
+  });
+  document.getElementById('tn-minimap-canvas').addEventListener('click',e=>{
+    const rect=e.target.getBoundingClientRect();
+    const px=Math.round((e.clientX-rect.left)*(GRID_W/rect.width));
+    const py=Math.round((e.clientY-rect.top)*(GRID_H/rect.height));
+    viewX=Math.max(0,Math.min(GRID_W-VP,px-Math.floor(VP/2)));
+    viewY=Math.max(0,Math.min(GRID_H-VP,py-Math.floor(VP/2)));
+    renderGrid();
+  });
+
   // Lang
   document.getElementById('tn-lang-btn').addEventListener('click',()=>{LANG.cur=LANG.cur==='en'?'zh':'en';document.documentElement.lang=LANG.cur;renderStatus();renderGrid();renderInv();});
 
@@ -2374,7 +2450,7 @@ function bindUI(){
     mk('[ RESET ]',()=>{
       if(!confirm('Reset all progress?'))return;
       genCache.clear();chunkCache.clear();
-      S=mkState();bootstrapReveal(S);
+      S=mkState();bootstrapReveal(S);revSet=new Set(S.revealed);
       resetView();
       renderStatus();renderGrid();renderInv();
     });
@@ -2484,6 +2560,7 @@ async function init(){
   if(pt)document.documentElement.dataset.theme=pt;
   await loadState();
   if(!S.meta.lastTickAt){S.meta.lastTickAt=new Date().toISOString();S.meta.energyLastReset=new Date().toISOString();}
+  if(S.meta.needsToilet)startToiletTimer();
   applyTime();
   resetView();
   renderStatus();renderGrid();renderInv();bindUI();
