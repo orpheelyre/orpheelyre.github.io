@@ -3030,11 +3030,11 @@ function makeIconDefs() {
       x: leftColX, y: topY + rowStep * 3,
       action: () => openInstallationGate(),
     },
-    {
+    ...(adminLoggedIn ? [{
       id: 'thirdnature', label: 'third nature.app', icon: SVG.ruins_bonsai, iconKey: 'ruins_bonsai',
       x: leftColX, y: topY + rowStep * 4,
       action: () => openThirdNatureWindow(),
-    },
+    }] : []),
     // ── Left bottom: bin ─────────────────────────────────────
     {
       id: 'bin', label: 'Bin', icon: SVG.trash, iconKey: 'trash',

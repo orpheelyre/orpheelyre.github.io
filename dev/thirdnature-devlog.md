@@ -64,6 +64,42 @@ A slow ecological succession game built as a gift. Ruins → exposure → water 
 - [x] Energy system: 5/day, 24h reset
 - [x] Pan: swipe (touch) + arrow keys
 
+---
+
+## Phase 1 — Bug fixes & polish (2026-06-15, session 2)
+
+**Claude Code (claude-sonnet-4-6)**
+
+### Bug fixes
+
+- **Event storm**: removed all inline `onclick` handlers from grid cells; now uses single delegated listener on `#tn-grid-wrap`. Prevented 3–5 `handleClick` calls per click.
+- **Time remainder lost on tick**: `lastTickAt` and `energyLastReset` now advance by exact tick durations (not reset to `now`), preserving fractional-hour remainder across sessions.
+- **Succession `if` → `while`**: `advanceCell` now catches up multiple succession steps on long offline periods instead of advancing by one step only.
+- **Energy reset `if` → `while`**: same catch-up fix for `resetDailyResources` — correctly resets across multiple missed days.
+- **Drag/click mutex**: removed capture-phase `document.click` listener that was bypassing `suppressNextGridClick`; drag no longer triggers cell actions.
+- **Graft null safety**: guard added for `graftSource === null` after state reload.
+- **Seed pouch soft-lock**: excavation no longer returns early when seed pouch is full — cell advances to `excavatedDepth` with a "seed shattered" message instead of becoming permanently un-excavatable.
+- **Ghost targ**: `setTool` now clears ALL `.tn-btn.targ` before re-applying to prevent stale targeting highlights.
+- **GPR ghost echo**: `runGPR` now respects `cell.artifactFound` and `cell.seedFound` — already-collected items don't echo on radar.
+- **Forever day-1**: replaced `hrs/24` calculation with `totalPlayedHours` accumulator stored in state; day counter now persists correctly across sessions.
+- **Toilet timer not restarting**: `startToiletTimer()` now called in `init()` when `S.meta.needsToilet` is true, so the urgency timer survives page reload.
+- **Gorse absolute peace**: gorse invasion now sources from fog boundary (`!isRev` neighbors of revealed cells) instead of absolute map edges — players will actually encounter it.
+- **`_branch` flicker**: flicker animation resolved `_branch` to the actual branching surface (`fungi` or `ice_plant`) instead of rendering undefined char.
+
+### Features
+
+- **Minimap**: canvas-based 128×128px, color-coded by surface type, viewport rect overlay, click-to-navigate, toggle button in titlebar.
+- **O(1) fog lookup**: `revSet: Set<string>` replaces O(N) `S.revealed.includes()` for `isRev` checks. `normalizeS()` and dev RESET rebuild the set.
+- **Tool hints**: `showToolHint(id)` called at start of all button handlers + inside `setTool()` — every tool shows description in info panel on activation.
+- **LiDAR fix**: subsurface layer unlock removed; LiDAR only clears fog / reveals surface, not underground strata.
+- **Visitor lock**: `#tn-window.visitor` CSS class hides inventory bar and dims/disables all non-OBSERVE buttons when unauthenticated. Toggled in `renderStatus()`.
+- **Dev slider repositioned**: moved from bottom of screen (was covering info panel) to `top: 60px`.
+- **Irrigation layer**: `doIrrigate` now only records `mud_seep` layer when surface actually converts; otherwise records a water trace `~`.
+- **Succession dead zones cleared**: added `moss→_branch` wet/dry split, `mud_seep→sedge`, `rubble→lichen`, `hummock→grass`, `slip_scar→dry`, `hollow→mud_seep` — no more permanent ecological traps.
+- **`_branch` handling**: `advanceCell` while loop correctly resolves `_branch` placeholder via `hasWetClay` check; not exposed to SUCC dictionary.
+- **i18n additions**: `tool_desc_graft`, `tool_desc_relieve`, `artifact_found`, `artifact_collected`, `seed_found` added to `T.en` + `T.zh`.
+- **Index admin gate**: `thirdnature` desktop icon in `app.js` now only included in `makeIconDefs()` when `adminLoggedIn === true`. Visitor mode inside the game retained but deactivated.
+
 ### TODO (Phase 2)
 
 - [ ] Extend `now-sync-worker.js` for `source: "nature"` → `assets/nature/state.json`
