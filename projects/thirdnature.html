@@ -269,7 +269,7 @@
     #tn-item-menu-close { background:none; border:none; color:var(--fg); font-family:inherit; cursor:pointer; }
 
     #tn-observe {
-      position: absolute; left: 0; right: 0; bottom: 98px;
+      position: absolute; left: 0; right: 0; bottom: var(--bars-h, 98px);
       background: var(--bg);
       border-top: 1px solid var(--bd);
       padding: 7px 9px; z-index: 60; font-size: 10px; line-height: 1.55;
@@ -285,13 +285,13 @@
 
     /* Profile popup — absolute inside #tn-window */
     #tn-profile {
-      position: absolute; bottom: 98px; left: 0; right: 0;
+      position: absolute; bottom: var(--bars-h, 98px); left: 0; right: 0;
       background: var(--pop); border-top: 2px solid var(--bd);
       padding: 11px 14px 20px; font-size: 11px; line-height: 1.75;
       z-index: 100; max-height: 42vh; overflow-y: auto;
       transition: transform 0.2s cubic-bezier(0.4,0,0.2,1);
     }
-    #tn-profile.hidden { transform: translateY(calc(100% + 98px)); }
+    #tn-profile.hidden { transform: translateY(calc(100% + var(--bars-h, 98px))); }
     #tn-profile-hdr { display: flex; justify-content: space-between; margin-bottom: 8px; }
     #tn-profile-title { font-weight: 700; font-size: 10px; letter-spacing: 0.08em; }
     #tn-profile-xy { font-size: 10px; opacity: 0.38; }
@@ -409,13 +409,9 @@
       font-size: 9px; opacity: 0.22; pointer-events: none; white-space: nowrap;
     }
     .tn-dev-time {
-      position:absolute; right:6px; top:26px; z-index:300; width:max-content;
-      display:none; align-items:center; gap:5px; flex-shrink:0;
-      font-size:9px; opacity:.92;
-      background: color-mix(in srgb, var(--pop) 98%, transparent);
-      border: 1px solid var(--bd); padding:5px 7px;
+      display:inline-flex; align-items:center; gap:5px; flex-shrink:0;
+      font-size:9px; opacity:.72;
     }
-    .tn-dev-time.open { display:flex; }
     .tn-dev-time input { width:80px; accent-color: var(--fg); }
     .hidden-hard { display: none !important; }
     @media (max-width: 520px) {
@@ -430,8 +426,7 @@
       .tn-btn { padding: 5px 10px; font-size: 11px; }
       .tn-select { font-size: 11px; padding: 5px 6px; }
       #tn-legend, #tn-notebook, #tn-pw { top: 35px; right: 6px; width: calc(100% - 12px); max-height: min(70dvh, 520px); }
-      #tn-profile, #tn-observe { bottom: calc(98px + env(safe-area-inset-bottom, 0px)); }
-      #tn-item-menu { bottom: calc(102px + env(safe-area-inset-bottom, 0px)); }
+      #tn-item-menu { bottom: calc(var(--bars-h, 98px) + 4px); }
     }
   </style>
 </head>
@@ -1877,6 +1872,7 @@ function renderStatus(){
   document.getElementById('tn-notebook-btn').title=t('notebook_lbl');
   document.getElementById('tn-notebook-title').textContent=t('notebook_lbl');
   document.getElementById('t-plant').classList.toggle('cooldown',S.inventory.seeds.length===0);
+  requestAnimationFrame(updateBarsHeight);
   renderSymbolGuide();
   renderNotebook();
 }
@@ -3004,15 +3000,10 @@ function bindUI(){
       S.meta.lastTickAt=new Date(Date.now()-TICK_H*3600001).toISOString();
       applyTime();renderStatus();renderGrid();renderInv();saveLocal();showToast(`+1 tick (Day ${S.meta.day})`);
     });
-    const timeBox=document.createElement('div');
+    const timeBox=document.createElement('span');
     timeBox.className='tn-dev-time';
     timeBox.innerHTML=`<span>${t('dev_time')}</span><button class="tn-btn dev" id="tn-dev-time-minus">−</button><input id="tn-dev-time-range" type="range" min="0" max="30" step="1" value="0"><button class="tn-btn dev" id="tn-dev-time-plus">+</button><span id="tn-dev-time-out">0×8h</span><button class="tn-btn dev" id="tn-dev-time-run">[ RUN ]</button>`;
-    bar.insertBefore(timeBox,bar.children[1]||null);
-    const timeToggleBtn=document.createElement('button');
-    timeToggleBtn.className='tn-hbtn top';timeToggleBtn.title='Time test';
-    timeToggleBtn.innerHTML=`<svg viewBox="0 0 9 9" width="9" height="9" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linecap="square"><circle cx="4.5" cy="4.5" r="3.5"/><polyline points="4.5,2.5 4.5,4.5 6,5.5"/></svg>`;
-    timeToggleBtn.addEventListener('click',()=>{timeBox.classList.toggle('open');if(timeBox.classList.contains('open'))timeBox.scrollIntoView({block:'nearest',inline:'start'});});
-    document.getElementById('tn-title-right').prepend(timeToggleBtn);
+    bar.appendChild(timeBox);
     const range=timeBox.querySelector('#tn-dev-time-range');
     const out=timeBox.querySelector('#tn-dev-time-out');
     const updateRange=()=>{out.textContent=`${range.value}×8h`;};
@@ -3111,6 +3102,11 @@ async function loadRealWeather(){
   }
 }
 
+function updateBarsHeight(){
+  const h=['tn-bar-tools','tn-bar-actions','tn-bar-inv'].reduce((s,id)=>s+(document.getElementById(id)?.offsetHeight||0),0);
+  if(h>0)document.documentElement.style.setProperty('--bars-h',h+'px');
+}
+
 function fitCells(){
   const wrap=document.getElementById('tn-grid-wrap');
   if(!wrap)return;
@@ -3133,10 +3129,11 @@ async function init(){
   resetView();
   fitCells();
   renderStatus();renderGrid();renderInv();bindUI();
+  requestAnimationFrame(updateBarsHeight);
   showFirstLetterIfNeeded();
   loadRealWeather();
   setInterval(liveTick,60_000);
-  window.addEventListener('resize',()=>{fitCells();renderGrid();renderMinimap();});
+  window.addEventListener('resize',()=>{fitCells();renderGrid();renderMinimap();updateBarsHeight();});
 }
 
 init();
