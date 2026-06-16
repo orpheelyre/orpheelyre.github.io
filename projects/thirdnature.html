@@ -22,21 +22,29 @@
       --zone-slope: rgba(90,70,35,0.035);
       --zone-garden: rgba(20,90,20,0.025);
       --zone-field: rgba(90,70,20,0.020);
-      --c-water:  #1a44bb;
-      --c-grass:  #86ad49;
-      --c-lichen: #a9b84a;
-      --c-moss:   #7fa33d;
-      --c-succ:   #4b9653;
-      --c-fungi:  #8a4a8a;
-      --c-shrub:  #2f6e32;
-      --c-gorse:  #8a6a00;
-      --c-tree:   #0a3a0a;
-      --c-willow: #1a5a3a;
-      --c-ruin:   #1a1a1a;
-      --c-soil:   #8a6a43;
-      --c-soil2:  #6f5842;
-      --c-anom:   #aa1a1a;
-      --c-lidar:  #1a5a88;
+      --c-water:   #1a44bb;
+      --c-grass:   #86ad49;
+      --c-lichen:  #a9b84a;
+      --c-moss:    #7fa33d;
+      --c-succ:    #4b9653;
+      --c-fungi:   #8a4a8a;
+      --c-shrub:   #2f6e32;
+      --c-gorse:   #8a6a00;
+      --c-tree:    #0a3a0a;
+      --c-kanuka:  #4a8430;
+      --c-tree-c:  #1a5040;
+      --c-conifer: #0d3820;
+      --c-pine:    #071f10;
+      --c-tussock: #7a6828;
+      --c-rush:    #3a5430;
+      --c-timber:  #7a4e28;
+      --c-wet:     #3a5a6a;
+      --c-willow:  #1a5a3a;
+      --c-ruin:    #1a1a1a;
+      --c-soil:    #8a6a43;
+      --c-soil2:   #6f5842;
+      --c-anom:    #aa1a1a;
+      --c-lidar:   #1a5a88;
       --cell-w:   32px;
       --cell-h:   32px;
     }
@@ -54,21 +62,29 @@
       --zone-slope: rgba(220,170,70,0.05);
       --zone-garden: rgba(60,190,90,0.035);
       --zone-field: rgba(210,180,90,0.035);
-      --c-water:  #5588ee;
-      --c-grass:  #99cc66;
-      --c-lichen: #c4d46a;
-      --c-moss:   #99bb55;
-      --c-succ:   #66bb77;
-      --c-fungi:  #d67ad6;
-      --c-shrub:  #66bb44;
-      --c-gorse:  #ddaa00;
-      --c-tree:   #22aa22;
-      --c-willow: #44bb88;
-      --c-ruin:   #dedad2;
-      --c-soil:   #b08a5e;
-      --c-soil2:  #9a7a5a;
-      --c-anom:   #ee4444;
-      --c-lidar:  #44aadd;
+      --c-water:   #5588ee;
+      --c-grass:   #99cc66;
+      --c-lichen:  #c4d46a;
+      --c-moss:    #99bb55;
+      --c-succ:    #66bb77;
+      --c-fungi:   #d67ad6;
+      --c-shrub:   #66bb44;
+      --c-gorse:   #ddaa00;
+      --c-tree:    #22aa22;
+      --c-kanuka:  #88cc55;
+      --c-tree-c:  #44bb99;
+      --c-conifer: #33aa66;
+      --c-pine:    #228855;
+      --c-tussock: #bbaa44;
+      --c-rush:    #77aa55;
+      --c-timber:  #bb8855;
+      --c-wet:     #88aacc;
+      --c-willow:  #44bb88;
+      --c-ruin:    #dedad2;
+      --c-soil:    #b08a5e;
+      --c-soil2:   #9a7a5a;
+      --c-anom:    #ee4444;
+      --c-lidar:   #44aadd;
     }
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     html, body {
@@ -176,12 +192,20 @@
     .tn-c-fungi  { color: var(--c-fungi); }
     .tn-c-shrub  { color: var(--c-shrub); }
     .tn-c-gorse  { color: var(--c-gorse); }
-    .tn-c-tree   { color: var(--c-tree); }
-    .tn-c-willow { color: var(--c-willow); }
-    .tn-c-soil   { color: var(--c-soil); }
-    .tn-c-soil2  { color: var(--c-soil2); }
-    .tn-c-anom   { color: var(--c-anom); }
-    .tn-c-lidar  { color: var(--c-lidar); }
+    .tn-c-tree    { color: var(--c-tree); }
+    .tn-c-kanuka  { color: var(--c-kanuka); }
+    .tn-c-tree-c  { color: var(--c-tree-c); }
+    .tn-c-conifer { color: var(--c-conifer); }
+    .tn-c-pine    { color: var(--c-pine); }
+    .tn-c-tussock { color: var(--c-tussock); }
+    .tn-c-rush    { color: var(--c-rush); }
+    .tn-c-wet     { color: var(--c-wet); }
+    .tn-c-timber  { color: var(--c-timber); }
+    .tn-c-willow  { color: var(--c-willow); }
+    .tn-c-soil    { color: var(--c-soil); }
+    .tn-c-soil2   { color: var(--c-soil2); }
+    .tn-c-anom    { color: var(--c-anom); }
+    .tn-c-lidar   { color: var(--c-lidar); }
     .tn-gpr-mark { color: var(--c-anom) !important; }
     .tn-lidar-mark { color: var(--c-lidar) !important; opacity: 0.65; }
 
@@ -528,12 +552,15 @@
     <h3>LEGEND</h3>
     <div id="tn-symbol-guide"></div>
     <div class="lg-sec">── ruins / masonry ──</div>
-    <div class="lg-row"><span class="lg-c">▓</span><span>dense masonry wall</span></div>
-    <div class="lg-row"><span class="lg-c">▬</span><span>ashlar / foundation</span></div>
+    <div class="lg-row"><span class="lg-c">▓</span><span>masonry wall</span></div>
+    <div class="lg-row"><span class="lg-c">▬</span><span>stone foundation</span></div>
+    <div class="lg-row"><span class="lg-c">▤</span><span>brick course</span></div>
     <div class="lg-row"><span class="lg-c">─</span><span>wall base line</span></div>
-    <div class="lg-row"><span class="lg-c">::</span><span>stone paving / tile</span></div>
-    <div class="lg-row"><span class="lg-c">|</span><span>pillar stub</span></div>
-    <div class="lg-row"><span class="lg-c">≡</span><span>drain cover</span></div>
+    <div class="lg-row"><span class="lg-c">╌</span><span>corridor trace</span></div>
+    <div class="lg-row"><span class="lg-c">::</span><span>stone paving</span></div>
+    <div class="lg-row"><span class="lg-c">|</span><span>stone post base</span></div>
+    <div class="lg-row"><span class="lg-c" style="color:var(--c-timber)">¦</span><span>timber post</span></div>
+    <div class="lg-row"><span class="lg-c">≡</span><span>drain channel</span></div>
     <div class="lg-sec">── instability ──</div>
     <div class="lg-row"><span class="lg-c">^</span><span>slump hummock</span></div>
     <div class="lg-row"><span class="lg-c">∪</span><span>undrained hollow</span></div>
@@ -541,19 +568,26 @@
     <div class="lg-row"><span class="lg-c">≈</span><span>mud seep</span></div>
     <div class="lg-row"><span class="lg-c">~</span><span>standing water</span></div>
     <div class="lg-sec">── bare ground ──</div>
-    <div class="lg-row"><span class="lg-c">_</span><span>disturbed soil</span></div>
+    <div class="lg-row"><span class="lg-c">_</span><span>disturbed soil (dry)</span></div>
+    <div class="lg-row"><span class="lg-c" style="color:var(--c-wet)">_</span><span>wet clay soil</span></div>
     <div class="lg-row"><span class="lg-c">;</span><span>cracked surface</span></div>
     <div class="lg-row"><span class="lg-c">░</span><span>rubble scatter</span></div>
     <div class="lg-row"><span class="lg-c">'</span><span>visitor footprint</span></div>
     <div class="lg-sec">── succession ──</div>
-    <div class="lg-row"><span class="lg-c">,</span><span>pioneer grass (browntop)</span></div>
-    <div class="lg-row"><span class="lg-c">"</span><span>rush / sedge / harakeke</span></div>
+    <div class="lg-row"><span class="lg-c">,</span><span>browntop (pioneer grass)</span></div>
+    <div class="lg-row"><span class="lg-c" style="color:var(--c-tussock)">,</span><span>toetoe (native tussock)</span></div>
+    <div class="lg-row"><span class="lg-c">"</span><span>carex sedge</span></div>
+    <div class="lg-row"><span class="lg-c" style="color:var(--c-rush)">"</span><span>juncus rush</span></div>
     <div class="lg-row"><span class="lg-c">:</span><span>lichen crust</span></div>
     <div class="lg-row"><span class="lg-c">m</span><span>moss (Bryum)</span></div>
     <div class="lg-row"><span class="lg-c">i</span><span>fungi mat</span></div>
     <div class="lg-row"><span class="lg-c">*</span><span>Disphyma ice plant</span></div>
-    <div class="lg-row"><span class="lg-c">n</span><span>pioneer shrub (mānuka)</span></div>
-    <div class="lg-row"><span class="lg-c">Y</span><span>tree (mānuka / kānuka / kōtukutuku)</span></div>
+    <div class="lg-row"><span class="lg-c">n</span><span>mānuka shrub</span></div>
+    <div class="lg-row"><span class="lg-c" style="color:var(--c-tree)">Y</span><span>mānuka (tree)</span></div>
+    <div class="lg-row"><span class="lg-c" style="color:var(--c-kanuka)">Y</span><span>kānuka</span></div>
+    <div class="lg-row"><span class="lg-c" style="color:var(--c-tree-c)">Y</span><span>kōtukutuku</span></div>
+    <div class="lg-row"><span class="lg-c" style="color:var(--c-conifer)">T</span><span>macrocarpa</span></div>
+    <div class="lg-row"><span class="lg-c" style="color:var(--c-pine)">T</span><span>radiata pine</span></div>
     <div class="lg-row"><span class="lg-c">W</span><span>weeping willow</span></div>
     <div class="lg-row"><span class="lg-c">#</span><span>gorse</span></div>
     <div class="lg-row"><span class="lg-c">@</span><span>ornamental (garden remnant)</span></div>
@@ -721,18 +755,21 @@ const T = {
     inv_none: '—',
     surface_lbl: {
       ruins:'ancient ruins', floor:'stone floor', open:'open ground',
-      cracked:'scraped surface', dry:'disturbed soil', water:'standing water',
+      cracked:'scraped surface', dry:'disturbed soil', wet:'wet clay soil', water:'standing water',
       hummock:'slump hummock', hollow:'undrained hollow', slip_scar:'slip scar',
       mud_seep:'mud seep', rubble:'rubble scatter', footprint:'visitor footprint',
-      grass:'pioneer grass (browntop)', sedge:'rush / sedge / harakeke',
+      grass:'pioneer grass (browntop)', toetoe:'toetoe',
+      sedge:'carex sedge', rush:'juncus rush',
       lichen:'lichen crust', moss:'moss (Bryum)', fungi:'fungi mat',
       boletus:'boletus', dung_fungi:'dung fungus', harore:'harore honeycap',
       basket_fungus:'basket fungus', blue_entoloma:'werewere-kōkako',
       glow_mycena:'glowing mycena', purple_pouch:'purple pouch fungus',
       fly_agaric:'fly agaric',
-      ice_plant:'Disphyma ice plant', shrub:'pioneer shrub (mānuka)',
-	      gorse:'gorse', ornamental:'ornamental (garden remnant)',
-      tree:'tree (mānuka / kānuka / kōtukutuku)', willow:'weeping willow',
+      ice_plant:'Disphyma ice plant', shrub:'mānuka shrub',
+      gorse:'gorse', ornamental:'ornamental (garden remnant)',
+      tree:'mānuka', kanuka:'kānuka', kotukutuku:'kōtukutuku',
+      macrocarpa:'macrocarpa', pine:'radiata pine',
+      willow:'weeping willow',
       rabbit_hole:'rabbit hole', artifact:'artifact emerging', anomaly:'GPR anomaly',
       toilet_trace:'toilet trace', compost_trace:'compost trace',
       toxic_fungi:'toxic fungi (mutated)',
@@ -741,10 +778,13 @@ const T = {
       ruins:'Institutional masonry still holds the surface in a hard grid.',
       open:'Unworked ground. Nothing has been disturbed here yet.',
       cracked:'A broken crust: one more disturbance may reveal water, fill, or soil.',
-      dry:'Fresh disturbed soil, open to pioneer grasses and crusts.',
+      dry:'Fresh disturbed soil — construction backfill or recent excavation, open to pioneer grasses and crusts.',
+      wet:'Waterlogged clay exposed at the surface, fed by a persistent groundwater layer below. Pioneer sedges establish first.',
       water:'Standing water has reached the surface and will pull succession toward sedges.',
       hollow:'A blocked drain or sagging pocket is collecting water below.',
-      grass:'Pioneer grass has taken the first thin hold on disturbed ground.',
+      grass:'Pioneer browntop has taken the first thin hold on disturbed ground.',
+      toetoe:'A native tussock grass establishing a rough hold before shrubs move in.',
+      rush:'Juncus rush has taken wet ground — tolerates seasonal flooding.',
       lichen:'A crust is binding stone and dust into the first living skin.',
       moss:'Moss is storing water and softening the ruin edge.',
       fungi:'Fungal mats are feeding on damp organic fill.',
@@ -758,10 +798,14 @@ const T = {
       fly_agaric:'Red caps with white flecks appear near introduced trees.',
       toxic_fungi:'Bright warning fruiting bodies have pushed through the mat.',
       ice_plant:'Dry stone supports a succulent coastal mat.',
-      shrub:'Native shrub growth is beginning to anchor the surface.',
-      tree:'A later successional tree is stabilising deeper time.',
-      willow:'A planted willow; will not change further from here.',
-      ornamental:'A garden remnant; this species holds its form and will not succeed further.',
+      shrub:'Mānuka shrub is beginning to anchor the surface — a fast pioneer that opens the way for slower natives.',
+      tree:'Mānuka in tree form; canopy closing, slower species may follow beneath.',
+      kanuka:'Kānuka established here. Slower-growing than mānuka, denser canopy.',
+      kotukutuku:'Kōtukutuku (tree fuchsia) in a damp sheltered position.',
+      macrocarpa:'A macrocarpa planted in the institution period. Dense evergreen windbreak.',
+      pine:'Radiata pine from the institution period. Suppressive needle-drop canopy.',
+      willow:'Weeping willow; a planted wet-ground tree, final form.',
+      ornamental:'A garden remnant holding its form; no further succession.',
       gorse:'Invasive gorse is blocking native succession.',
       rabbit_hole:'Rabbit disturbance has cut a new tunnel through the surface.',
       artifact:'An artifact has moved into visibility.',
@@ -775,6 +819,7 @@ const T = {
     strata_lbl: {
       foundation_stone:'stone foundation (old institution)', brick_course:'brick course',
       inst_fill:'institutional fill', void_space:'subsurface void',
+      topsoil:'disturbed topsoil — root zone, recent bioturbation',
       organic_fill:'older organic fill (pre-institution)',
       drain_intact:'drain — intact', drain_blocked:'drain — BLOCKED',
       gravel_fill:'gravel fill',
@@ -886,18 +931,21 @@ const T = {
     inv_none:    '空',
     surface_lbl: {
       ruins:'古遗迹', floor:'石板地面', open:'裸露地表',
-      cracked:'裂缝', dry:'扰动土层', water:'积水',
+      cracked:'裂缝', dry:'扰动回填土', wet:'湿粘土裸地', water:'积水',
       hummock:'滑坡丘', hollow:'积水洼地', slip_scar:'滑移疤',
       mud_seep:'泥浆渗出', rubble:'碎石散落', footprint:'访客脚印',
-      grass:'先锋草（褐顶草）', sedge:'莎草/灯芯草/哈拉客',
+      grass:'先锋草（褐顶草）', toetoe:'托托威草',
+      sedge:'莎草（Carex）', rush:'灯芯草（Juncus）',
       lichen:'地衣壳', moss:'苔藓（Bryum）', fungi:'真菌垫',
       boletus:'牛肝菌', dung_fungi:'粪生菌', harore:'哈罗雷蜜环菌',
       basket_fungus:'篮状菌', blue_entoloma:'蓝粉褶菌',
       glow_mycena:'发光小菇', purple_pouch:'紫色囊菌',
       fly_agaric:'毒蝇伞',
-      ice_plant:'冰草（Disphyma）', shrub:'先锋灌木（麦卢卡）',
-	      gorse:'金雀花', ornamental:'装饰植物（花园遗存）',
-      tree:'乔木（麦卢卡/卡努卡/倒挂金钟）', willow:'垂柳',
+      ice_plant:'冰草（Disphyma）', shrub:'麦卢卡灌木',
+      gorse:'金雀花', ornamental:'装饰植物（花园遗存）',
+      tree:'麦卢卡', kanuka:'卡努卡', kotukutuku:'倒挂金钟树',
+      macrocarpa:'大果柏', pine:'辐射松',
+      willow:'垂柳',
       rabbit_hole:'兔子洞', artifact:'文物露出', anomaly:'探地雷达异常',
       toilet_trace:'如厕痕迹', compost_trace:'堆肥痕迹',
       toxic_fungi:'毒蕈（变异体）',
@@ -906,10 +954,13 @@ const T = {
       ruins:'旧院砌体仍把地表固定成一种坚硬的机构网格。',
       open:'未扰动地表。这里还没有被行动打开。',
       cracked:'表层已经开裂；再一次扰动可能露出水、填土或干土。',
-      dry:'新鲜扰动土，适合先锋草本与地衣壳进入。',
+      dry:'新鲜扰动回填土——建设回填或近期开挖，适合先锋草本与地衣壳进入。',
+      wet:'地下水持续渗出，地表暴露出积水粘土层。莎草率先在此定殖。',
       water:'积水抵达地表，演替会转向莎草、灯芯草等湿地路径。',
       hollow:'堵塞暗渠或下陷口袋正在蓄水。',
-      grass:'先锋草已在扰动地表上建立第一层薄薄的抓握。',
+      grass:'褐顶草已在扰动地表上建立第一层薄薄的抓握。',
+      toetoe:'原生丛生草，在灌木入场前先占据一席之地。',
+      rush:'灯芯草占据了湿地，耐季节性积水。',
       lichen:'地衣壳把石面与尘土缝成第一层活的皮肤。',
       moss:'苔藓储水，并把遗迹边缘慢慢变软。',
       fungi:'真菌垫正在利用潮湿有机填土。',
@@ -923,10 +974,14 @@ const T = {
       fly_agaric:'红色白点菌盖出现在外来树附近。',
       toxic_fungi:'颜色过分明确的毒蕈从垫层里冒出。',
       ice_plant:'干石面上形成了海岸型肉质植物垫。',
-      shrub:'原生灌木开始锚定表层。',
-      tree:'后期乔木把更深的时间稳定下来。',
-      willow:'种植的垂柳；从这里开始不再演替。',
-      ornamental:'花园遗留植物；维持当前形态，不会进一步演替。',
+      shrub:'麦卢卡灌木开始锚定表层——先锋快速演替，为慢速原生树种铺路。',
+      tree:'麦卢卡进入乔木形态，林冠逐渐封闭。',
+      kanuka:'卡努卡已在此扎根，比麦卢卡生长更慢，林冠更密。',
+      kotukutuku:'倒挂金钟树，偏好湿润避风的沟谷环境。',
+      macrocarpa:'机构期种植的大果柏，常绿防风林，终态。',
+      pine:'机构期遗留的辐射松，针叶抑制林下植被，终态。',
+      willow:'种植的垂柳，湿地乔木，终态。',
+      ornamental:'花园遗留植物，维持当前形态，不再演替。',
       gorse:'入侵金雀花正在阻断原生演替。',
       rabbit_hole:'兔子扰动在表面下切出新的通道。',
       artifact:'一件物被扰动推到了可见层。',
@@ -940,6 +995,7 @@ const T = {
     strata_lbl: {
       foundation_stone:'地基残骸', brick_course:'砖砌层残段',
       inst_fill:'填充土层', void_space:'板下空洞',
+      topsoil:'扰动表土 — 根系活跃层，近代生物翻动',
       organic_fill:'有机填土（院前层）',
       drain_intact:'暗渠（完好）', drain_blocked:'暗渠（堵塞）',
       gravel_fill:'碎石填层',
@@ -1006,9 +1062,9 @@ function cellRng(seed,x,y){ return mulberry32(((seed^(x*73856093)^(y*19349663))>
 
 // ── Zones ────────────────────────────────────────────────────────
 const ZONE_INIT = {
-  institutional_core:['▓','▓','▓','▬','▬','─','::'],
-  ward_wing:['▓','▬','▬','─','─','::','░'],
-  ancillary:['▬','─','─','::','_','░','░'],
+  institutional_core:['▓','▓','▓','▬','▬','─','::','╌'],
+  ward_wing:['▓','▬','▬','─','╌','::','░'],
+  ancillary:['▬','─','╌','::','_','░','¦'],
   formal_garden:['::','::','::','_','_',',','─'],
   slope_face:['_','_',',',','],
   farm_field:['_','_','_',',',','],
@@ -1018,42 +1074,50 @@ const ZONE_STAB = {institutional_core:.82,ward_wing:.73,ancillary:.68,formal_gar
 const ZONE_RUINS = {institutional_core:true,ward_wing:true,ancillary:true,formal_garden:false,slope_face:false,farm_field:false,native_remnant:false};
 
 const RUIN_SURFACE_LABELS={
-  '▓':{en:'standing masonry wall',zh:'残存砌体墙'},
-  '▬':{en:'stone footing / foundation',zh:'石砌基脚 / 基础'},
-  '▤':{en:'brick course fragment',zh:'砖砌层残段'},
-  '─':{en:'wall trace / corridor line',zh:'墙线 / 走廊痕迹'},
-  '::':{en:'paving / institutional path',zh:'铺地 / 机构路径'},
-  '|':{en:'pillar stump / post base',zh:'柱基 / 桩脚'},
-  '≡':{en:'drain cover / service trench',zh:'暗渠盖 / 管沟'},
+  '▓':{en:'masonry wall',zh:'砌体墙'},
+  '▬':{en:'stone foundation',zh:'石砌地基'},
+  '▤':{en:'brick course',zh:'砖砌层'},
+  '─':{en:'wall base line',zh:'墙基线'},
+  '╌':{en:'corridor trace',zh:'走廊遗迹'},
+  '::':{en:'stone paving',zh:'石材铺地'},
+  '|':{en:'stone post base',zh:'石质柱基'},
+  '¦':{en:'timber post',zh:'木质桩脚'},
+  '≡':{en:'drain channel',zh:'暗渠'},
 };
 const RUIN_SURFACE_DESC={
   '▓':{en:'A dense wall remnant fixes the ruin as architecture rather than just rubble.',zh:'密集墙体残留让这里仍像建筑，而不只是碎石。'},
   '▬':{en:'A footing line sits close to the surface: the building is remembered by its base.',zh:'基脚贴近地表；建筑以底部的线条被记住。'},
-  '▤':{en:'A small run of brickwork interrupts the soil matrix.',zh:'一段砖砌层打断了土壤基质。'},
-  '─':{en:'A thin corridor or wall trace cuts through the ground plan.',zh:'细长的墙线或走廊痕迹切过总平面。'},
-  '::':{en:'Paving or a made path: a hard surface made for movement.',zh:'铺地或人工道路：为移动制造的硬表面。'},
-  '|':{en:'A vertical stump hints at a verandah, post, or service structure.',zh:'竖向残桩暗示廊柱、桩脚或附属结构。'},
-  '≡':{en:'A drainage/service line: water infrastructure is close to the surface.',zh:'排水或管沟线：水的基础设施贴近地表。'},
+  '▤':{en:'A run of brickwork interrupts the soil matrix.',zh:'一段砖砌层打断了土壤基质。'},
+  '─':{en:'The top of a buried wall: the building\'s plan reduced to a line.',zh:'埋藏墙体的顶部：建筑平面缩减为一条线。'},
+  '╌':{en:'A corridor ran here. The gap between walls is still readable in the ground plan.',zh:'此处曾有走廊；两墙之间的间隔仍可在平面上读出。'},
+  '::':{en:'Paving made for movement — a path or courtyard laid to last.',zh:'为移动而铺设的地面——通道或院子，铺设时本为持久。'},
+  '|':{en:'A stone post base: the structure above is gone but the foundation remains.',zh:'石质柱基：上层结构已消失，底座仍在。'},
+  '¦':{en:'A timber post has rotted down to a stain and shadow in the soil.',zh:'木质桩脚已腐朽，只留下土中的痕迹和阴影。'},
+  '≡':{en:'A drain line: water infrastructure is still readable at the surface.',zh:'排水线或沟渠：水的基础设施仍可在地表读出。'},
 };
 const FIELD_CLUE_LABELS={
-  '▓':{en:'dark blocky hard trace',zh:'深色块状硬痕'},
-  '▬':{en:'flat hard edge',zh:'扁平硬边'},
-  '▤':{en:'regular small hard marks',zh:'规则小块硬痕'},
-  '─':{en:'thin linear trace',zh:'细长线性痕迹'},
-  '::':{en:'stippled hard surface',zh:'点状硬质表面'},
-  '|':{en:'upright hard nub',zh:'竖向硬质凸点'},
-  '≡':{en:'parallel hard lines',zh:'平行硬线'},
-  '░':{en:'coarse scatter',zh:'粗粒散布'},
+  '▓':{en:'stone blocks',zh:'石块'},
+  '▬':{en:'flat stone edge',zh:'石质平边'},
+  '▤':{en:'brick fragments',zh:'砖块'},
+  '─':{en:'stone edge, linear',zh:'石材线迹'},
+  '╌':{en:'gap in stonework',zh:'石材缺口'},
+  '::':{en:'paving stones',zh:'铺地石'},
+  '|':{en:'stone upright',zh:'石质立柱残留'},
+  '¦':{en:'timber post',zh:'木质桩脚'},
+  '≡':{en:'stone-lined channel',zh:'石材沟槽'},
+  '░':{en:'stone and mortar rubble',zh:'石砖碎块'},
 };
 const FIELD_CLUE_DESC={
-  '▓':{en:'Something hard interrupts the surface, but its role is not known yet.',zh:'某种硬质东西打断了表面，但它的作用还不能确定。'},
-  '▬':{en:'A flat resistant edge sits near the surface; interpretation needs deeper evidence.',zh:'扁平的阻力边缘贴近地表；需要更深证据才能解释。'},
-  '▤':{en:'The marks are regular, but regularity is only a clue for now.',zh:'这些痕迹很规则，但规则性目前只是线索。'},
-  '─':{en:'A line crosses the ground. It may be natural, made, recent, or older.',zh:'一条线穿过地表；可能是自然的、人工的、近期的，也可能更早。'},
-  '::':{en:'The surface feels compact and stippled. It is not yet clear why.',zh:'表面紧实并带点状纹理；原因尚不明确。'},
-  '|':{en:'A small hard nub catches the eye without explaining itself.',zh:'一个小硬点很显眼，但还没有解释自己。'},
-  '≡':{en:'Parallel lines appear at the surface; their function is still uncertain.',zh:'平行线出现在表面；功能仍不确定。'},
-  '░':{en:'A coarse scatter lies on the surface; it has not been assigned to a context.',zh:'粗粒散布在地表；还没有归入任何语境。'},
+  '▓':{en:'Stone blocks interrupt the surface — dense, compact. Function not yet clear.',zh:'石块打断了地表，紧实密集，功能尚不明确。'},
+  '▬':{en:'A flat stone edge runs near the surface; its role needs deeper investigation.',zh:'石质平边贴近地表延伸，需要更深调查才能判断作用。'},
+  '▤':{en:'Brick fragments in regular arrangement — regularity noted, context not established.',zh:'砖块规则排布，规律性有记录，背景尚未确认。'},
+  '─':{en:'A stone edge runs across the ground. Its origin — structural or geological — is not yet clear.',zh:'石材线迹穿过地面；来源——结构性还是地质性——尚不确定。'},
+  '╌':{en:'A gap or break in the stone surface. May be a threshold, opening, or later cut.',zh:'石材面出现缺口或断裂，可能是门槛、开口或后期切割。'},
+  '::':{en:'A stone surface with regular point-like marks. Compact. Interpretation pending.',zh:'规则点状纹理的石材面，紧实，解释待定。'},
+  '|':{en:'A stone upright — isolated at the surface. Structural context not yet established.',zh:'孤立的石质直立残留，结构背景尚未确认。'},
+  '¦':{en:'A timber remnant at the surface — weathered, possibly decayed. Context not yet established.',zh:'地表木质残留，已风化，可能腐朽，背景尚未确认。'},
+  '≡':{en:'Stone edges in parallel at the surface; their function is not yet assigned.',zh:'地表出现平行石材边缘，功能尚未确认。'},
+  '░':{en:'Stone and mortar fragments in the surface layer — not yet assigned to a context.',zh:'地表石砖碎块，尚未归入任何背景。'},
 };
 
 function inRect(x,y,r){return x>=r.x&&x<r.x+r.w&&y>=r.y&&y<r.y+r.h;}
@@ -1068,7 +1132,7 @@ function nearPolyline(x,y,pts,w=.75){
   return false;
 }
 function seededPick(list,r){return list[Math.min(list.length-1,Math.floor(r*list.length))];}
-const SURFACE_TRACE_CHARS=['░','─','▬','▤','|','▓','::'];
+const SURFACE_TRACE_CHARS=['░','─','▬','▤','|','¦','▓','::','╌'];
 function surfaceTraceChar(r){return seededPick(SURFACE_TRACE_CHARS,r);}
 function initialGroundChar(r){return seededPick(['_','_',',',',',','],r);}
 function initialGroundOrTrace(r,chance=.045){
@@ -1199,6 +1263,8 @@ const NATIVE_SEEDS=[
   {species:'Kunzea ericoides',name:'kānuka',path:'dry',origin:'pre-institutional'},
   {species:'Fuchsia excorticata',name:'kōtukutuku',path:'wet',origin:'pre-institutional'},
   {species:'Cordyline australis',name:'tī kōuka',path:'wet',origin:'pre-institutional'},
+  {species:'Austroderia richardii',name:'toetoe',path:'dry',origin:'pre-institutional'},
+  {species:'Juncus pallidus',name:'pale rush',path:'wet',origin:'pre-institutional'},
 ];
 function seedForLayer(depth,r){
   const pool=depth>=-2?EXOTIC_SEEDS:NATIVE_SEEDS;
@@ -1223,7 +1289,8 @@ function genCell(x,y){
     const t2=rv[2]<.45?'drain_intact':rv[2]<.75?'drain_blocked':'gravel_fill';
     l2={depth:-2,char:{drain_intact:'═',drain_blocked:'╪',gravel_fill:'░'}[t2],type:t2};
   }else{
-    l1={depth:-1,char:'.',type:'organic_fill'};
+    const instZone=['institutional_core','ward_wing','ancillary','formal_garden'].includes(zone);
+    l1={depth:-1,char:instZone&&rv[1]<.5?'░':'.',type:instZone&&rv[1]<.5?'inst_fill':'topsoil'};
     l2={depth:-2,char:'.',type:'organic_fill'};
   }
   const distC=Math.sqrt(((x-CX)/40)**2+((y-CY)/40)**2);
@@ -1254,13 +1321,17 @@ function genCell(x,y){
 }
 
 // ── Surface helpers ──────────────────────────────────────────────
-const SURF_CHAR={cracked:';',dry:'_',water:'~',hummock:'^',hollow:'∪',slip_scar:'/',mud_seep:'≈',footprint:"'",rubble:'░',grass:',',sedge:'"',lichen:':',moss:'m',fungi:'i',toxic_fungi:'×',boletus:'b',dung_fungi:'d',harore:'h',basket_fungus:'k',blue_entoloma:'e',glow_mycena:'g',purple_pouch:'p',fly_agaric:'a',ice_plant:'*',shrub:'n',gorse:'#',ornamental:'@',tree:'Y',willow:'W',rabbit_hole:'o',artifact:'!',anomaly:'?'};
+const SURF_CHAR={cracked:';',dry:'_',wet:'_',water:'~',hummock:'^',hollow:'∪',slip_scar:'/',mud_seep:'≈',footprint:"'",rubble:'░',grass:',',toetoe:',',sedge:'"',rush:'"',lichen:':',moss:'m',fungi:'i',toxic_fungi:'×',boletus:'b',dung_fungi:'d',harore:'h',basket_fungus:'k',blue_entoloma:'e',glow_mycena:'g',purple_pouch:'p',fly_agaric:'a',ice_plant:'*',shrub:'n',gorse:'#',ornamental:'@',tree:'Y',kanuka:'Y',kotukutuku:'Y',macrocarpa:'T',pine:'T',willow:'W',rabbit_hole:'o',artifact:'!',anomaly:'?'};
 const SURF_CSS={
   water:'tn-c-water',sedge:'tn-c-water',willow:'tn-c-willow',
-  grass:'tn-c-grass',lichen:'tn-c-lichen',moss:'tn-c-moss',
-  ice_plant:'tn-c-succ',shrub:'tn-c-shrub',tree:'tn-c-tree',
+  grass:'tn-c-grass',toetoe:'tn-c-tussock',
+  rush:'tn-c-rush',
+  lichen:'tn-c-lichen',moss:'tn-c-moss',
+  ice_plant:'tn-c-succ',shrub:'tn-c-shrub',
+  tree:'tn-c-tree',kanuka:'tn-c-kanuka',kotukutuku:'tn-c-tree-c',
+  macrocarpa:'tn-c-conifer',pine:'tn-c-pine',
   fungi:'tn-c-fungi',toxic_fungi:'tn-c-anom',boletus:'tn-c-fungi',dung_fungi:'tn-c-fungi',harore:'tn-c-fungi',basket_fungus:'tn-c-lichen',blue_entoloma:'tn-c-water',glow_mycena:'tn-c-fungi',purple_pouch:'tn-c-succ',fly_agaric:'tn-c-anom',gorse:'tn-c-gorse',ornamental:'tn-c-shrub',
-  dry:'tn-c-soil',cracked:'tn-c-soil2',rubble:'tn-c-soil2',
+  dry:'tn-c-soil',wet:'tn-c-wet',cracked:'tn-c-soil2',rubble:'tn-c-soil2',
   mud_seep:'tn-c-soil2',hummock:'tn-c-soil',hollow:'tn-c-soil',
   slip_scar:'tn-c-soil2',footprint:'tn-c-soil2',
   artifact:'tn-c-anom',anomaly:'tn-c-anom'
@@ -1268,14 +1339,14 @@ const SURF_CSS={
 const MULTI_CH=new Set(['::','[ ]']);
 const MUSHROOM_KINDS=['toxic_fungi','fly_agaric','boletus','harore','basket_fungus','dung_fungi','blue_entoloma','glow_mycena','purple_pouch'];
 const TOILET_FOOD=new Set(['toxic_fungi','fly_agaric','purple_pouch']);
-const HARVESTABLE=new Set(['grass','sedge','lichen','moss','fungi',...MUSHROOM_KINDS,'ice_plant','shrub']);
-const HARVEST_PREV={grass:'dry',sedge:'water',lichen:'dry',moss:'lichen',fungi:'moss',ice_plant:'moss',shrub:'lichen'};
+const HARVESTABLE=new Set(['grass','toetoe','sedge','rush','lichen','moss','fungi',...MUSHROOM_KINDS,'ice_plant','shrub']);
+const HARVEST_PREV={grass:'dry',toetoe:'dry',sedge:'water',rush:'wet',lichen:'dry',moss:'lichen',fungi:'moss',ice_plant:'moss',shrub:'lichen'};
 MUSHROOM_KINDS.forEach(k=>HARVEST_PREV[k]='moss');
 const FOOD_EFFECTS={crop:1,grass:1,ice_plant:2,water:2,lichen:-1,moss:-1,fungi:-1,toxic_fungi:-999,fly_agaric:-5,boletus:5,harore:3,basket_fungus:1,dung_fungi:3,blue_entoloma:-2,glow_mycena:-1,purple_pouch:-3,rabbit:2,fish:3,waste:-5};
 const FOOD_SYMBOLS={crop:'◆',grass:',',ice_plant:'*',lichen:':',moss:'m',fungi:'i',toxic_fungi:'×',fly_agaric:'a',boletus:'b',harore:'h',basket_fungus:'k',dung_fungi:'d',blue_entoloma:'e',glow_mycena:'g',purple_pouch:'p',rabbit:'o',fish:'≈'};
 const PLANTABLE_FOOD=new Set(['grass','ice_plant','lichen','moss','fungi',...MUSHROOM_KINDS]);
 function foodKindFromSurface(surface,x,y){
-  if(surface==='sedge'||surface==='shrub')return'crop';
+  if(['sedge','rush','toetoe','shrub'].includes(surface))return'crop';
   if(surface==='fungi'||MUSHROOM_KINDS.includes(surface)){
     const r=cellRng(CANON_SEED+131,x,y)();
     if(surface!=='fungi')return surface;
@@ -1300,12 +1371,15 @@ function weightedMushroom(r){
 }
 
 const SYMBOL_DEFS=[
-  {char:'▓',cat:'ruins',label:{en:'standing masonry wall',zh:'残存砌体墙'}},
-  {char:'▬',cat:'ruins',label:{en:'ashlar foundation',zh:'石砌基础'}},
+  {char:'▓',cat:'ruins',label:{en:'masonry wall',zh:'砌体墙'}},
+  {char:'▬',cat:'ruins',label:{en:'stone foundation',zh:'石砌地基'}},
   {char:'▤',cat:'ruins',label:{en:'brick course',zh:'砖砌层'}},
   {char:'─',cat:'ruins',label:{en:'wall base line',zh:'墙基线'}},
-  {char:'::',cat:'ruins',label:{en:'stone paving / tile',zh:'石板铺地 / 地砖'}},
-  {char:'≡',cat:'ruins',label:{en:'drain cover / mudstone',zh:'暗渠盖 / 泥岩'}},
+  {char:'╌',cat:'ruins',label:{en:'corridor trace',zh:'走廊遗迹'}},
+  {char:'::',cat:'ruins',label:{en:'stone paving',zh:'石材铺地'}},
+  {char:'|',cat:'ruins',label:{en:'stone post base',zh:'石质柱基'}},
+  {char:'¦',cat:'ruins',label:{en:'timber post',zh:'木质桩脚'}},
+  {char:'≡',cat:'ruins',label:{en:'drain channel',zh:'暗渠'}},
   {char:'□',cat:'ruins',label:{en:'subfloor void',zh:'地板下空洞'}},
   {char:'~',cat:'instability',key:'water'},
   {char:'∪',cat:'instability',key:'hollow'},
@@ -1365,8 +1439,6 @@ function hasSubsurfaceEvidence(cell){
   return Boolean(
     (cell.unlockedLayers||[]).length||
     cell.excavatedDepth||
-    cell.gprAnomaly||
-    cell.lidarScanned||
     cell.drainCleared||
     cell.artifactFound||
     cell.seedFound
@@ -1391,8 +1463,7 @@ function observedSurfaceDesc(ch,surf,gen,cell){
         :`Planted. ~${rem} tick${rem===1?'':'s'} (${rem*TICK_H}h) until ${tl('surface_lbl',s.next)}.`;
       return `${base} ${growNote}`;
     }
-    const termNote=LANG.cur==='zh'?'已种植；此为终态，不再演替。':'Planted; this is the final form — no further succession.';
-    return `${base} ${termNote}`;
+    return base;
   }
   return base;
 }
@@ -1413,15 +1484,17 @@ function symbolGuideCatLabel(cat,rows){
 function surfaceCategory(surf,gen){
   if(['ruins','floor'].includes(surf))return'ruins';
   if(['water','hollow','hummock','slip_scar','mud_seep'].includes(surf))return'instability';
-  if(['grass','sedge','lichen','moss','fungi',...MUSHROOM_KINDS,'ice_plant','shrub','gorse','ornamental','tree','willow'].includes(surf))return'life';
+  if(['grass','toetoe','sedge','rush','lichen','moss','fungi',...MUSHROOM_KINDS,'ice_plant','shrub','gorse','ornamental','tree','kanuka','kotukutuku','macrocarpa','pine','willow'].includes(surf))return'life';
   if(['rabbit_hole','artifact','anomaly'].includes(surf))return'disturbance';
   return'ground';
 }
 
 // ── Growth chain ─────────────────────────────────────────────────
 const SUCC={
-  dry:{ticks:2,next:'grass',stab:0},water:{ticks:1,next:'sedge',stab:0},
-  grass:{ticks:3,next:'lichen',stab:.01},sedge:{ticks:3,next:'moss',stab:.03},
+  dry:{ticks:2,next:'grass',stab:0},wet:{ticks:3,next:'sedge',stab:.02},
+  water:{ticks:1,next:'sedge',stab:0},
+  grass:{ticks:3,next:'lichen',stab:.01},toetoe:{ticks:8,next:'shrub',stab:.03},
+  sedge:{ticks:3,next:'moss',stab:.03},rush:{ticks:3,next:'moss',stab:.02},
   lichen:{ticks:4,next:'moss',stab:.02},moss:{ticks:5,next:'_branch',stab:.02},
   mud_seep:{ticks:2,next:'sedge',stab:.01},rubble:{ticks:3,next:'lichen',stab:0},
   hummock:{ticks:3,next:'grass',stab:.01},slip_scar:{ticks:4,next:'dry',stab:0},
@@ -1433,7 +1506,10 @@ const SUCC={
   glow_mycena:{ticks:0,next:null,stab:.01},purple_pouch:{ticks:0,next:null,stab:0},
   ice_plant:{ticks:10,next:'shrub',stab:.01},
   shrub:{ticks:15,next:'tree',stab:.05},gorse:{ticks:0,next:null,stab:.03},
-  ornamental:{ticks:0,next:null,stab:0},tree:{ticks:0,next:null,stab:.06},willow:{ticks:0,next:null,stab:.05},
+  ornamental:{ticks:0,next:null,stab:0},
+  tree:{ticks:0,next:null,stab:.06},kanuka:{ticks:0,next:null,stab:.06},
+  kotukutuku:{ticks:0,next:null,stab:.05},macrocarpa:{ticks:0,next:null,stab:.05},
+  pine:{ticks:0,next:null,stab:.04},willow:{ticks:0,next:null,stab:.05},
 };
 const GROWABLE=new Set(Object.keys(SUCC));
 
@@ -1627,7 +1703,7 @@ function advanceCell(x,y,ticks){
   if(ticks<=0)return;
   const cell=getCell(x,y);let s=SUCC[cell.surface];if(!s)return;
   const w=S.meta.weather;
-  const WET_PATH=new Set(['water','sedge','moss','fungi','mud_seep']);
+  const WET_PATH=new Set(['water','wet','sedge','rush','moss','fungi','mud_seep']);
   // Weather: rain speeds up wet-path succession
   let effectiveTicks=ticks;
   if(w?.rain>0 && WET_PATH.has(cell.surface)) effectiveTicks=ticks+1;
@@ -1660,7 +1736,7 @@ function advanceCell(x,y,ticks){
   coverSurface(x,y,newSurf,{daysActive:days,stability:newStab});
   if(newSurf!==cell.surface){
     addRecentLayer(x,y,SURF_CHAR[newSurf]||'.',newSurf);
-    const canopyR=(newSurf==='tree'||newSurf==='willow')?3:newSurf==='shrub'?2:0;
+    const canopyR=(['tree','kanuka','kotukutuku','macrocarpa','pine','willow'].includes(newSurf))?3:newSurf==='shrub'?2:0;
     if(canopyR>0)for(let dy=-canopyR;dy<=canopyR;dy++)for(let dx=-canopyR;dx<=canopyR;dx++){if(dx*dx+dy*dy<=canopyR*canopyR)reveal(x+dx,y+dy);}
   }
 }
@@ -1907,11 +1983,18 @@ function fieldInfoForKey(key){
   const zh={
     gorse:'入侵植物；会从迷雾边缘扩散，抢占裸地。',
     ornamental:'制度期园林遗留；通常不是原生群落。',
-    willow:'制度期引入/栽植线索；偏湿地。',
+    willow:'制度期引入的湿地乔木，终态。',
+    macrocarpa:'制度期种植的常绿乔木，防风功能，终态。',
+    pine:'制度期遗留的针叶树，针叶抑制林下，终态。',
+    kanuka:'种植的卡努卡，比麦卢卡稳定性更强，终态。',
+    kotukutuku:'种植的倒挂金钟树，湿润沟谷原生乔木，终态。',
     ice_plant:'海岸肉质植物；干石面上能活。',
-    shrub:'本地先锋灌木；会慢慢稳定表层。',
-    tree:'后期乔木；说明演替已经走得比较远。',
-    grass:'先锋草；最早占住扰动表面。',
+    shrub:'麦卢卡先锋灌木；逐渐稳定表层，向乔木演替。',
+    tree:'麦卢卡进入乔木形态；演替已走到中后期。',
+    grass:'褐顶草；最早占住扰动表面。',
+    toetoe:'原生丛生草；中间演替阶段，比草本更稳定。',
+    rush:'灯芯草；湿地先锋，耐积水。',
+    wet:'积水粘土裸地；地下水持续渗出，适合湿地物种定殖。',
     lichen:'地衣壳；石面/裸土上的第一层活皮。',
     moss:'苔藓；代表更湿、更能蓄水的表层。',
     fungi:'真菌垫；潮湿有机质里会继续出菇。',
@@ -1925,11 +2008,18 @@ function fieldInfoForKey(key){
   const en={
     gorse:'Invasive plant; spreads from fog edges and takes bare ground.',
     ornamental:'Institution-period garden remnant; usually not native succession.',
-    willow:'Introduced/planted wet-ground clue from the institution period.',
+    willow:'Introduced wet-ground tree from the institution period; final form.',
+    macrocarpa:'Institution-period evergreen; dense rooting, final form.',
+    pine:'Institution-period conifer; needle-drop suppresses understory, final form.',
+    kanuka:'Planted kānuka; slower than mānuka but stabilises deeper, final form.',
+    kotukutuku:'Planted kōtukutuku; wet-gully native tree, final form.',
     ice_plant:'Coastal succulent; survives on dry stone.',
-    shrub:'Native pioneer shrub; gradually stabilises the surface.',
-    tree:'Later successional tree; the surface has been stable for a while.',
-    grass:'Pioneer grass; first to hold disturbed ground.',
+    shrub:'Mānuka pioneer shrub; gradually stabilises the surface toward tree succession.',
+    tree:'Mānuka in tree form; mid-to-late succession.',
+    grass:'Browntop pioneer grass; first to hold disturbed ground.',
+    toetoe:'Native tussock; intermediate stage before shrub canopy closes.',
+    rush:'Juncus rush; wet-ground pioneer, tolerates seasonal flooding.',
+    wet:'Wet clay soil from groundwater seepage or scraped water cell. Wetland species establish here.',
     lichen:'Lichen crust; first living skin on stone or bare soil.',
     moss:'Moss; wetter, water-holding surface.',
     fungi:'Fungal mat; damp organic fill may fruit into mushrooms.',
@@ -2013,8 +2103,9 @@ function renderGrid(){
       const cell=getCell(x,y);const gen=genCell(x,y);
       const surf=cell.surface;
       let ch=(['ruins','floor','open'].includes(surf))?gen.initialChar:(SURF_CHAR[surf]||'?');
-      if(cell.excavatedDepth&&!['water','artifact','mud_seep','toxic_fungi'].includes(surf)){const dl=gen.strata.find(s=>s.depth===-(cell.excavatedDepth));if(dl)ch=dl.char;}
+      if(cell.excavatedDepth&&['dry','wet','open','cracked'].includes(surf)){const dl=gen.strata.find(s=>s.depth===-(cell.excavatedDepth));if(dl)ch=dl.char;}
       let css=SURF_CSS[surf]||'';
+      if(ch==='¦')css='tn-c-timber';
       let extra='';
       const isGPRAnom=cell.gprAnomaly==='confirmed'&&!['artifact','anomaly'].includes(surf);
       if(!isGPRAnom&&cell.lidarScanned&&['ruins','open'].includes(surf)){extra=' tn-lidar-mark';}
@@ -2041,13 +2132,14 @@ function renderGrid(){
 function minimapSurf(surf){
   const m={
     ruins:[80,70,60],floor:[90,80,70],open:[70,65,60],
-    dry:[120,110,80],cracked:[100,90,70],rubble:[110,95,75],
-    grass:[60,110,50],sedge:[50,120,70],
+    dry:[120,110,80],wet:[70,100,120],cracked:[100,90,70],rubble:[110,95,75],
+    grass:[60,110,50],toetoe:[110,110,50],sedge:[50,120,70],rush:[55,100,60],
     lichen:[90,140,110],moss:[40,120,60],
     fungi:[120,100,40],toxic_fungi:[180,60,40],boletus:[130,80,45],dung_fungi:[95,70,55],
     ice_plant:[160,90,120],ornamental:[80,140,80],
     shrub:[40,90,40],gorse:[100,120,30],
-    tree:[20,70,20],willow:[30,100,40],
+    tree:[20,70,20],kanuka:[50,110,35],kotukutuku:[30,90,70],
+    macrocarpa:[15,65,35],pine:[10,50,25],willow:[30,100,40],
     water:[40,80,160],mud_seep:[70,90,100],
     artifact:[180,160,60],slip_scar:[140,100,60],hummock:[80,120,60],
   };
@@ -2269,7 +2361,7 @@ function handleClick(x,y,el){
 }
 // ── Actions ──────────────────────────────────────────────────────
 const RUINS_SUBSTRATES=new Set(['ruins','floor']);
-const EXPOSE_VEG=new Set(['grass','sedge','lichen','moss','fungi',...MUSHROOM_KINDS,'ice_plant','shrub','gorse','ornamental','tree','willow']);
+const EXPOSE_VEG=new Set(['grass','toetoe','sedge','rush','lichen','moss','fungi',...MUSHROOM_KINDS,'ice_plant','shrub','gorse','ornamental','tree','kanuka','kotukutuku','macrocarpa','pine','willow']);
 const EXPOSE_COVER=new Set(['rubble','hummock','slip_scar','mud_seep','dry','cracked']);
 function doExpose(x,y,el){
   const cell=getCell(x,y),gen=genCell(x,y);
@@ -2288,13 +2380,28 @@ function doExpose(x,y,el){
     const msg=LANG.cur==='zh'?'砌体已被发现。可以探底，但无法移除。':'Masonry exposed. Can be probed, not removed.';
     showToast(msg);showProfile(x,y);return;
   }
+  // Water cell: scrape reveals wet clay (type A) or mud (type B)
+  if(surf==='water'){
+    if(!useEnergy())return;
+    const newSurf=cell.waterType==='A'?'wet':'mud_seep';
+    addRecentLayer(x,y,'~','water');
+    coverSurface(x,y,newSurf,{daysActive:0,waterType:cell.waterType});
+    logEvent('clear',`water scraped @ ${x},${y}`);
+    showToast(LANG.cur==='zh'?(newSurf==='wet'?'积水清去；暴露出湿粘土。':'积水清去；留下泥痕。'):(newSurf==='wet'?'Water cleared; wet clay exposed.':'Water cleared; mud seep left.'));
+    reveal(x,y);
+    if(el){el.classList.add('tn-grew');setTimeout(()=>el.classList.remove('tn-grew'),1200);}
+    renderGrid();renderInv();saveLocal();return;
+  }
   if(!EXPOSE_VEG.has(surf)){
     showToast(LANG.cur==='zh'?'地表已光秃秃，清表无处着力。':'Nothing to scrape here.');
     showProfile(x,y);return;
   }
   if(!useEnergy())return;
   addRecentLayer(x,y,SURF_CHAR[surf]||',',surf);
-  coverSurface(x,y,'dry',{daysActive:0});
+  // Vegetation that grew from a water source → wet clay soil; otherwise dry
+  const WET_SURFS=new Set(['sedge','rush','moss','mud_seep']);
+  const fromWater=cell.waterType||(gen.hasWetClay&&WET_SURFS.has(surf));
+  coverSurface(x,y,fromWater?'wet':'dry',{daysActive:0});
   logEvent('clear',`${tl('surface_lbl',surf)} @ ${x},${y}`);
   const cleared=tl('surface_lbl',surf);
   showToast(LANG.cur==='zh'?`清理：${cleared}`:`Cleared: ${cleared}`);
@@ -2366,7 +2473,7 @@ function doProbe(x,y){
 
 function doTrowel(x,y){
   const cell=getCell(x,y),gen=genCell(x,y);
-  if(!RUINS_SUBSTRATES.has(cell.surface)&&ruinRecordFor(x,y,cell,gen)&&['rubble','hummock','slip_scar','mud_seep','dry','cracked'].includes(cell.surface)){
+  if(!RUINS_SUBSTRATES.has(cell.surface)&&ruinRecordFor(x,y,cell,gen)&&['rubble','hummock','slip_scar','mud_seep','dry','wet','cracked'].includes(cell.surface)){
     if(!useEnergy(2))return;
     exposeBuriedRuin(x,y,cell.surface);
     markPlayerCell(x,y,'trowel');
@@ -2402,7 +2509,7 @@ function doTrowel(x,y){
     showToast(t('artifact_collected'));
     renderGrid();renderInv();renderStatus();saveLocal();return;
   }
-  if(!['dry','cracked','hollow','water','mud_seep'].includes(cell.surface)){showProfile(x,y);return;}
+  if(!['dry','wet','cracked','hollow','water','mud_seep'].includes(cell.surface)){showProfile(x,y);return;}
   if(cell.surface==='water'&&(cell.excavatedDepth||0)>0){
     showToast(LANG.cur==='zh'?'积水无法继续挖掘。先采水让表面干燥。':'Cannot dig through standing water. Harvest first to drain.');
     showProfile(x,y);return;
@@ -2489,11 +2596,31 @@ function doHarvest(x,y){
 
 function doPlant(x,y){
   const cell=getCell(x,y);
-  if(!['dry','open'].includes(cell.surface)){showToast(LANG.cur==='zh'?'种植需要干燥裸土。':'Plant needs dry/open soil.');return;}
   if(!S.inventory.seeds.length){showToast(t('plant_none'));return;}
+  const seed=S.inventory.seeds[S.inventory.seeds.length-1];
+  const isWetSeed=seed.path==='wet';
+  const canPlant=cell.surface==='wet'?isWetSeed:['dry','open'].includes(cell.surface);
+  if(!canPlant){
+    showToast(LANG.cur==='zh'?(cell.surface==='wet'?'湿土只能种植湿地物种。':'种植需要干燥裸土或湿粘土。'):(cell.surface==='wet'?'Wet soil: only wetland species here.':'Plant needs dry/open soil or wet clay.'));
+    return;
+  }
   if(!useEnergy())return;
-  const seed=S.inventory.seeds.pop();
-  const plantedSurface=seed.origin==='institutional'?(seed.path==='wet'?'willow':seed.path==='garden'?'ornamental':'tree'):'shrub';
+  S.inventory.seeds.pop();
+  function seedToSurface(s){
+    if(s.origin==='institutional'){
+      if(s.path==='wet')return'willow';
+      if(s.path==='garden')return'ornamental';
+      if(s.name==='macrocarpa')return'macrocarpa';
+      if(s.name==='radiata pine')return'pine';
+      return'tree';
+    }
+    if(s.name==='kānuka')return'kanuka';
+    if(s.name==='kōtukutuku')return'kotukutuku';
+    if(s.name==='toetoe')return'toetoe';
+    if(s.name==='pale rush')return'rush';
+    return'shrub';
+  }
+  const plantedSurface=seedToSurface(seed);
   coverSurface(x,y,plantedSurface,{daysActive:0,species:seed.species||'native',origin:seed.origin||'unknown'});
   markPlayerCell(x,y,'plant');
   addRecentLayer(x,y,SURF_CHAR[plantedSurface]||'n',plantedSurface);
