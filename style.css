@@ -528,7 +528,7 @@ body {
 
 /* ── Publication detail ──────────────────────────────────────── */
 .pub-detail { }
-.pub-detail-title { font-family: var(--font-ui); font-size: var(--sz-body); font-weight: bold; margin: 6px 0 4px; line-height: 1.4; }
+.pub-detail-title { font-family: var(--font-ui); font-size: var(--sz-body); font-weight: bold; margin: 6px 0 4px; line-height: 1.4; color: var(--c-text); }
 .pub-detail-meta { font-family: var(--font-ui); font-size: var(--sz-small); color: var(--c-text-muted); margin-bottom: 12px; }
 .pub-detail-abstract { font-family: var(--font-body); font-size: var(--sz-small); line-height: 1.6; color: var(--c-text); margin-bottom: 14px; }
 .pub-detail-keywords { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 12px; }
