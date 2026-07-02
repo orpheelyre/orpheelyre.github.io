@@ -644,8 +644,8 @@ const GPR_COST   = 3;
 const GPR_RAD    = 5;
 const LIDAR_RAD  = 5;
 const CANON_SEED = 20260615;
-const STATE_VER  = 12;
-const LS_KEY     = 'tn_state_v21';
+const STATE_VER  = 13;
+const LS_KEY     = 'tn_state_v22';
 const SITE_WEATHER = {
   lat: -45.68,
   lon: 170.62,
@@ -1519,6 +1519,16 @@ function mkState(){
   const n=new Date().toISOString();
   return{version:STATE_VER,seed:CANON_SEED,meta:{day:1,lastTickAt:n,energy:MAX_NRG,energyLastReset:n,lastLidarAt:null,probeUses:0,waterStreak:0,needsToilet:false,toiletKind:null,hospitalUntilDay:0,weather:null,rainDays:0,droughtDays:0},cells:{},revealed:[],seenSymbols:{},knownSymbols:{},knownFood:{},actionLog:[],signs:{},notebookPages:[],inventory:{seeds:[],water:0,waste:0,food:{crop:0,rabbit:0,fish:0},artifacts:[]}};
 }
+function resetStartDateToToday(s){
+  if(!s?.meta || s.meta.startDateMode!=='today')return;
+  const now=new Date().toISOString();
+  s.meta.day=1;
+  s.meta.totalPlayedHours=0;
+  s.meta.lastTickAt=now;
+  s.meta.energy=MAX_NRG;
+  s.meta.energyLastReset=now;
+  s.meta.probeUses=0;
+}
 function normalizeS(s){
   if(!s)return;
   const loadedVersion=s.version||0;
@@ -1533,6 +1543,7 @@ function normalizeS(s){
   s.meta=s.meta||{};
   s.meta.energy=Math.min(MAX_NRG,s.meta.energy??MAX_NRG);
   s.meta.day=s.meta.day||1;
+  resetStartDateToToday(s);
   s.meta.lastLidarAt=s.meta.lastLidarAt||null;
   s.meta.probeUses=s.meta.probeUses||0;
   s.meta.waterStreak=s.meta.waterStreak||0;
